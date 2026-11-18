@@ -1,0 +1,36 @@
+{
+  "fixture_id": "rejected-declaration-only-beside-a-declared-member",
+  "description": "'Declare none or declare all, and say which' -- the released rule on bitemporal-assertion.v1 /value. A declared sibling revokes the subtree's opacity, after which every member must be declared; a declaration-only pointer deliberately is not one, so this shape would raise UndeclaredPathError at HASH time, far from the schema that caused it. Diagnosed at derivation instead, naming both annotations.",
+  "expect": "rejects",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-mixed-declaration-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "value": {
+        "type": "object",
+        "x-datacompany-hash-opaque": true,
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      }
+    }
+  },
+  "expected_error": "HashProfileError",
+  "expected_message_contains": "both declares members [\"/value/note\"] and carries x-datacompany-hash-declaration-only at [\"/value/tags\"]"
+}

@@ -1,0 +1,13 @@
+{
+  "fixture_id": "invalid-bare-id-reference",
+  "description": "A bare {id, version} pair with no owner context, type, scope or hash.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "owner_context"
+  ],
+  "instance": {
+    "id": "9b828d53-402d-6e33-2ef0-5a2fe03063b3",
+    "version": 3
+  }
+}

@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:locator-selector:1",
+  "title": "LocatorSelectorV1",
+  "description": "FND-002 task 4: the versioned discriminated selector union an evidence location carries (document 10 section 2.5, document 16 section 7.2). This document declares no root type: it is a $defs library holding the discriminator enum, the six closed selector bodies and the six if/then guards that cross-link them, so evidence-location-version:1 and evidence-location-candidate:1 compose ONE union rather than restating it twice.",
+  "$comment": "IMP-DEC-FND002-021 records why the discriminator is a top-level selector_type sibling rather than a member inside the selector object, and IMP-DEC-FND002-022 why the tabular kind is spelled tabular. Only the document kind has a concrete JSON shape anywhere in the corpus (document 10 section 2.5 lines 200-208); the other five carry an English field list only (lines 215-220), so every member spelling for them is IMP-DEC-FND002-023, taken using the document shape as the naming idiom. THE UNION IS DISCRIMINATED BY GUARDS, NOT BY THE oneOf: a selector oneOf with no cross-link accepts selector_type document carrying a tabular body, in both engines, with no error. Each guard's `if` carries required:[selector_type] because without it an absent discriminator satisfies the guard by vacuity. NEVER declare an x-datacompany-cross-field rule in a guard: `if` subschemas are not collected at all and a rule in `then` or in any oneOf branch is collected UNCONDITIONALLY and evaluated for every instance whatever its selector_type, so a per-kind invariant expressed that way fires on every other kind. Every per-kind invariant here is therefore plain JSON Schema.",
+  "$defs": {
+    "selector_kind": {
+      "$comment": "The discriminator's closed value set, transcribed from document 10 section 2.5 line 197 ('document|tabular|media|transcript|notebook|code') and line 215-220. IMP-DEC-FND002-022: tabular, never table. Released as an enum reachable from the composing document's ROOT properties, never only from inside the union: a discriminator that exists only inside a oneOf leaves the generated root type with no selector_type member at all and generation still reports success.",
+      "enum": ["code", "document", "media", "notebook", "tabular", "transcript"]
+    },
+    "character_span": {
+      "$comment": "Document 10 section 2.5 line 205: {\"start\": 821, \"end\": 914}. IMP-DEC-FND002-024 fixes the unit as Unicode code points. IMP-DEC-FND002-031 records that start < end is INEXPRESSIBLE in this contract and is a producer obligation rather than a released constraint: JSON Schema cannot compare two members, and the released half_open_interval operator parses its bounds as RFC 3339 instants only.",
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 }
+      },
+      "unevaluatedProperties": false
+    },
+    "table_cell": {
+      "$comment": "Document 10 section 2.5 line 206: {\"table_id\": \"t2\", \"row\": 4, \"column\": 3}. Both coordinates are integers in the citation, so both are integers here; IMP-DEC-FND002-025's 1-based reasoning is about PAGE numbering and is deliberately not extended to these, which the citation shows without a stated base.",
+      "type": "object",
+      "required": ["table_id", "row", "column"],
+      "properties": {
+        "table_id": { "type": "string", "minLength": 1 },
+        "row": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 0 }
+      },
+      "unevaluatedProperties": false
+    },
+    "bbox_fractions": {
+      "$comment": "Document 10 section 2.5 line 207: [0.10, 0.22, 0.91, 0.31]. IMP-DEC-FND002-026, whose three parts have DIFFERENT standing and are labelled here because they do. FORCED: the decimal-string carrier, forced by the released canonical hash profile rather than by the citation -- binary_float_policy is reject, so a bbox held as JSON numbers could never have its content_hash computed, and this record carries one by construction. The bound pattern sits beside the composed decimal_string rather than replacing it, so the released exact-decimal grammar still applies unchanged. LOCAL CHOICE: the [0,1] bound. The citation shows four values below 1, which is equally consistent with fractions, with centimetres and with inches; the corpus states no unit for bbox anywhere, so the bound is taken, not derived. LOCAL CHOICE: the corner order [x0, y0, x1, y1], which the corpus does not state either. An earlier draft of this $comment called the normalisation DERIVED on the ground that every value in the citation is below 1; that is a non-sequitur and is withdrawn -- IMP-DEC-FND002-026's measurement_correction records it. Declared ORDERED for the same reason section_path is, and covered by the same recorded exception (IMP-DEC-FND002-032): sorting a box corner sequence produces a different box.",
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "urn:datacompany:stable-identity:1#/$defs/decimal_string",
+        "pattern": "^(0(\\.[0-9]+)?|1(\\.0+)?)$"
+      },
+      "x-datacompany-array": { "kind": "ordered" }
+    },
+    "frame_range": {
+      "$comment": "Document 10 section 2.5 line 217, 'optional frame range'. IMP-DEC-FND002-023 for the member spellings; first/last rather than start/end so a frame COUNT is never confused with the millisecond instants beside it.",
+      "type": "object",
+      "required": ["first", "last"],
+      "properties": {
+        "first": { "type": "integer", "minimum": 0 },
+        "last": { "type": "integer", "minimum": 0 }
+      },
+      "unevaluatedProperties": false
+    },
+    "line_range": {
+      "$comment": "Document 10 section 2.5 line 220, 'line/column range'. Lines are 1-based for the same reason pages are (IMP-DEC-FND002-025): every editor, diff and stack trace that would ever be used to check one is.",
+      "type": "object",
+      "required": ["first", "last"],
+      "properties": {
+        "first": { "type": "integer", "minimum": 1 },
+        "last": { "type": "integer", "minimum": 1 }
+      },
+      "unevaluatedProperties": false
+    },
+    "column_range": {
+      "$comment": "Document 10 section 2.5 line 220, the optional half of 'line/column range'. Same base as line_range and deliberately a SEPARATE definition: collapsing the two would let a column range be used where a line range is required and no gate anywhere would see it. IMP-DEC-FND002-042 records why this idiom splits while the tabular kind's 'column/cell range' does not -- lines and columns are orthogonal axes in source code, and neither subsumes the other.",
+      "type": "object",
+      "required": ["first", "last"],
+      "properties": {
+        "first": { "type": "integer", "minimum": 1 },
+        "last": { "type": "integer", "minimum": 1 }
+      },
+      "unevaluatedProperties": false
+    },
+    "document_selector": {
+      "$comment": "Document 10 section 2.5 lines 200-208 and 215, the ONLY selector kind with a concrete JSON shape anywhere in the corpus. Every member spelling below is transcribed, not chosen. IMP-DEC-FND002-030: only page is required. Line 222's rule -- 'Fields are optional only when the asset format cannot express them' -- is unencodable as written, and requiring the other five would force a selector for a paragraph to fabricate a table cell it cannot have.",
+      "type": "object",
+      "required": ["page"],
+      "properties": {
+        "page": {
+          "$comment": "Document 10 section 2.5 line 202 shows 12 with no base stated. IMP-DEC-FND002-025 takes 1-based.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_path": {
+          "$comment": "Document 10 section 2.5 line 203: [\"Results\", \"Primary outcome\"]. Declared ORDERED, and it is one of the two released arrays for which an ordered collection of scalars is correct rather than an oversight: a section path is a route from the document root downwards, so sorting it would make two different locations hash identically. IMP-DEC-FND002-032 records that exception and the equality that pins it.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "x-datacompany-array": { "kind": "ordered" }
+        },
+        "block_id": {
+          "$comment": "Document 10 section 2.5 line 204: 'stable-block-id'.",
+          "type": "string",
+          "minLength": 1
+        },
+        "character_span": { "$ref": "#/$defs/character_span" },
+        "table": { "$ref": "#/$defs/table_cell" },
+        "bbox": { "$ref": "#/$defs/bbox_fractions" }
+      },
+      "unevaluatedProperties": false
+    },
+    "tabular_selector": {
+      "$comment": "Document 10 section 2.5 line 216: 'sheet/table, stable row ID or row index, column/cell range and value hash'. IMP-DEC-FND002-023 for the spellings and IMP-DEC-FND002-028 for the row XOR, which is expressed in JSON Schema rather than as a cross-field rule because a rule declared in any branch of this document would be collected for EVERY selector kind. IMP-DEC-FND002-029 records why the digest is value_digest rather than value_hash. IMP-DEC-FND002-042 records why 'column/cell range' collapses to the single cell_range here while the visibly parallel 'line/column range' on the code kind splits into two members: a cell range and a column range are two spellings of one address space, whereas a line range and a column range are orthogonal axes.",
+      "type": "object",
+      "required": ["sheet_or_table_id", "cell_range", "value_digest"],
+      "properties": {
+        "sheet_or_table_id": { "type": "string", "minLength": 1 },
+        "row_id": { "type": "string", "minLength": 1 },
+        "row_index": { "type": "integer", "minimum": 0 },
+        "cell_range": { "type": "string", "minLength": 1 },
+        "value_digest": { "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest" }
+      },
+      "oneOf": [
+        {
+          "$comment": "IMP-DEC-FND002-028: line 216's literal 'or'. Exactly one addressing mode, never both and never neither -- a row addressed twice is two claims about one cell.",
+          "required": ["row_id"],
+          "not": { "required": ["row_index"] }
+        },
+        {
+          "required": ["row_index"],
+          "not": { "required": ["row_id"] }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "media_selector": {
+      "$comment": "Document 10 section 2.5 line 217: 'track, start/end time and optional frame range'. IMP-DEC-FND002-023 for the spellings and IMP-DEC-FND002-027 for integer milliseconds.",
+      "type": "object",
+      "required": ["track", "start_ms", "end_ms"],
+      "properties": {
+        "track": { "type": "string", "minLength": 1 },
+        "start_ms": { "type": "integer", "minimum": 0 },
+        "end_ms": { "type": "integer", "minimum": 0 },
+        "frame_range": { "$ref": "#/$defs/frame_range" }
+      },
+      "unevaluatedProperties": false
+    },
+    "transcript_selector": {
+      "$comment": "Document 10 section 2.5 line 218: 'speaker/turn, time range and character span'. IMP-DEC-FND002-030: the citation marks nothing optional, so every member is required.",
+      "type": "object",
+      "required": ["speaker_id", "turn_index", "start_ms", "end_ms", "character_span"],
+      "properties": {
+        "speaker_id": { "type": "string", "minLength": 1 },
+        "turn_index": { "type": "integer", "minimum": 0 },
+        "start_ms": { "type": "integer", "minimum": 0 },
+        "end_ms": { "type": "integer", "minimum": 0 },
+        "character_span": { "$ref": "#/$defs/character_span" }
+      },
+      "unevaluatedProperties": false
+    },
+    "notebook_selector": {
+      "$comment": "Document 10 section 2.5 line 219: 'notebook/cell ID, cell version and optional output ID'. cell_version is a string rather than the released version_number: the citation says 'cell version' of a foreign artifact, and the released version_number is the DataCompany monotonic sequence of a registered identity, which a notebook cell is not.",
+      "type": "object",
+      "required": ["notebook_id", "cell_id", "cell_version"],
+      "properties": {
+        "notebook_id": { "type": "string", "minLength": 1 },
+        "cell_id": { "type": "string", "minLength": 1 },
+        "cell_version": { "type": "string", "minLength": 1 },
+        "output_id": { "type": "string", "minLength": 1 }
+      },
+      "unevaluatedProperties": false
+    },
+    "code_selector": {
+      "$comment": "Document 10 section 2.5 line 220: 'repository/bundle version, commit/content hash, path and line/column range'. IMP-DEC-FND002-029: the digest is source_digest, never content_hash -- the released content_hash attests a canonical metadata envelope (document 16 lines 826-829 require any other meaning to carry a documented compatibility mapping) and a selector-local member of that name would be a second, silently different meaning of the released spelling.",
+      "type": "object",
+      "required": ["bundle_version", "source_digest", "path", "line_range"],
+      "properties": {
+        "bundle_version": { "type": "string", "minLength": 1 },
+        "source_digest": { "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest" },
+        "path": { "type": "string", "minLength": 1 },
+        "line_range": { "$ref": "#/$defs/line_range" },
+        "column_range": { "$ref": "#/$defs/column_range" }
+      },
+      "unevaluatedProperties": false
+    },
+    "any_selector": {
+      "$comment": "Shape-only union. It closes the selector object -- an undeclared member inside it matches no branch -- and gives both generated languages one name for the union. It deliberately does NOT know about selector_type; the six guards below supply the discrimination. The six bodies stay MUTUALLY EXCLUSIVE under their closed member sets, which is what keeps this a oneOf: if two kinds ever converge this becomes an anyOf, because the guards and not the union are what enforce correctness.",
+      "oneOf": [
+        { "$ref": "#/$defs/document_selector" },
+        { "$ref": "#/$defs/tabular_selector" },
+        { "$ref": "#/$defs/media_selector" },
+        { "$ref": "#/$defs/transcript_selector" },
+        { "$ref": "#/$defs/notebook_selector" },
+        { "$ref": "#/$defs/code_selector" }
+      ]
+    },
+    "selector_fields": {
+      "$comment": "Declares BOTH union members as ordinary properties of the composing document's ROOT. That is what makes them evaluated for unevaluatedProperties whichever branch matches, what makes an absent selector a `required` failure rather than a silent accept, and what lets scripts/generate_types.py emit them on the root type instead of on six orphan branch types nothing references.",
+      "type": "object",
+      "required": ["selector_type", "selector"],
+      "properties": {
+        "selector_type": { "$ref": "#/$defs/selector_kind" },
+        "selector": { "$ref": "#/$defs/any_selector" }
+      }
+    },
+    "document_selector_guard": {
+      "$comment": "Constraint-only, composed into the root allOf of every document that carries a selector. `if` is guarded with required + const so a missing discriminator cannot satisfy it by vacuity; `then` narrows selector to the one branch body that kind admits, which is what turns a shape-only union into a discriminated one.",
+      "if": {
+        "required": ["selector_type"],
+        "properties": { "selector_type": { "const": "document" } }
+      },
+      "then": { "properties": { "selector": { "$ref": "#/$defs/document_selector" } } }
+    },
+    "tabular_selector_guard": {
+      "if": {
+        "required": ["selector_type"],
+        "properties": { "selector_type": { "const": "tabular" } }
+      },
+      "then": { "properties": { "selector": { "$ref": "#/$defs/tabular_selector" } } }
+    },
+    "media_selector_guard": {
+      "if": {
+        "required": ["selector_type"],
+        "properties": { "selector_type": { "const": "media" } }
+      },
+      "then": { "properties": { "selector": { "$ref": "#/$defs/media_selector" } } }
+    },
+    "transcript_selector_guard": {
+      "if": {
+        "required": ["selector_type"],
+        "properties": { "selector_type": { "const": "transcript" } }
+      },
+      "then": { "properties": { "selector": { "$ref": "#/$defs/transcript_selector" } } }
+    },
+    "notebook_selector_guard": {
+      "if": {
+        "required": ["selector_type"],
+        "properties": { "selector_type": { "const": "notebook" } }
+      },
+      "then": { "properties": { "selector": { "$ref": "#/$defs/notebook_selector" } } }
+    },
+    "code_selector_guard": {
+      "if": {
+        "required": ["selector_type"],
+        "properties": { "selector_type": { "const": "code" } }
+      },
+      "then": { "properties": { "selector": { "$ref": "#/$defs/code_selector" } } }
+    }
+  }
+}

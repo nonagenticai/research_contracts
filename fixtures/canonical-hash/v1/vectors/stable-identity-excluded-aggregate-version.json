@@ -1,0 +1,20 @@
+{
+  "fixture_id": "stable-identity-excluded-aggregate-version",
+  "description": "aggregate_version is a mutable optimistic-concurrency counter, not content: it is removed from the hash view, so bumping it does not change the content hash.",
+  "axis": [
+    "excluded-fields"
+  ],
+  "schema_ref": "urn:datacompany:stable-identity:1",
+  "hash_profile_ref": "urn:datacompany:canonical-hash-profile:1",
+  "instance": {
+    "entity_id": "245f3342-1dc6-1b18-99d5-d87be4498c30",
+    "entity_type": "recommendation",
+    "resource_scope": "tenant",
+    "resource_tenant_id": "d10b4f3e-f504-e2c9-00c1-37014165a6dd",
+    "created_at": "2026-07-30T08:00:00Z",
+    "created_by": "user:reviewer-1",
+    "aggregate_version": 7
+  },
+  "expected_hash_view_canonical_json": "{\"created_at\":\"2026-07-30T08:00:00Z\",\"created_by\":\"user:reviewer-1\",\"entity_id\":\"245f3342-1dc6-1b18-99d5-d87be4498c30\",\"entity_type\":\"recommendation\",\"resource_scope\":\"tenant\",\"resource_tenant_id\":\"d10b4f3e-f504-e2c9-00c1-37014165a6dd\"}",
+  "expected_content_hash": "sha256:8b5fc05e14e29b041ad3d93dfb8728983b7443579195757c3fc0b574c4911219"
+}

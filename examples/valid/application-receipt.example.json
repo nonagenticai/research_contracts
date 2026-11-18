@@ -1,0 +1,22 @@
+{
+  "schema_ref": "urn:datacompany:application-receipt:1",
+  "receipt_id": "5c1b9a2e-4f3d-4a11-9e0a-1d2c3b4a5f60",
+  "attestation_id": "b3e2b5b0-6c1a-4e2f-8b7a-9d3c1e2f4a5b",
+  "approval_id": "9e5f6a7b-1c2d-4e3f-8a9b-0c1d2e3f4a5b",
+  "approval_round": 1,
+  "resource_scope": "tenant",
+  "resource_tenant_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "target": {
+    "service": "evidence-review",
+    "aggregate_type": "screening_decision",
+    "aggregate_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "aggregate_version": 4,
+    "input_revision": "sha256:1f3870be274f6c49b3e31a0c6728957f7963ed7a1abfeda9ce9b0839e57f6cba"
+  },
+  "command_operation": "apply_screening_override",
+  "command_hash": "sha256:c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646",
+  "verified_at": "2026-09-03T14:02:11Z",
+  "outcome": "applied",
+  "applied_version_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "recorded_at": "2026-09-03T14:02:12Z"
+}

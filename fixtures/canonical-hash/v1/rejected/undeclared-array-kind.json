@@ -1,0 +1,56 @@
+{
+  "fixture_id": "undeclared-array-kind",
+  "schema_ref": "urn:datacompany:bitemporal-assertion:1",
+  "expected_error": "UndeclaredArrayError",
+  "expected_message_contains": "no released ordered/set-like declaration",
+  "instance": {
+    "assertion_id": "460c2efa-ad4c-2c6c-dd19-a0e764f6940f",
+    "assertion_version_id": "28ab5605-abd4-8ce2-94aa-23156cc12380",
+    "subject_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "f9d7660d-abc5-f574-1ac0-8097c53cf95f",
+      "version_id": "25a6cc07-d7e1-d81d-2e00-23f83b2096cd",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:5a134073e875c2756e60a51bacd8f02478a7113e27ebd0749524e5d853f1b129",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "assertion_type": "recommendation_strength",
+    "value": {
+      "steps": [
+        "a",
+        "b"
+      ]
+    },
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": "2027-01-01T00:00:00Z",
+    "basis_refs": [
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "e3189fac-64da-29d6-0b80-544d6f21a296",
+        "version_id": "24294ae1-4107-e7e2-937b-233a8f5ee011",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:fbff6bd03afb5f09659ff5bbc1c46f92efaf7fe9457b8a465e4e773e6cacc393",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      },
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "54bf7b1e-c5be-4cad-1e54-71c94bb3c3a3",
+        "version_id": "c88b14e6-a0e0-abd9-0645-7d8e48332c00",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:07e1d65ee76e1dff4d395c1512d5c7d97f5aa0afea1c728f21926bcb1b93d0d3",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ],
+    "recorded_at": "2026-07-30T09:30:00Z"
+  },
+  "rationale": "Every array must be declared ordered or set-like before it can be hashed."
+}

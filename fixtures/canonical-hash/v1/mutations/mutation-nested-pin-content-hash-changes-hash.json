@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-nested-pin-content-hash-changes-hash",
+  "base_fixture": "immutable-version-nested-pins",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/profile_ref/content_hash",
+      "value": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "rationale": "A nested pinned target's content_hash stays in the hash view."
+}

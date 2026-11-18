@@ -1,0 +1,24 @@
+{
+  "adr_id": "ADR-DATACOMPANY-REGULATORY-MODEL",
+  "status": "not_accepted",
+  "normalization": "lowercase ASCII alphanumeric",
+  "forbidden_canonical_tokens": [
+    "regulatory_instrument",
+    "regulatory_provision",
+    "regulatory_effect",
+    "legal_event",
+    "legal_status",
+    "regulatory_applicability",
+    "regulatory_change",
+    "normative_citation",
+    "consolidation_snapshot",
+    "recommendation_regulatory_link"
+  ],
+  "guarded_activation_discriminators": [
+    "work_type"
+  ],
+  "ordinary_source_document_types_allowed": [
+    "research_asset",
+    "document_version"
+  ]
+}

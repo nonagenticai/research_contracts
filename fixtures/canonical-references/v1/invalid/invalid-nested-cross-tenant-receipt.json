@@ -1,0 +1,43 @@
+{
+  "fixture_id": "invalid-nested-cross-tenant-receipt",
+  "description": "Tenant A subject with a tenant B target. Cross-tenant references are forbidden.",
+  "schema_ref": "urn:datacompany:reference-verification-receipt:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "no_cross_tenant_receipt"
+  ],
+  "instance": {
+    "reference_verification_receipt_id": "a0f43149-7981-f1e4-4419-f75e5bc535af",
+    "consumer_context": "kag-research",
+    "subject_local_ref": {
+      "owner_context": "kag-research",
+      "entity_type": "research_recommendation",
+      "entity_id": "6c4b25d4-27a6-9f9c-fd6b-340f5245c3ab",
+      "version_id": "4e63567c-f187-07ed-26fd-352db5a9a883",
+      "version_number": 3,
+      "resource_scope": "tenant",
+      "schema_ref": "urn:datacompany:research-recommendation-version:1",
+      "content_hash": "sha256:7b26b75ebcb7da88f241967ebc97b3d3f64c531b21b7cfe3dda614091b962421",
+      "resolved_at": "2026-07-30T10:00:00Z",
+      "resource_tenant_id": "1a2b3c4d-0000-4000-8000-000000000001"
+    },
+    "pinned_version_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "8a20e0c1-a13b-4bdf-aead-12cabf168c53",
+      "version_id": "bee3f8f5-8bdf-40da-4ed1-563139072321",
+      "version_number": 3,
+      "resource_scope": "tenant",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:819b542bde16f23e4c3fbdafacb891d89d27b775978e86d31d21ea907cd7b64e",
+      "resolved_at": "2026-07-30T10:00:00Z",
+      "resource_tenant_id": "1a2b3c4d-0000-4000-8000-000000000002"
+    },
+    "verification_profile_ref": "urn:datacompany:verification-profile-strict:1",
+    "verified_owner_context": "terminology-broker",
+    "verified_schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "verified_content_hash": "sha256:f90772e194163096efaca67c0f4d292dd6c007a8efdae404a2dd6dbc6238c1d1",
+    "verified_at": "2026-07-30T10:00:05Z",
+    "result": "verified"
+  }
+}

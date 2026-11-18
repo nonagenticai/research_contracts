@@ -1,0 +1,16 @@
+{
+  "fixture_id": "mutation-ordered-array-reorder-changes-hash",
+  "base_fixture": "ordered-array-preserves-order",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/value/steps",
+      "value": [
+        "treat",
+        "confirm",
+        "screen"
+      ]
+    }
+  ],
+  "rationale": "RFC 8785 preserves array order; a released ordered array is a sequence."
+}

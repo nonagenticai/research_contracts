@@ -1,0 +1,12 @@
+{
+  "fixture_id": "problem-retryable-transient",
+  "schema_ref": "urn:datacompany:problem-details:1",
+  "rationale": "The permanent/transient split is carried by the CODE, and retryable is the single yes/no a client acts on. Retry timing stays in the Retry-After header and never appears here.",
+  "instance": {
+    "code": "provider_temporarily_unavailable",
+    "status": 503,
+    "message": "The analysis provider is temporarily unreachable.",
+    "retryable": true,
+    "correlation_id": "66666666-6666-4666-8666-666666666666"
+  }
+}

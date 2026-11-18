@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:canonical-hash-profile:1",
+  "title": "CanonicalHashProfileV1",
+  "description": "FND-005 hash-view manifest. One released manifest per hashed schema_ref. It lists every included and excluded JSON Pointer of the semantic hash view and the set-order key for every array, plus the released absent-versus-null, timestamp, Unicode, decimal, serialization and digest rules. Adding or changing a path, normalization rule or collection kind is a schema compatibility change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_id",
+    "profile_version",
+    "schema_ref",
+    "serialization",
+    "encoding",
+    "byte_order_mark",
+    "digest_algorithm",
+    "digest_prefix",
+    "absent_vs_null",
+    "unicode_normalization",
+    "timestamp_representation",
+    "decimal_representation",
+    "binary_float_policy",
+    "included_pointers",
+    "excluded_pointers",
+    "opaque_pointers",
+    "arrays"
+  ],
+  "x-datacompany-cross-field": [
+    {
+      "rule": "unique_by",
+      "name": "one_array_declaration_per_pointer",
+      "scope": "relative",
+      "at": "/arrays",
+      "key": "/pointer",
+      "$comment": "uniqueItems cannot express this: two declarations for the same pointer that differ in kind are distinct objects and pass it, and the hash view keys arrays by pointer, so the last one silently wins and can re-declare a released set-like array as ordered."
+    },
+    {
+      "rule": "unique_by",
+      "name": "one_exclusion_per_pointer",
+      "scope": "relative",
+      "at": "/excluded_pointers",
+      "key": "/pointer"
+    },
+    {
+      "rule": "disjoint",
+      "name": "a_pointer_is_either_included_or_excluded",
+      "scope": "relative",
+      "left": "/included_pointers",
+      "right": "/excluded_pointers",
+      "right_key": "/pointer"
+    },
+    {
+      "rule": "disjoint",
+      "name": "an_opaque_subtree_is_not_also_excluded",
+      "scope": "relative",
+      "left": "/opaque_pointers",
+      "right": "/excluded_pointers",
+      "right_key": "/pointer"
+    }
+  ],
+  "properties": {
+    "profile_id": { "const": "urn:datacompany:canonical-hash-profile:1" },
+    "profile_version": { "type": "integer", "minimum": 1 },
+    "schema_ref": {
+      "$comment": "The schema whose fully composed instances this manifest hashes.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref"
+    },
+    "serialization": { "const": "rfc8785" },
+    "encoding": { "const": "utf-8" },
+    "byte_order_mark": { "const": false },
+    "digest_algorithm": { "const": "sha256" },
+    "digest_prefix": { "const": "sha256:" },
+    "absent_vs_null": {
+      "$comment": "distinct: an absent member and an explicit null are different hash inputs. equivalent: an explicit null is removed before serialization.",
+      "enum": ["distinct", "equivalent"]
+    },
+    "unicode_normalization": {
+      "$comment": "Undeclared normalization is forbidden. A manifest must state none explicitly if it applies none.",
+      "enum": ["none", "nfc", "nfd", "nfkc", "nfkd"]
+    },
+    "timestamp_representation": { "enum": ["rfc3339_utc_z"] },
+    "decimal_representation": { "enum": ["decimal_string"] },
+    "binary_float_policy": {
+      "$comment": "reject is the released behavior: an unstable binary float never enters a signed or hashed input.",
+      "enum": ["reject"]
+    },
+    "included_pointers": {
+      "$comment": "Every semantic hash-view path. Array elements use the - token, for example /pack_refs/-/version_id.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/hash_view_pointer" }
+    },
+    "excluded_pointers": {
+      "$comment": "Every non-hashable path with its released exclusion reason. An exclusion whose reason is not in this closed set is an unknown exclusion and is rejected.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pointer", "reason"],
+        "properties": {
+          "pointer": { "$ref": "#/$defs/hash_view_pointer" },
+          "reason": { "$ref": "#/$defs/exclusion_reason" }
+        }
+      }
+    },
+    "opaque_pointers": {
+      "$comment": "Every subtree the released schema explicitly marks x-datacompany-hash-opaque, meaning its members are hashed as they arrive without being declared one by one. A domain payload is declare-none-or-declare-all: either the subtree is listed here, or every member of it is an included pointer. An object that is neither is rejected, so an undeclared payload can never be hashed by default.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/hash_view_pointer" }
+    },
+    "arrays": {
+      "$comment": "Every array in the hash view, declared ordered or set-like, at most once per pointer. An array that is not declared here has undeclared collection semantics and is rejected, including inside an opaque subtree: RFC 8785 preserves array order and does not canonicalize a set.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/array_declaration" }
+    }
+  },
+  "$defs": {
+    "order_key_pointer": {
+      "$comment": "D8. A member-relative sort pointer for a set-like array. It is hash_view_pointer PLUS RFC 6901's whole-document pointer, the empty string, which addresses the array MEMBER ITSELF. Without it a set of SCALARS could not be declared at all: hash_view_pointer requires a leading '/' and minLength 2, so neither '' nor '/' was expressible, and hash_view._pointer_at resolved an order key only inside a dict member, so a scalar member always yielded the absent marker. The consequence was that five released foundation arrays that are semantically sets shipped as ORDERED -- duplicates rejected by uniqueItems, member order unguarded -- so two services holding the same collection in two orders computed two different canonical hashes. This is a FOURTH pointer language in the manifest tier and it is deliberately NOT hash_view_pointer: widening that would have let '' address the whole instance in included_pointers and excluded_pointers, where it has no meaning.",
+      "anyOf": [{ "$ref": "#/$defs/hash_view_pointer" }, { "const": "" }]
+    },
+    "hash_view_pointer": {
+      "$comment": "RFC 6901 JSON Pointer restricted to the released hash view, with - as the array-element token.",
+      "type": "string",
+      "pattern": "^(/([^/~]|~[01])*)+$",
+      "minLength": 2
+    },
+    "exclusion_reason": {
+      "enum": [
+        "own_content_hash",
+        "signature",
+        "transport_envelope",
+        "resolution_observation",
+        "projection_or_cache",
+        "aggregate_version",
+        "recorded_until"
+      ]
+    },
+    "array_declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pointer", "kind"],
+      "properties": {
+        "pointer": { "$ref": "#/$defs/hash_view_pointer" },
+        "kind": { "enum": ["ordered", "set"] },
+        "order_key": {
+          "$comment": "Released canonical sort key for a set-like array: an ordered list of member-relative JSON Pointers. Required for kind set and forbidden for kind ordered.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/order_key_pointer" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "set" } } },
+          "then": { "required": ["order_key"] },
+          "else": { "not": { "required": ["order_key"] } }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "fixture_id": "run-manifest-required-groups-only",
+  "schema_ref": "urn:datacompany:run-manifest:1",
+  "rationale": "The five groups every run has regardless of method. sources, extraction, rights and approvals are capability-declared and absent here. Golden canonical bytes AND digest are both pinned: a matching digest over different canonical bytes would be luck, not parity.",
+  "instance": {
+    "entity_id": "99999999-9999-4999-8999-999999999999",
+    "entity_type": "run_manifest",
+    "resource_scope": "global",
+    "created_at": "2026-07-30T09:00:00Z",
+    "created_by": "service:decision-modelling",
+    "aggregate_version": 3,
+    "run_manifest_id": "99999999-9999-4999-8999-999999999999",
+    "schema_ref": "urn:datacompany:run-manifest:1",
+    "content_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "run_ref": {
+      "owner_context": "decision-modelling",
+      "entity_type": "model_run",
+      "entity_id": "bbbbbbbb-0000-4000-8000-000000000001",
+      "resource_scope": "global",
+      "version_id": "bbbbbbbb-0000-4000-8000-000000000002",
+      "version_number": 1,
+      "schema_ref": "urn:datacompany:model-run:1",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "inputs": {
+      "input_refs": [
+        {
+          "owner_context": "guideline-registry",
+          "entity_type": "guideline_version",
+          "entity_id": "cccccccc-0000-4000-8000-000000000001",
+          "resource_scope": "global",
+          "version_id": "cccccccc-0000-4000-8000-000000000002",
+          "version_number": 1,
+          "schema_ref": "urn:datacompany:guideline-version:1",
+          "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "resolved_at": "2026-07-30T10:00:00Z"
+        }
+      ],
+      "input_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "parameters": [
+        {
+          "name": "discount_rate",
+          "value_decimal": "0.035"
+        },
+        {
+          "name": "iterations",
+          "value_integer": 10000
+        },
+        {
+          "name": "half_cycle_correction",
+          "value_boolean": true
+        }
+      ]
+    },
+    "versions": {
+      "protocol_version_ref": {
+        "owner_context": "fr-control-plane",
+        "entity_type": "protocol_version",
+        "entity_id": "dddddddd-0000-4000-8000-000000000001",
+        "resource_scope": "global",
+        "version_id": "dddddddd-0000-4000-8000-000000000002",
+        "version_number": 1,
+        "schema_ref": "urn:datacompany:protocol-version:1",
+        "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      },
+      "schema_refs": [
+        "urn:datacompany:model-run:1"
+      ]
+    },
+    "method": {
+      "method_id": "markov_cohort",
+      "engine_provider": "scientific-processor",
+      "engine_version": "2.4.1",
+      "packages": [
+        "numpy==2.3.4",
+        "scipy==1.16.2"
+      ],
+      "seed": 20260730,
+      "convergence_policy": "fixed-iterations",
+      "tolerance_policy": "0.0001"
+    },
+    "environment": {
+      "application_commit": "000000000000000000000000000000000000000a",
+      "image_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "operating_system": "debian-13",
+      "numerical_library_versions": [
+        "openblas-0.3.30"
+      ],
+      "hardware_class": "x86-64-avx2",
+      "validation_suite_version": "1.4.0"
+    },
+    "outputs": {
+      "artifact_refs": [
+        {
+          "artifact_ref": {
+            "owner_context": "artifact-storage",
+            "entity_type": "artifact_version",
+            "entity_id": "eeeeeeee-0000-4000-8000-000000000001",
+            "resource_scope": "global",
+            "version_id": "eeeeeeee-0000-4000-8000-000000000002",
+            "version_number": 1,
+            "schema_ref": "urn:datacompany:artifact-version:1",
+            "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "resolved_at": "2026-07-30T10:00:00Z"
+          },
+          "payload_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        }
+      ]
+    }
+  },
+  "expected_hash_view_canonical_json": "{\"created_at\":\"2026-07-30T09:00:00Z\",\"created_by\":\"service:decision-modelling\",\"entity_id\":\"99999999-9999-4999-8999-999999999999\",\"entity_type\":\"run_manifest\",\"environment\":{\"application_commit\":\"000000000000000000000000000000000000000a\",\"hardware_class\":\"x86-64-avx2\",\"image_digest\":\"sha256:3333333333333333333333333333333333333333333333333333333333333333\",\"numerical_library_versions\":[\"openblas-0.3.30\"],\"operating_system\":\"debian-13\",\"validation_suite_version\":\"1.4.0\"},\"inputs\":{\"input_hash\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"input_refs\":[{\"content_hash\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"entity_id\":\"cccccccc-0000-4000-8000-000000000001\",\"entity_type\":\"guideline_version\",\"owner_context\":\"guideline-registry\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:guideline-version:1\",\"version_id\":\"cccccccc-0000-4000-8000-000000000002\",\"version_number\":1}],\"parameters\":[{\"name\":\"discount_rate\",\"value_decimal\":\"0.035\"},{\"name\":\"half_cycle_correction\",\"value_boolean\":true},{\"name\":\"iterations\",\"value_integer\":10000}]},\"method\":{\"convergence_policy\":\"fixed-iterations\",\"engine_provider\":\"scientific-processor\",\"engine_version\":\"2.4.1\",\"method_id\":\"markov_cohort\",\"packages\":[\"numpy==2.3.4\",\"scipy==1.16.2\"],\"seed\":20260730,\"tolerance_policy\":\"0.0001\"},\"outputs\":{\"artifact_refs\":[{\"artifact_ref\":{\"content_hash\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"entity_id\":\"eeeeeeee-0000-4000-8000-000000000001\",\"entity_type\":\"artifact_version\",\"owner_context\":\"artifact-storage\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:artifact-version:1\",\"version_id\":\"eeeeeeee-0000-4000-8000-000000000002\",\"version_number\":1},\"payload_digest\":\"sha256:2222222222222222222222222222222222222222222222222222222222222222\"}]},\"resource_scope\":\"global\",\"run_manifest_id\":\"99999999-9999-4999-8999-999999999999\",\"run_ref\":{\"content_hash\":\"sha256:2222222222222222222222222222222222222222222222222222222222222222\",\"entity_id\":\"bbbbbbbb-0000-4000-8000-000000000001\",\"entity_type\":\"model_run\",\"owner_context\":\"decision-modelling\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:model-run:1\",\"version_id\":\"bbbbbbbb-0000-4000-8000-000000000002\",\"version_number\":1},\"schema_ref\":\"urn:datacompany:run-manifest:1\",\"versions\":{\"protocol_version_ref\":{\"content_hash\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"entity_id\":\"dddddddd-0000-4000-8000-000000000001\",\"entity_type\":\"protocol_version\",\"owner_context\":\"fr-control-plane\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:protocol-version:1\",\"version_id\":\"dddddddd-0000-4000-8000-000000000002\",\"version_number\":1},\"schema_refs\":[\"urn:datacompany:model-run:1\"]}}",
+  "expected_content_hash": "sha256:9bf098f7b61904ef9bfc2eb2c4ba7ef939d39e4514aaeb226345da2eca99a6f2"
+}

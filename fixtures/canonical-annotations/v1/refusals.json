@@ -1,0 +1,833 @@
+{
+  "$comment": "Authoring-time refusals of the x-datacompany-* vocabulary, replayed by BOTH engines. EXTENSIONS.md sections 7.1-7.4 and 7.6 are the fail-opens each refusal closes, and section 9 item 12 is why the expected `message` is compared BYTE FOR BYTE rather than by error class: two engines that refuse the same schema with different words are a divergence a consumer reading either one cannot reconcile. Every `expect.message` here was READ OUT of the Python engine, so this file is a golden record rather than a transcription. The `accepted: true` cases are the false-positive controls: without them an engine that refused EVERY annotated node would satisfy the whole suite.",
+  "vocabulary_version": "1.2",
+  "replayed_by": [
+    "tests/test_extension_vocabulary.py",
+    "packages/typescript/test/authoringRefusals.test.ts"
+  ],
+  "cases": [
+    {
+      "name": "7.1-a-misspelled-annotation-name",
+      "section": "7.1",
+      "symptom": "x-datacompany-hash-exclude, one letter short of an exclusion, is a valid JSON Schema member, is preserved on round trip and is read by nothing, so the path it was meant to remove stays in the hash view and no error is raised anywhere.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "x-datacompany-hash-exclude": true,
+            "x-datacompany-hash-exclusion-reason": "signature",
+            "x-datacompany-hash-excluded": true
+          },
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/signature\" carries [\"x-datacompany-hash-exclude\"], which is not a released x-datacompany-* annotation. The released vocabulary is [\"x-datacompany-array\",\"x-datacompany-composition-point\",\"x-datacompany-cross-field\",\"x-datacompany-hash-declaration-only\",\"x-datacompany-hash-excluded\",\"x-datacompany-hash-exclusion-reason\",\"x-datacompany-hash-opaque\"]. A name outside it is preserved on round trip and read by nothing, so the hash view is derived as though the annotation had never been written."
+      }
+    },
+    {
+      "name": "7.1-an-unregistered-name-in-the-namespace",
+      "section": "7.1",
+      "symptom": "Any other unregistered x-datacompany-* member, not only a near-miss spelling.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "x-datacompany-hash-excluded": true,
+            "x-datacompany-hash-exclusion-reason": "signature",
+            "x-datacompany-hash-priority": 3
+          },
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/signature\" carries [\"x-datacompany-hash-priority\"], which is not a released x-datacompany-* annotation. The released vocabulary is [\"x-datacompany-array\",\"x-datacompany-composition-point\",\"x-datacompany-cross-field\",\"x-datacompany-hash-declaration-only\",\"x-datacompany-hash-excluded\",\"x-datacompany-hash-exclusion-reason\",\"x-datacompany-hash-opaque\"]. A name outside it is preserved on round trip and read by nothing, so the hash view is derived as though the annotation had never been written."
+      }
+    },
+    {
+      "name": "7.2-a-lone-exclusion-reason",
+      "section": "7.2",
+      "symptom": "An author who deletes x-datacompany-hash-excluded and leaves the reason silently re-admits a signature to the hash view: excluded_pointers derives EMPTY.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "x-datacompany-hash-exclusion-reason": "signature"
+          },
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/signature\" carries x-datacompany-hash-exclusion-reason with no x-datacompany-hash-excluded beside it. The reason is read only inside the flag's branch, so on its own it excludes nothing: the path stays in the hash view and excluded_pointers records no exclusion. Add x-datacompany-hash-excluded: true, or delete the reason."
+      }
+    },
+    {
+      "name": "7.3-a-string-array-declaration",
+      "section": "7.3",
+      "symptom": "\"set\" derives arrays: [] -- the declaration is lost at derivation time.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": "set"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-array at \"/tags\" is a JSON string, not an object. A non-object declaration is dropped at derivation, so the array keeps undeclared collection semantics until some instance happens to carry it, and an optional array that no instance carries loses them indefinitely with no gate going red."
+      }
+    },
+    {
+      "name": "7.3-a-list-array-declaration",
+      "section": "7.3",
+      "symptom": "[\"set\"] derives arrays: [] for the same reason.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": [
+              "set"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-array at \"/tags\" is a JSON array, not an object. A non-object declaration is dropped at derivation, so the array keeps undeclared collection semantics until some instance happens to carry it, and an optional array that no instance carries loses them indefinitely with no gate going red."
+      }
+    },
+    {
+      "name": "7.3-a-boolean-array-declaration",
+      "section": "7.3",
+      "symptom": "true derives arrays: [] for the same reason.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": true
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-array at \"/tags\" is a JSON boolean, not an object. A non-object declaration is dropped at derivation, so the array keeps undeclared collection semantics until some instance happens to carry it, and an optional array that no instance carries loses them indefinitely with no gate going red."
+      }
+    },
+    {
+      "name": "7.4-an-array-declaration-that-retargets-itself",
+      "section": "7.4",
+      "symptom": "The derivation merges {'pointer': <derived>, **declaration}, annotation LAST, so a pointer member re-targets the declaration at an unrelated path with no error -- and the entry that reaches the manifest is still a valid array_declaration.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": {
+              "pointer": "/elsewhere",
+              "kind": "ordered"
+            }
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-array at \"/tags\" carries [\"pointer\"]; a released array declaration carries [\"kind\",\"order_key\"] only. The declaration is merged into the manifest entry AFTER the derived pointer, so a pointer member re-targets the declaration at an unrelated path and the entry that reaches the manifest is still a valid array_declaration."
+      }
+    },
+    {
+      "name": "7.4-an-array-declaration-with-no-kind",
+      "section": "7.4",
+      "symptom": "The same additionalProperties/required contract, from the other side: a declaration that names no collection kind declares nothing.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": {}
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-array at \"/tags\" declares no kind. An array declaration that names no collection kind declares nothing, and canonical-hash-profile.v1 closes the set of kinds it may name."
+      }
+    },
+    {
+      "name": "7.6-an-unknown-operator-beside-a-violated-rule",
+      "section": "7.6",
+      "symptom": "[{'rule': 'equal', ...}, {'rule': 'nope'}] against an instance that violates the first rule raised out of the failure-collection path and the already-collected equal failure was LOST. The refusal now happens at COLLECTION, before any instance is examined, so there is never a partial list to lose.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer"
+          },
+          "b": {
+            "type": "integer"
+          }
+        },
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "owner",
+            "left": "/a",
+            "right": "/b"
+          },
+          {
+            "rule": "nope"
+          }
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/1 declares rule \"nope\", which is not a released cross-field operator (disjoint, equal, equal_when_both_present, half_open_interval, unique_by)."
+      }
+    },
+    {
+      "name": "F-a-string-rule-declaration",
+      "section": "7.5",
+      "symptom": "Decision F's messages diverged between the engines: Python rendered Python type names and reprs where the port rendered typeof and JSON.stringify. Same refusal, different words.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": "equal"
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field must be an array of rule objects, not a JSON string. A non-array declaration is not a rule this engine can evaluate."
+      }
+    },
+    {
+      "name": "F-a-null-rule-member",
+      "section": "7.5",
+      "symptom": "Python said NoneType where the port said null.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          null
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/0 is not a rule object, but a JSON null."
+      }
+    },
+    {
+      "name": "F-a-nested-array-rule-member",
+      "section": "7.5",
+      "symptom": "Python said list where the port said object.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          [
+            "equal"
+          ]
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/0 is not a rule object, but a JSON array."
+      }
+    },
+    {
+      "name": "F-an-unreleased-scope",
+      "section": "7.5",
+      "symptom": "Python rendered 'sideways' where the port rendered \"sideways\".",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "left": "/a",
+            "right": "/b",
+            "scope": "sideways"
+          }
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/0 declares scope \"sideways\"; the released scopes are \"absolute\" and \"relative\"."
+      }
+    },
+    {
+      "name": "F-an-operand-that-is-not-a-pointer",
+      "section": "7.5",
+      "symptom": "Same repr-versus-JSON.stringify divergence on the operand value.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "left": "a",
+            "right": "/b"
+          }
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/0 operand left=\"a\" is not an RFC 6901 pointer of the released form (a non-empty sequence of '/'-prefixed reference tokens)."
+      }
+    },
+    {
+      "name": "F-a-missing-operand",
+      "section": "7.5",
+      "symptom": "Same divergence on the operator name.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "left": "/a"
+          }
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/0 is a \"equal\" rule missing the operand(s) right, which the evaluator indexes directly."
+      }
+    },
+    {
+      "name": "F-an-operand-of-another-operator",
+      "section": "7.5",
+      "symptom": "Same divergence on the operator name.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "left": "/a",
+            "right": "/b",
+            "at": "/c"
+          }
+        ]
+      },
+      "expect": {
+        "error": "CrossFieldError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-cross-field/0 carries at, which \"equal\" does not read. An operand belonging to a different operator is silently ignored, so it is rejected here."
+      }
+    },
+    {
+      "name": "parity-a-non-ascii-member-name-in-the-refusal-text",
+      "section": "7.3",
+      "symptom": "The third spelling of section 9 item 12's rendering trap, and the one no ASCII case can see: json.dumps defaults to ensure_ascii=True and escapes every code point above U+007F, JSON.stringify escapes nothing above the control range. The two engines therefore refused the SAME schema with different bytes whenever a member name was not ASCII. The pointer is rendered into the message, so this case fails the moment either engine's renderer changes.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "caf\u00e9\ud83d\ude00": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": "set"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-array at \"/caf\u00e9\ud83d\ude00\" is a JSON string, not an object. A non-object declaration is dropped at derivation, so the array keeps undeclared collection semantics until some instance happens to carry it, and an optional array that no instance carries loses them indefinitely with no gate going red."
+      }
+    },
+    {
+      "name": "row2-hash-excluded-false-beside-a-valid-reason",
+      "section": "8.row2",
+      "symptom": "The same outcome as section 7.2, reached by writing the flag WRONGLY instead of by deleting it: `is True` is an identity comparison, so false derived an EMPTY excluded_pointers and left the signature in the hash view. Section 7.2 was closed for a MISSING flag and this was left open for a PRESENT one.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "x-datacompany-hash-excluded": false,
+            "x-datacompany-hash-exclusion-reason": "signature"
+          },
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/signature\" declares x-datacompany-hash-excluded as false. All three of [\"x-datacompany-hash-declaration-only\",\"x-datacompany-hash-excluded\",\"x-datacompany-hash-opaque\"] are read with an identity comparison, so every value but the literal true is a silent no-op that leaves the path exactly as it was: false beside a valid exclusion reason hashes the member it reads as excluding. Write true, or omit the annotation."
+      }
+    },
+    {
+      "name": "row2-hash-excluded-as-the-string-true",
+      "section": "8.row2",
+      "symptom": "The same no-op spelled as a string.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "x-datacompany-hash-excluded": "true",
+            "x-datacompany-hash-exclusion-reason": "signature"
+          },
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/signature\" declares x-datacompany-hash-excluded as \"true\". All three of [\"x-datacompany-hash-declaration-only\",\"x-datacompany-hash-excluded\",\"x-datacompany-hash-opaque\"] are read with an identity comparison, so every value but the literal true is a silent no-op that leaves the path exactly as it was: false beside a valid exclusion reason hashes the member it reads as excluding. Write true, or omit the annotation."
+      }
+    },
+    {
+      "name": "row2-hash-opaque-false",
+      "section": "8.row2",
+      "symptom": "The second identity-compared flag, same rule.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "object",
+            "x-datacompany-hash-opaque": false
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/payload\" declares x-datacompany-hash-opaque as false. All three of [\"x-datacompany-hash-declaration-only\",\"x-datacompany-hash-excluded\",\"x-datacompany-hash-opaque\"] are read with an identity comparison, so every value but the literal true is a silent no-op that leaves the path exactly as it was: false beside a valid exclusion reason hashes the member it reads as excluding. Write true, or omit the annotation."
+      }
+    },
+    {
+      "name": "row2-hash-declaration-only-zero",
+      "section": "8.row2",
+      "symptom": "The third identity-compared flag, same rule.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "object",
+            "x-datacompany-hash-declaration-only": 0
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/payload\" declares x-datacompany-hash-declaration-only as 0. All three of [\"x-datacompany-hash-declaration-only\",\"x-datacompany-hash-excluded\",\"x-datacompany-hash-opaque\"] are read with an identity comparison, so every value but the literal true is a silent no-op that leaves the path exactly as it was: false beside a valid exclusion reason hashes the member it reads as excluding. Write true, or omit the annotation."
+      }
+    },
+    {
+      "name": "row8-declaration-only-beside-hash-excluded",
+      "section": "8.row8",
+      "symptom": "Two contradictory acts on one pointer. The hash-opaque half of the same meta-schema rule is deliberately NOT refused here: it belongs with the composed walk, in the placement guard, and refusing it in two places with two messages would be the divergence this closure exists to remove.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "object",
+            "x-datacompany-hash-opaque": true,
+            "properties": {
+              "tags": {
+                "type": "array",
+                "x-datacompany-hash-declaration-only": true,
+                "x-datacompany-hash-excluded": true,
+                "x-datacompany-hash-exclusion-reason": "signature",
+                "x-datacompany-array": {
+                  "kind": "ordered"
+                }
+              }
+            }
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"/payload/tags\" carries x-datacompany-hash-declaration-only AND x-datacompany-hash-excluded. They are contradictory acts on one pointer: an exclusion REMOVES a path and records the removal in excluded_pointers with a released reason, while declaration-only asserts there is no path there to remove. Keep whichever one is meant."
+      }
+    },
+    {
+      "name": "parity-a-non-ascii-member-name-on-the-declaration-only-guard",
+      "section": "D9",
+      "symptom": "The same ensure_ascii trap as the case above, but through hash_profile._require_declaration_only_inside_an_opaque_subtree rather than through the annotation guard. That path rendered its pointer list with a helper that did NOT pass ensure_ascii=False, so it escaped where JSON.stringify did not: the two engines refused the same schema with different bytes. Nothing pinned it, because every fixture on that path was ASCII.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "caf\u00e9\ud83d\ude00": {
+            "type": "array",
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-hash-declaration-only at [\"/caf\u00e9\ud83d\ude00\"] is not strictly inside an x-datacompany-hash-opaque subtree. The annotation exists so that an array inside an opaque subtree can carry its released collection declaration without its pointer becoming a declared member and revoking the subtree's opacity; outside an opaque subtree it would silently remove a member from the hash view, which is x-datacompany-hash-excluded's job and carries a released reason and an excluded_pointers entry. Mark the enclosing payload x-datacompany-hash-opaque, or exclude the member with x-datacompany-hash-excluded and a reason."
+      }
+    },
+    {
+      "name": "parity-an-unpaired-surrogate-in-the-refusal-text",
+      "section": "D9",
+      "symptom": "The FOURTH spelling of the rendering trap, and it was INTRODUCED by the fix for the third. With ensure_ascii=True Python escaped a lone surrogate to \\ud800 and happened to agree with ES2019's well-formed JSON.stringify; turning it off to stop escaping cafe-plus-emoji made Python emit the raw code point instead -- which diverges from the port AND produces a message that .encode('utf-8') refuses, so printing or logging a legitimate refusal raised UnicodeEncodeError and the diagnostic became an unhandled crash. Reverting would reopen the third trap; escaping only the unpaired surrogates closes both.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "caf\ud800": {
+            "type": "array",
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: x-datacompany-hash-declaration-only at [\"/caf\\ud800\"] is not strictly inside an x-datacompany-hash-opaque subtree. The annotation exists so that an array inside an opaque subtree can carry its released collection declaration without its pointer becoming a declared member and revoking the subtree's opacity; outside an opaque subtree it would silently remove a member from the hash view, which is x-datacompany-hash-excluded's job and carries a released reason and an excluded_pointers entry. Mark the enclosing payload x-datacompany-hash-opaque, or exclude the member with x-datacompany-hash-excluded and a reason."
+      }
+    },
+    {
+      "name": "control-a-well-formed-exclusion",
+      "section": "control",
+      "symptom": "The node the 7.1 and 7.2 mutants are derived from.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "signature": {
+            "type": "string",
+            "x-datacompany-hash-excluded": true,
+            "x-datacompany-hash-exclusion-reason": "signature"
+          },
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "accepted": true
+      }
+    },
+    {
+      "name": "control-a-well-formed-array-declaration",
+      "section": "control",
+      "symptom": "The node the 7.3 and 7.4 mutants are derived from.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      },
+      "expect": {
+        "accepted": true
+      }
+    },
+    {
+      "name": "control-a-well-formed-set-declaration",
+      "section": "control",
+      "symptom": "order_key is a released member and must survive the member-name check.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                }
+              }
+            },
+            "x-datacompany-array": {
+              "kind": "set",
+              "order_key": [
+                "/id"
+              ]
+            }
+          }
+        }
+      },
+      "expect": {
+        "accepted": true
+      }
+    },
+    {
+      "name": "control-a-composition-point-that-resolves-is-accepted",
+      "section": "control",
+      "symptom": "The false-positive control for the four 8.row7 refusals. x-datacompany-composition-point is READ by both engines since 2026-08-04 (EXTENSIONS.md section 6.4), so a guard that refused every declaration would satisfy all four of them; this is the well-formed declaration that must still derive. The $defs entry it names EXISTS, which is the only difference from the last refusal above -- and resolution, not the meta-schema pattern, is what tells the two apart.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-composition-point": "#/$defs/domain_extension",
+        "$defs": {
+          "domain_extension": {
+            "$comment": "The entry the composition point names. Its EXISTENCE is what this control asserts.",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "accepted": true
+      }
+    },
+    {
+      "name": "control-two-well-formed-rules-are-both-collected",
+      "section": "control",
+      "symptom": "The declaration the 7.6 mutant is derived from; both rules collect.",
+      "entry_point": "collect_cross_field_rules",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "integer"
+          },
+          "b": {
+            "type": "integer"
+          }
+        },
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "owner",
+            "left": "/a",
+            "right": "/b"
+          },
+          {
+            "rule": "equal_when_both_present",
+            "name": "tenant",
+            "left": "/a",
+            "right": "/b"
+          }
+        ]
+      },
+      "expect": {
+        "accepted": true,
+        "collected_rules": 2
+      }
+    },
+    {
+      "name": "8.row7-a-composition-point-that-is-not-a-string",
+      "section": "8.row7",
+      "symptom": "EXTENSIONS.md section 3.5 measured this and recorded it as accepted: 42, null and \"not-a-pointer\" all derived cleanly with no effect whatsoever, because no code in either language read the annotation. An envelope's declared extension point is exactly the kind of thing a consumer reads and trusts.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-composition-point": 42,
+        "$defs": {
+          "domain_extension": {
+            "type": "object"
+          }
+        },
+        "properties": {
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"\" declares x-datacompany-composition-point as 42. A composition point names the $defs entry at which a domain schema attaches, so it must be a document-relative pointer beginning \"#/$defs/\". Anything else names nothing and leaves the envelope with no stated extension point at all."
+      }
+    },
+    {
+      "name": "8.row7-a-composition-point-that-is-null",
+      "section": "8.row7",
+      "symptom": "The same fail-open written as an explicit null rather than a wrong type. Both engines test PRESENCE rather than a null-valued read, so a declared-but-null point reaches this message instead of being reported as no declaration at all -- which matters because 'declares none' is a DIFFERENT and legitimate state since 2026-08-04.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-composition-point": null,
+        "$defs": {
+          "domain_extension": {
+            "type": "object"
+          }
+        },
+        "properties": {
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"\" declares x-datacompany-composition-point as null. A composition point names the $defs entry at which a domain schema attaches, so it must be a document-relative pointer beginning \"#/$defs/\". Anything else names nothing and leaves the envelope with no stated extension point at all."
+      }
+    },
+    {
+      "name": "8.row7-a-composition-point-that-is-not-a-document-relative-pointer",
+      "section": "8.row7",
+      "symptom": "A bare $defs entry NAME rather than a pointer to it. It satisfies nothing the meta-schema's composition_point pattern allows, and was accepted anyway.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-composition-point": "domain_extension",
+        "$defs": {
+          "domain_extension": {
+            "type": "object"
+          }
+        },
+        "properties": {
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"\" declares x-datacompany-composition-point as \"domain_extension\". A composition point names the $defs entry at which a domain schema attaches, so it must be a document-relative pointer beginning \"#/$defs/\". Anything else names nothing and leaves the envelope with no stated extension point at all."
+      }
+    },
+    {
+      "name": "8.row7-a-composition-point-naming-no-defs-entry",
+      "section": "8.row7",
+      "symptom": "THE TYPO HOLE, and the reason this rule RESOLVES the pointer rather than pattern matching it. \"#/$defs/domian_extension\" satisfies the meta-schema pattern exactly, survives every round trip, and names an entry that does not exist -- so the envelope's stated extension point silently addresses nothing while still reading as a constraint. A pattern check cannot see it; only resolution can.",
+      "entry_point": "derive_hash_profile",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:annotation-refusal-probe:1",
+        "type": "object",
+        "x-datacompany-composition-point": "#/$defs/domian_extension",
+        "$defs": {
+          "domain_extension": {
+            "type": "object"
+          }
+        },
+        "properties": {
+          "payload": {
+            "type": "string"
+          }
+        }
+      },
+      "expect": {
+        "error": "HashProfileError",
+        "message": "urn:datacompany:annotation-refusal-probe:1: \"\" declares the composition point \"#/$defs/domian_extension\", which resolves to no $defs entry of urn:datacompany:annotation-refusal-probe:1. The annotation is the envelope's own statement of where a consumer may attach, so a name that resolves to nothing invites a domain schema to extend a point that does not exist."
+      }
+    }
+  ]
+}

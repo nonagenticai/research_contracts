@@ -1,0 +1,15 @@
+{
+  "fixture_id": "release-ref-regulatory-family-stem",
+  "schema_ref": "urn:datacompany:release-ref:1#/$defs/release_ref",
+  "rationale": "The pre-ADR regulatory guard reaches release identifiers too: a pack may not activate a regulatory capability before ADR-DATACOMPANY-REGULATORY-MODEL is accepted.",
+  "expected_error_contains": [
+    "should not be valid"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "not"
+    }
+  ],
+  "instance": "regulatory-consolidation@1.0.0"
+}

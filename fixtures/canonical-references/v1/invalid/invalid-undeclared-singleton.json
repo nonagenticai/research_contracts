@@ -1,0 +1,21 @@
+{
+  "fixture_id": "invalid-undeclared-singleton",
+  "description": "A locally invented singleton: version_number is 1 but entity_id does not equal version_id, so the released singleton equality rejects it.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1#/$defs/singleton",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "entity_id",
+    "version_id"
+  ],
+  "instance": {
+    "owner_context": "run-registry",
+    "entity_type": "analysis_run",
+    "entity_id": "f7727c32-e542-52fd-1ece-6f57642c478f",
+    "version_id": "4b6bb931-8748-3d65-6c08-16884382080d",
+    "version_number": 1,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:analysis-run:1",
+    "content_hash": "sha256:12c334e29cac0d12dcf98c20c01bbac829b3ba7f2975fc92850a2736be763176",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

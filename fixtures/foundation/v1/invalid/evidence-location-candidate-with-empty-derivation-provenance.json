@@ -1,0 +1,54 @@
+{
+  "fixture_id": "evidence-location-candidate-with-empty-derivation-provenance",
+  "schema_ref": "urn:datacompany:evidence-location-candidate:1",
+  "rationale": "IMP-DEC-FND002-040. An empty set records that the candidate was derived from nothing, which is not the same statement as a derivation whose inputs are listed. minItems is what separates the two, and without it the member would be present, well-typed and vacuous.",
+  "expected_error_contains": [
+    "should be non-empty"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/derivation_provenance_refs",
+      "keyword": "minItems"
+    }
+  ],
+  "instance": {
+    "document_version_ref": {
+      "owner_context": "ingestion-documents",
+      "entity_type": "document_version",
+      "entity_id": "d0cf1111-1111-4111-8111-111111111111",
+      "resource_scope": "tenant",
+      "version_id": "d0cf2222-2222-4222-8222-222222222222",
+      "version_number": 4,
+      "schema_ref": "urn:datacompany:document-version:1",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "resolved_at": "2026-07-30T10:00:00Z",
+      "resource_tenant_id": "11111111-1111-4111-8111-111111111111"
+    },
+    "selector_type": "transcript",
+    "selector": {
+      "speaker_id": "speaker-2",
+      "turn_index": 7,
+      "start_ms": 61000,
+      "end_ms": 64500,
+      "character_span": {
+        "start": 0,
+        "end": 42
+      }
+    },
+    "selector_schema_ref": "urn:datacompany:locator-selector:1",
+    "coordinate_manifest_ref": {
+      "owner_context": "ingestion-documents",
+      "entity_type": "coordinate_manifest",
+      "entity_id": "c00d1111-1111-4111-8111-111111111111",
+      "resource_scope": "global",
+      "version_id": "c00d2222-2222-4222-8222-222222222222",
+      "version_number": 1,
+      "schema_ref": "urn:datacompany:coordinate-manifest:1",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "quoted_text_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "language": "en",
+    "derivation_provenance_refs": []
+  }
+}

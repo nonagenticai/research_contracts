@@ -1,0 +1,21 @@
+{
+  "fixture_id": "locator-selector-tabular-with-both-row-addressings",
+  "schema_ref": "urn:datacompany:locator-selector:1#/$defs/tabular_selector",
+  "rationale": "IMP-DEC-FND002-028. Document 10 line 216 says 'stable row ID or row index'; a selector carrying both makes two claims about one cell and there is no rule for which wins. Expressed as a oneOf over two constraint branches rather than as a cross-field rule, because a rule declared anywhere in this document is collected for EVERY selector kind and would fire on a media selector that has neither member.",
+  "expected_error_contains": [
+    "is not valid under any of the given schemas"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "oneOf"
+    }
+  ],
+  "instance": {
+    "sheet_or_table_id": "primary-outcomes",
+    "row_id": "row-0f2a",
+    "cell_range": "C4:C4",
+    "value_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "row_index": 4
+  }
+}

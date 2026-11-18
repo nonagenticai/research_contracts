@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:bitemporal-assertion:1",
+  "title": "BitemporalAssertionV1",
+  "description": "Canonical bitemporal-assertion envelope (document 16 sections 3.2 and 3.4, shared foundation section 4.1). Both intervals are half-open [from, to) and non-empty. The semantic payload is immutable; recorded_until is the only field the ledger correction routine may close.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/assertion_fields" },
+    { "$ref": "#/$defs/system_time_fields" }
+  ],
+  "required": ["recorded_at"],
+  "x-datacompany-composition-point": "#/$defs/domain_extension",
+  "x-datacompany-cross-field": [
+    {
+      "rule": "half_open_interval",
+      "name": "valid",
+      "scope": "relative",
+      "from": "/valid_from",
+      "to": "/valid_to"
+    },
+    {
+      "rule": "half_open_interval",
+      "name": "recorded",
+      "scope": "relative",
+      "from": "/recorded_at",
+      "to": "/recorded_until"
+    }
+  ],
+  "$defs": {
+    "assertion_fields": {
+      "type": "object",
+      "required": [
+        "assertion_id",
+        "assertion_version_id",
+        "subject_ref",
+        "assertion_type",
+        "value",
+        "valid_from",
+        "basis_refs"
+      ],
+      "properties": {
+        "assertion_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid",
+          "readOnly": true
+        },
+        "assertion_version_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid",
+          "readOnly": true
+        },
+        "subject_ref": {
+          "$comment": "Identity or pinned-version subject, as the assertion type declares. A domain schema narrows this to exactly one form at its composition point.",
+          "oneOf": [
+            { "$ref": "urn:datacompany:identity-ref:1" },
+            { "$ref": "urn:datacompany:pinned-version-ref:1" }
+          ]
+        },
+        "assertion_type": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token",
+          "readOnly": true
+        },
+        "value": {
+          "$comment": "Typed predicate value and the envelope's open payload point. Binary floats are rejected by the canonical hash engine; exact numbers use the released decimal-string rule. x-datacompany-hash-opaque declares explicitly that a domain which contributes no hash-view pointers here has its whole value subtree hashed as it arrives; the moment a domain declares any member of value, it must declare all of them. Arrays inside it still require their own ordered/set-like declaration.",
+          "type": ["object", "array", "string", "boolean", "integer", "null"],
+          "x-datacompany-hash-opaque": true
+        },
+        "valid_from": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" },
+        "valid_to": {
+          "$comment": "Half-open upper bound. An omitted valid_to means positive infinity; explicit null is not a released encoding for infinity.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        },
+        "basis_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "decision_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "supersedes_assertion_version_id": {
+          "$comment": "Corrected assertion version. A correction never overwrites the semantic payload.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid",
+          "readOnly": true
+        }
+      }
+    },
+    "system_time_fields": {
+      "type": "object",
+      "properties": {
+        "recorded_at": {
+          "$comment": "Assigned by the authoritative service transaction clock, never accepted from a domain request body. Read-only in command schemas.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp",
+          "readOnly": true
+        },
+        "recorded_until": {
+          "$comment": "System-maintained ledger metadata, closed only by the correction routine in the same transaction that inserts the replacement. Excluded from the canonical hash view.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp",
+          "readOnly": true,
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "recorded_until"
+        }
+      }
+    },
+    "domain_extension": {
+      "$comment": "Declared composition point for the type-specific assertion payload.",
+      "type": "object"
+    },
+    "sealed": {
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    },
+    "command": {
+      "$comment": "Command form. recorded_at and recorded_until are read-only system time and are rejected on input.",
+      "allOf": [
+        { "$ref": "#/$defs/assertion_fields" },
+        {
+          "not": {
+            "anyOf": [
+              { "required": ["recorded_at"] },
+              { "required": ["recorded_until"] }
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false,
+      "x-datacompany-cross-field": [
+        {
+          "rule": "half_open_interval",
+          "name": "valid",
+          "scope": "relative",
+          "from": "/valid_from",
+          "to": "/valid_to"
+        }
+      ]
+    }
+  }
+}

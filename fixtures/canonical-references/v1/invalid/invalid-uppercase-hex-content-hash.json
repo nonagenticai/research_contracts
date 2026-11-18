@@ -1,0 +1,20 @@
+{
+  "fixture_id": "invalid-uppercase-hex-content-hash",
+  "description": "Isolates hexadecimal case alone. The sha256: prefix is exactly right and the digest is exactly 64 hexadecimal characters; only the hex digits are upper-case. invalid-non-canonical-content-hash.json also upper-cases the prefix, so on its own it cannot tell a case-insensitive [0-9a-fA-F]{64} pattern from the released [0-9a-f]{64} one.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "content_hash"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "640d9493-270e-5ac0-d3bc-1b785c7f5e38",
+    "version_id": "5a465240-5230-effd-6711-e5c28038c42b",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:5A134073E875C2756E60A51BACD8F02478A7113E27EBD0749524E5D853F1B129",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

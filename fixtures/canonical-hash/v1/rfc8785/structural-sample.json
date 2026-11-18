@@ -1,0 +1,8 @@
+{
+  "fixture_id": "rfc8785-structural-sample",
+  "description": "The RFC 8785 sample object: number normalization, literal handling and the complete string escaping rule of Section 3.2.2.2.",
+  "source": "{\n  \"numbers\": [333333333.33333329, 1E30, 4.50, 2e-3, 0.000000000000000000000000001],\n  \"string\": \"\\u20ac$\\u000F\\u000aA'\\u0042\\u0022\\u005c\\\\\\\"\\/\",\n  \"literals\": [null, true, false]\n}\n",
+  "expected_canonical_json": "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"\u20ac$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}",
+  "expected_sha256": "sha256:2d5e01a318d0f0879ab568c4be289c8b1f64ef8921a53c6277d5e069978baacb",
+  "contains_binary_floats": true
+}

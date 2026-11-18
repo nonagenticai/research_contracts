@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-evidence-snapshot-created:1",
+  "title": "ReviewEvidenceSnapshotCreatedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.evidence_snapshot.created.v1': the eighteenth of the twenty-one document 09 section 3.7 events, announcing one urn:datacompany:evidence-snapshot-manifest:1 instance by identity, declared use, member census and gating coverage. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (aggregate_type 'evidence_snapshot', aggregate_id the snapshot, aggregate_version snapshot.version_number -- a REAL counter, not a literal 1), the ordering key, the time, and content_hash = snapshot.content_hash.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "snapshot_id",
+    "intended_use",
+    "member_count",
+    "member_manifest_hash",
+    "gates_evaluated"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. evidence_review_service/src/application/services/events.py contains emit_evidence_snapshot_created, called from snapshots._build after the snapshot, every member and its artifact row are already in the session and inside the same transaction, so a consumer told a snapshot exists can never find it half-written. This schema matches that producer's payload dict exactly, and reuses urn:datacompany:evidence-snapshot-manifest:1's own vocabulary for the fields the two documents share, per the instruction that this event announces one of those manifests rather than inventing a parallel description of it. SIX AUTHORING DECISIONS THAT ARE NOT STYLE. (1) member_count is a STRING, and it is left that way deliberately. The producer writes `\"member_count\": str(snapshot.member_count)` -- an int-cast-to-string, not an integer. This is an INCONSISTENCY against review.import.completed.v1's sibling counts on the very same producer module (`accepted_count`, `rejected_count`, `quarantined_count`, all written as plain integers with no str() around them) and against evidence-snapshot-manifest.v1's own `member_count`, which is typed `integer` there. Typing this field as an integer here would be truer to the domain and to the sibling schema, and it would be WRONG: it would describe what the producer should write, not what it writes, and a consumer validating a real row would fail against a schema that never fails against the real service. Fixing the type is a producer change -- casting the manifest's own `member_count` straight through instead of through `str()` -- not a schema change, and it is recorded here as a defect against the producer rather than silently 'corrected' in the contract. The string is bounded to a pattern of 1-7 digits with no leading zero (or the single digit '0'), which mirrors evidence-snapshot-manifest.v1's own integer bound of 0 to 1,000,000 (a 7-digit ceiling) rather than inventing an unrelated bound; the ceiling is a courtesy match to that sibling range, not a byte-exact regex reproduction of `<= 1000000`, which would need a bespoke digit-by-digit pattern for one string field bought at a cost this document does not think is worth it. (2) gates_evaluated is the ONE array across all twenty-one payloads, and the producer's own rationale is quoted rather than paraphrased: 'a consumer deciding whether it may bind this snapshot has to be able to see that three of the five gates … did not run… Sending the id alone would make the incomplete gating invisible to exactly the audience it is for.' It is therefore not optional and not summarised to a count -- a consumer needs to see WHICH gates ran, not merely how many. Bounded to at most 5 items because document 14 section 345 names exactly five released gates; each item composes canonical_type_token rather than a bespoke enum, because the closed set of five gate names is the producer's registration concern, not this schema's, exactly as subject_kind is left open to the producer's own table in the acceptance-recorded document. (3) member_manifest_hash rides in the payload as well as being reachable from the aggregate, and the producer's content-hash rationale is quoted for why: document 14 line 359 says consumers 'pin the snapshot ID/hash and never dereference latest', so an event naming only the id would force every consumer to fetch before it could pin, and a consumer that fetched a different version than the one announced would never know it had. member_manifest_hash is NOT the same value as the envelope's own content_hash (snapshot.content_hash, the snapshot's own immutable-version content hash per urn:datacompany:evidence-snapshot-manifest:1's authoring decision 1) -- it is specifically the hash over 'members' after the declared sort, per that document's authoring decision 4, so the two hashes answer two different consumer questions (is this the snapshot I pinned, versus do I hold the exact member set it claims) and neither substitutes for the other. Composed via the same content_hash primitive both documents already use, not a parallel spelling. (4) THIS IS THE ONE EVENT WITH A STATED EMISSION RULE, and it is recorded rather than left implicit. The producer's own docstring cites it at document 09 line 332: '\"only terminal application of the complete immutable manifest emits\" it.' The task that authored this document separately cites document 09 lines 348-352 for the same rule; both citations are recorded here rather than silently resolved to one, since this document was not given document 09 itself to reconcile them against. Either way, the operative fact is unambiguous: no partial, draft or rejected manifest ever reaches the outbox, only the terminal, fully-applied one -- which is also why this document, unlike duplicate_cluster.proposed.v1's run-not-cluster granularity, needs no separate 'complete' flag; completeness is a precondition of emission, not a fact this payload has to assert about itself. (5) supersedes_snapshot_id is OPTIONAL and NULLABLE, for the identical reason and by the identical oneOf construction as supersedes_acceptance_id on urn:datacompany:review-evidence-acceptance-recorded:1: the producer's `_opt()` helper writes JSON null for 'no predecessor' rather than omitting the key, and the schema stays looser than that one habit by also permitting outright absence. (6) aggregate_version is snapshot.version_number, a REAL counter -- unlike the literal-1 aggregates of the acceptance-recorded document. The producer's module docstring places this event's aggregate among those with 'a real counter' alongside ReviewStateEvent.revision_number, ObservationVersion.version_number and ResearchAssertionVersion.version_number, because a snapshot correction is a new version of the SAME immutable-version aggregate (urn:datacompany:immutable-version:1's own version_number/supersedes_version_id chain) rather than a new aggregate instance with its own id every time, which is the acceptance document's shape. That is also why supersedes_snapshot_id in decision (5) is not redundant with aggregate_version here the way it might look: aggregate_version orders the immutable-version chain generically, while supersedes_snapshot_id is still carried in the payload for the same reason review-decision-recorded's decision_id is -- a consumer reading only this payload, without cross-referencing the envelope, should not have to. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS -- including narrowing member_count to an integer, should the producer defect in decision (1) ever be fixed -- mints urn:datacompany:review-evidence-snapshot-created:2, because document 13 section 8.1 ships event versions additively. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern, every scalar composes a released stable-identity primitive or a bounded custom string, and gates_evaluated is capped well under the envelope's 256-item array ceiling and 512-character per-string ceiling, so a payload valid against this document is valid against the envelope by construction rather than by separate inspection.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this snapshot was taken of. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the evidence_snapshot, so this is the only place the review is named. Same reasoning as evidence-snapshot-manifest.v1's own review_id, which is present for the identical reason: the review is the snapshot's scope, not one of its pinned members.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "snapshot_id": {
+      "$comment": "The snapshot's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a mixed batch never has to reach into the envelope to learn which snapshot a row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "intended_use": {
+      "$comment": "What this snapshot was built for. Reuses urn:datacompany:evidence-snapshot-manifest:1's own intended_use field and its canonical_type_token typing rather than inventing a parallel description of the same declared fact -- see that document's authoring decision on why it is required there: a downstream run must be able to check the declared use rather than guess it from the caller.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "member_count": {
+      "$comment": "The manifest's own member_count, INT-CAST-TO-STRING by the producer (`str(snapshot.member_count)`). Do not read this as an integer typo -- see authoring decision (1): it is a recorded producer inconsistency against the sibling integer counts on review.import.completed.v1 and against evidence-snapshot-manifest.v1's own integer-typed member_count, and this schema records the current truth rather than the preferred one. Bounded to 1-7 digits, no leading zero except the literal '0', mirroring the manifest's 0-to-1,000,000 integer ceiling.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,6})$",
+      "maxLength": 7
+    },
+    "member_manifest_hash": {
+      "$comment": "The manifest's own member_manifest_hash: the canonical hash over 'members' after the declared sort. NOT the envelope's content_hash (snapshot.content_hash) -- see authoring decision (3), the two hashes answer different consumer questions and are never substituted for one another.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "gates_evaluated": {
+      "$comment": "The gates that ran over this snapshot's members, by name. The one array across all twenty-one payloads -- see authoring decision (2). Sending the id alone would make incomplete gating invisible to the audience deciding whether it may bind this snapshot. Bounded to the five released gates document 14 section 345 names.",
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" }
+    },
+    "supersedes_snapshot_id": {
+      "$comment": "The prior snapshot this one corrects or replaces, where one exists. Optional and nullable, by the identical construction as review-evidence-acceptance-recorded's supersedes_acceptance_id -- see authoring decision (5). Absent, or the JSON literal null, both mean no predecessor.",
+      "oneOf": [
+        { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        { "$ref": "#" }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

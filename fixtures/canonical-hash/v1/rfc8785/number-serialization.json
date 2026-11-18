@@ -1,0 +1,135 @@
+{
+  "fixture_id": "rfc8785-number-serialization",
+  "description": "RFC 8785 Section 3.2.2.3 defers number serialization to the ECMAScript Number::toString algorithm (ECMA-262 6.1.6.1.20). Each entry is an IEEE-754 binary64 bit pattern and its required rendering, produced by a native ECMAScript String(n) call.",
+  "oracle": "ECMA-262 Number::toString via Node String(n)",
+  "vectors": [
+    {
+      "ieee754_hex": "0000000000000000",
+      "expected": "0"
+    },
+    {
+      "ieee754_hex": "8000000000000000",
+      "expected": "0"
+    },
+    {
+      "ieee754_hex": "0000000000000001",
+      "expected": "5e-324"
+    },
+    {
+      "ieee754_hex": "8000000000000001",
+      "expected": "-5e-324"
+    },
+    {
+      "ieee754_hex": "7fefffffffffffff",
+      "expected": "1.7976931348623157e+308"
+    },
+    {
+      "ieee754_hex": "ffefffffffffffff",
+      "expected": "-1.7976931348623157e+308"
+    },
+    {
+      "ieee754_hex": "4340000000000000",
+      "expected": "9007199254740992"
+    },
+    {
+      "ieee754_hex": "c340000000000000",
+      "expected": "-9007199254740992"
+    },
+    {
+      "ieee754_hex": "4430000000000000",
+      "expected": "295147905179352830000"
+    },
+    {
+      "ieee754_hex": "44b52d02c7e14af5",
+      "expected": "9.999999999999997e+22"
+    },
+    {
+      "ieee754_hex": "44b52d02c7e14af6",
+      "expected": "1e+23"
+    },
+    {
+      "ieee754_hex": "44b52d02c7e14af7",
+      "expected": "1.0000000000000001e+23"
+    },
+    {
+      "ieee754_hex": "444b1ae4d6e2ef4e",
+      "expected": "999999999999999700000"
+    },
+    {
+      "ieee754_hex": "444b1ae4d6e2ef4f",
+      "expected": "999999999999999900000"
+    },
+    {
+      "ieee754_hex": "444b1ae4d6e2ef50",
+      "expected": "1e+21"
+    },
+    {
+      "ieee754_hex": "3eb0c6f7a0b5ed8c",
+      "expected": "9.999999999999997e-7"
+    },
+    {
+      "ieee754_hex": "3eb0c6f7a0b5ed8d",
+      "expected": "0.000001"
+    },
+    {
+      "ieee754_hex": "41b3de4355555553",
+      "expected": "333333333.3333332"
+    },
+    {
+      "ieee754_hex": "41b3de4355555554",
+      "expected": "333333333.33333325"
+    },
+    {
+      "ieee754_hex": "41b3de4355555555",
+      "expected": "333333333.3333333"
+    },
+    {
+      "ieee754_hex": "41b3de4355555556",
+      "expected": "333333333.3333334"
+    },
+    {
+      "ieee754_hex": "41b3de4355555557",
+      "expected": "333333333.33333343"
+    },
+    {
+      "ieee754_hex": "becbf647612f3696",
+      "expected": "-0.0000033333333333333333"
+    },
+    {
+      "ieee754_hex": "43143ff3c1cb0959",
+      "expected": "1424953923781206.2"
+    },
+    {
+      "ieee754_hex": "3ff0000000000000",
+      "expected": "1"
+    },
+    {
+      "ieee754_hex": "4008000000000000",
+      "expected": "3"
+    },
+    {
+      "ieee754_hex": "3fb999999999999a",
+      "expected": "0.1"
+    },
+    {
+      "ieee754_hex": "c000000000000000",
+      "expected": "-2"
+    },
+    {
+      "ieee754_hex": "7fe1ccf385ebc8a0",
+      "expected": "1e+308"
+    },
+    {
+      "ieee754_hex": "0010000000000000",
+      "expected": "2.2250738585072014e-308"
+    },
+    {
+      "ieee754_hex": "000fffffffffffff",
+      "expected": "2.225073858507201e-308"
+    },
+    {
+      "ieee754_hex": "4b3b9aca00000000",
+      "expected": "2.6439996890920618e+54"
+    }
+  ]
+}

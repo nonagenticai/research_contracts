@@ -1,0 +1,97 @@
+{
+  "register_id": "urn:datacompany:deferred-schema-owners:1",
+  "decision": "IMP-DEC-FND002-020",
+  "status": "OPEN — no obligation here has been accepted by the named context. OWNERS.yaml assigns repository-level accountability (IMP-DEC-001, Python half, 2026-08-08) and .github/CODEOWNERS still assigns nobody, but neither names an owner for any individual schema, so the seventeen assignments below remain the only per-schema ownership statements this repository makes. An entry was discharged on 2026-09-04: `urn:datacompany:approval-attestation:1` was RELEASED, so its deferral (owed by fr-control-plane) no longer stands. A urn cannot be both deferred and released, and the resolution sweep fails if it is.",
+  "counts": {
+    "assignments": 17,
+    "compared_against_the_corpus": 16,
+    "excused_owner_not_observed_in_corpus": 1
+  },
+  "deferred_schema_owners": {
+    "urn:datacompany:analysis-run:1": "run-registry",
+    "urn:datacompany:approved-mapping-version:1": "terminology-broker",
+    "urn:datacompany:artifact-version:1": "artifact-storage",
+    "urn:datacompany:coordinate-manifest:1": "ingestion-documents",
+    "urn:datacompany:decomposition-block:1": "hirag",
+    "urn:datacompany:document-version:1": "ingestion-documents",
+    "urn:datacompany:evidence-resolution-receipt:1": "ingestion-documents",
+    "urn:datacompany:external-collaborator-grant-version:1": "collaboration-broker",
+    "urn:datacompany:extraction-model:1": "karma",
+    "urn:datacompany:guideline-version:1": "guideline-registry",
+    "urn:datacompany:language-expression-version:1": "guideline-registry",
+    "urn:datacompany:model-run:1": "decision-modelling",
+    "urn:datacompany:protocol-version:1": "fr-control-plane",
+    "urn:datacompany:qualification-report:1": "method-qualification",
+    "urn:datacompany:recommendation-version:1": "guideline-registry",
+    "urn:datacompany:research-recommendation-version:1": "kag-research",
+    "urn:datacompany:rights-decision-version:1": "rights-registry"
+  },
+  "owner_not_observed_in_corpus": {
+    "entries": {
+      "urn:datacompany:recommendation-version:1": "Named by fixtures that state no owner_context in the same object; guideline-registry is assigned from the implementation plans rather than observed."
+    }
+  },
+  "additional_observed_contexts": {
+    "entries": {
+      "urn:datacompany:approved-mapping-version:1": [
+        "guideline-registry"
+      ]
+    }
+  },
+  "deferred_obligations": {
+    "entries": {
+      "urn:datacompany:evidence-resolution-receipt:1": {
+        "owner_context": "ingestion-documents",
+        "decision": "IMP-DEC-FND002-041",
+        "urn_absence_quoted_from_citations": "EvidenceResolutionReceipt has EIGHT mentions (16:874, 16:3240, implementation-plans/00:122, 00:323, 05:1085, 10:207, 11:277, 90:380) and NO URN anywhere",
+        "corpus_field_list": "16-datacompany-canonical-domain-data-model.md:873-889",
+        "gaps": [
+          {
+            "id": "G1",
+            "members": [
+              "resource_scope",
+              "resource_tenant_id"
+            ],
+            "constraint": "stable-identity:1#/$defs/resource_scope_conditional",
+            "quoted_from_register": "(1) `resource_scope` is present and `resource_tenant_id` is ABSENT. Every released document in this contract composes stable-identity:1#/$defs/resource_scope_conditional, which REQUIRES resource_tenant_id iff the scope is tenant and forbids it iff global; the corpus field list cannot be transcribed as printed without violating the one invariant implementation-plans/00-shared-foundation.md:185-189 says no schema may weaken.",
+            "quoted_from_blocked_on": "the receipt's tenant conditional",
+            "register_paraphrase": {
+              "phrase": "says no schema may weaken",
+              "attributed_to": "implementation-plans/00-shared-foundation.md:185-189",
+              "corpus_wording": "No schema may replace it with a nullable tenant ID"
+            }
+          },
+          {
+            "id": "G2",
+            "members": [
+              "actor_or_service_ref",
+              "destination_or_provider"
+            ],
+            "quoted_from_register": "(2) `actor_or_service_ref` and `destination_or_provider` are bare names with no shape -- an identity_ref, a pinned_version_ref and a bare string are all consistent with the corpus, and they are not interchangeable.",
+            "quoted_from_blocked_on": "the types of actor_or_service_ref and destination_or_provider"
+          },
+          {
+            "id": "G3",
+            "members": [
+              "version_id",
+              "version_number",
+              "schema_ref",
+              "content_hash"
+            ],
+            "quoted_from_register": "(3) The corpus calls the receipt 'short-lived OR immutable' (16:871) and the field list carries evidence_resolution_receipt_id/resolved_at/expires_at but NONE of version_id, version_number, schema_ref or content_hash, so whether it is a versioned envelope at all is unstated -- and that is the single decision that determines its whole shape.",
+            "quoted_from_blocked_on": "whether it is a versioned envelope"
+          },
+          {
+            "id": "G4",
+            "members": [
+              "failure_code",
+              "problem_ref"
+            ],
+            "quoted_from_register": "(4) A `denied`, `unavailable` or `invalid_locator` outcome carries no reason member: there is no failure_code, no problem_ref and no free-text field anywhere in the list, so a refused receipt cannot say why it refused.",
+            "quoted_from_blocked_on": "how a non-authorized decision reports its reason"
+          }
+        ]
+      }
+    }
+  }
+}

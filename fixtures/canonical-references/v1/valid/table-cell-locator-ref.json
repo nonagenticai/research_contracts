@@ -1,0 +1,17 @@
+{
+  "fixture_id": "table-cell-locator-ref",
+  "description": "A table-cell evidence locator is a registered, rights-neutral immutable location referenced through the same complete pin shape.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "valid",
+  "instance": {
+    "owner_context": "evidence-registry",
+    "entity_type": "table_cell_location",
+    "entity_id": "1bc6cea3-029d-cb89-a569-1a9a56540809",
+    "version_id": "8deaa15b-0ca7-3f9f-79aa-6cb47d7a2a95",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:evidence-location-version:1",
+    "content_hash": "sha256:65ed29132f577d837ab088471b6635f2bbdbed8c7d3dbea257f9fd6f3dc625e9",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-conflict-resolved:1",
+  "title": "ReviewConflictResolvedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.conflict.resolved.v1': one adjudication that closes a screening conflict, named by its own identity, locating the review and the conflict it resolves, and carrying the disposition it reached. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the ADJUDICATION, not the review and not the conflict), the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "adjudication_id",
+    "conflict_id",
+    "disposition"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. This is the closing half of the conflict story that urn:datacompany:review-conflict-opened:1 opens: a conflict is named without its dispositions, and this event is the one and only place those dispositions become visible, because this is the event that ends the reason they were hidden. evidence_review_service/src/application/services/events.py already writes exactly these members when it raises this event, and this schema matches that producer -- it is the source of truth, not document 09's prose. PROVENANCE, RECORDED PLAINLY. Document 09 has NO aggregate block for Conflict or for Adjudication at all -- section 3.7 lists the event name and nothing else. The aggregate_type 'screening_adjudication', the choice of adjudication_id as aggregate_id, and every member below come from the implemented aggregate and the running producer, not from a specified model. This is the implemented aggregate; document 09 is silent. SIX AUTHORING DECISIONS THAT ARE NOT STYLE, THE FIRST OF WHICH IS THE MOST IMPORTANT IN THIS DOCUMENT. (1) THIS EVENT CARRIES disposition, DELIBERATELY, AND THAT IS NOT AN INCONSISTENCY WITH THE OTHER TWO CONFLICT/DECISION EVENTS. A future reader who lands here after reading review-decision-recorded's authoring decision (2) or review-conflict-opened's authoring decision (1) -- both of which refuse a disposition on blinding grounds -- must not 'fix' this event to match them. The producer's docstring gives the reason directly: 'Carries the disposition, deliberately, and that is not an inconsistency. An adjudication is the act that ENDS the blinding for its conflict... document 14 forbids carrying blinded decisions; an adjudicated one is no longer blinded.' Blinding protects a disposition only until independence is no longer possible to preserve; the adjudication is the moment independence stops mattering, because the conflict it resolves has already been named and both original screeners' independence is spent. Withholding disposition here would not protect anything -- it would just make the outbox unable to say what a conflict resolution service exists to say. (2) NO rationale. The adjudications table carries a rationale column, NOT NULL, and it is prose: free-text justification for why the adjudicator reached this disposition. It is exactly the kind of content document 13 section 8.2 and the envelope's minimal_fact bound exist to keep out of an event -- an authorized consumer fetches it from the producer. (3) NO adjudicator_subject_id and NO adjudicator_display_name. Document 16 lines 392-394: actor, tenant, reviewer and approver identity 'come from verified context and attestations, not from mutable domain payload fields'. Who adjudicated is not domain content of the resolution; it is caller identity, and it is withheld here for the same reason review-decision-recorded withholds the screener. (4) supersedes_adjudication_id is optional and nullable, present only when this adjudication corrects an earlier one for the same conflict. It chains by PAYLOAD reference, not by aggregate_version, and that is a real cost, recorded here the way the envelope records its own: aggregate_version is a literal 1 for every adjudication, because adjudications is a write-once aggregate table with no version counter of its own -- so the envelope's ordering guarantee, which is keyed on aggregate_version, gives a consumer nothing across a correction chain. A consumer that needs to walk from a superseded adjudication to the one that replaced it must follow supersedes_adjudication_id itself; the envelope cannot do that walk for it. (5) aggregate_type is 'screening_adjudication' and aggregate_id is adjudication_id -- the adjudication is its own aggregate, distinct from both the review (review_id) and the conflict it closes (conflict_id), both of which are carried in the payload for the same reason review-decision-recorded carries review_id: the aggregate the envelope names is not the only thing a consumer needs to locate. (6) disposition is a canonical_type_token, not a free-form string, matching the vocabulary the rest of the estate uses for enumerated outcomes -- an adjudication reaches one of a small closed set of dispositions, and the token primitive's pattern and regulatory denylist apply to it unchanged. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-conflict-resolved:2 as a new document that coexists with this one, because document 13 section 8.1 ships event versions additively. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this adjudication belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the adjudication, so this is one of two places (with conflict_id) that name what the adjudication is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "adjudication_id": {
+      "$comment": "The adjudication's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a batch of mixed events does not have to reach back into the envelope to learn which adjudication each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "conflict_id": {
+      "$comment": "The conflict this adjudication resolves, equal to the aggregate_id of the corresponding review.conflict.opened.v1 event -- the join key back to the conflict that was named without its dispositions.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "disposition": {
+      "$comment": "The outcome the adjudication reached. Carried here deliberately -- see authoring decision (1). An adjudicated disposition is no longer a blinded one, unlike the decision-level disposition this same estate refuses to carry on review.decision.recorded.v1 and review.conflict.opened.v1.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "supersedes_adjudication_id": {
+      "$comment": "Optional and nullable. The adjudication_id of the earlier adjudication this one corrects for the same conflict, when this adjudication is a correction rather than the first resolution. Absent (not merely null) when this is the first adjudication of its conflict. Chains by payload reference, not by aggregate_version -- see authoring decision (4) for the ordering cost that carries.",
+      "oneOf": [
+        {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "fixture_id": "rejected-declaration-only-outside-an-opaque-subtree-non-ascii",
+  "description": "The cross-language message parity is asserted in both engines' docstrings and was true only for ASCII. json.dumps defaults to ensure_ascii=True and escapes every non-ASCII code point; JSON.stringify does not. Every fixture that could have caught it was ASCII, so the parity claim was vacuous in exactly this dimension. This fixture carries a member name with a Latin-1 accent and an astral emoji, and BOTH engines assert the same expected_message_contains against it.",
+  "expect": "rejects",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-non-ascii-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "caf\u00e9\ud83d\ude00": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "x-datacompany-hash-declaration-only": true,
+        "x-datacompany-array": {
+          "kind": "ordered"
+        }
+      }
+    }
+  },
+  "expected_error": "HashProfileError",
+  "expected_message_contains": "x-datacompany-hash-declaration-only at [\"/caf\u00e9\ud83d\ude00\"] is not strictly inside"
+}

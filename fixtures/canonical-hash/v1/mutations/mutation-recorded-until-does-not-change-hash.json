@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-recorded-until-does-not-change-hash",
+  "base_fixture": "excluded-recorded-until-and-resolved-at",
+  "expect": "unchanged",
+  "mutations": [
+    {
+      "pointer": "/recorded_until",
+      "value": "2030-01-01T00:00:00Z"
+    }
+  ],
+  "rationale": "recorded_until is system-maintained ledger metadata."
+}

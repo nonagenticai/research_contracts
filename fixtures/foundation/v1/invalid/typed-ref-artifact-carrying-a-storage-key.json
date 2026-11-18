@@ -1,0 +1,26 @@
+{
+  "fixture_id": "typed-ref-artifact-carrying-a-storage-key",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/artifact_ref",
+  "rationale": "Document 16 section 14.5: an ArtifactRef points to an immutable object/version/hash, 'never a raw storage key'. That clause is discharged by pinned-version-ref:1's unevaluatedProperties:false rather than by any member typed-refs:1 writes, so this fixture is what proves the clause is enforced at all: an expiring signed URL smuggled in beside the pin is refused, not merely discouraged.",
+  "expected_error_contains": [
+    "storage_key"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "unevaluatedProperties"
+    }
+  ],
+  "instance": {
+    "owner_context": "artifact-storage",
+    "entity_type": "artifact_version",
+    "entity_id": "44444444-4444-4444-8444-444444444444",
+    "version_id": "55555555-5555-4555-8555-555555555555",
+    "version_number": 7,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:artifact-version:1",
+    "content_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "storage_key": "s3://artifact-store/runs/2026/07/output.parquet?expires=3600"
+  }
+}

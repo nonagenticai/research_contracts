@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-own-content-hash-does-not-change-hash",
+  "base_fixture": "run-manifest-all-nine-groups",
+  "expect": "unchanged",
+  "mutations": [
+    {
+      "pointer": "/content_hash",
+      "value": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  ],
+  "rationale": "The manifest's OWN content_hash is excluded from its own hash view; a nested target hash inside a pin is not."
+}

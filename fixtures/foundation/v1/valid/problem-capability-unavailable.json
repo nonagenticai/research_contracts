@@ -1,0 +1,12 @@
+{
+  "fixture_id": "problem-capability-unavailable",
+  "schema_ref": "urn:datacompany:problem-details:1",
+  "rationale": "The flagship code. Document 08 section 9 requires this instead of a silent fallback; retryable is false because an absent capability is not a transient condition.",
+  "instance": {
+    "code": "capability_unavailable",
+    "status": 501,
+    "message": "The requested analysis method is not available for this operation.",
+    "retryable": false,
+    "correlation_id": "66666666-6666-4666-8666-666666666666"
+  }
+}

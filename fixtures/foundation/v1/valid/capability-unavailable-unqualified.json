@@ -1,0 +1,14 @@
+{
+  "fixture_id": "capability-unavailable-unqualified",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "Installed and enabled but not qualified. It must report unavailable with a reason, never quietly answer in place of a qualified method.",
+  "instance": {
+    "capability_id": "network_meta_analysis",
+    "installed": true,
+    "enabled": true,
+    "qualified": false,
+    "available": false,
+    "unavailable_reason": "unqualified",
+    "required_for_publication": true
+  }
+}

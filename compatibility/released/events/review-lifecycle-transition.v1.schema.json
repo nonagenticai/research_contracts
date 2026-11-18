@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-lifecycle-transition:1",
+  "title": "ReviewLifecycleTransitionPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is one of the six registered review lifecycle transitions: review.activated.v1, review.resumed.v1, review.reopened.v1, review.paused.v1, review.closed.v1, review.archived.v1. aggregate_type is 'review' for all six. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate, the ordering key (a real revision counter for this event family, see below) and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "from_state",
+    "to_state",
+    "state_event_id"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. evidence_review_service/src/application/services/events.py contains one function, emit_review_lifecycle, that raises all six of these event types by dict dispatch (_ACTIVE_BY_ORIGIN keyed by from_state when to_state is 'active'; _LIFECYCLE_BY_TARGET keyed by to_state otherwise), and every call writes exactly four keys -- review_id, from_state, to_state, state_event_id. This schema matches that producer. WHY SIX EVENT TYPES SHARE ONE PAYLOAD DOCUMENT. Document 13 section 8.1 ships event versions additively -- 'review.decision.recorded.v1' and a future '.v2' are two registered types, not one type that changed -- which could be misread as implying six independently versionable documents here too. It does not apply: a single producer function writes all six, by dict dispatch over the SAME four keys, so the six payloads cannot diverge from one another without emit_review_lifecycle itself changing, and a schema change to one edge is a schema change to all six by construction. Six near-identical documents would imply six contracts that no code path can actually version apart -- there is no operation this producer can perform that changes what state_event_id means for review.paused.v1 alone. The event catalogue maps all six registered event types onto this one URN as their schema_ref target. What distinguishes one occurrence from another is from_state and to_state -- and event_type itself already encodes which of the six this is, so a consumer never has to infer the transition from the payload alone; from_state/to_state are carried anyway because a consumer holding only a payload column (not the event_type column) still needs to know the edge. FOUR AUTHORING DECISIONS THAT ARE NOT STYLE. (1) review_id IS carried even though aggregate_type is 'review' and the envelope's aggregate_id already equals it, for the same batch-reading convenience as urn:datacompany:review-created:1 and urn:datacompany:review-decision-recorded:1. (2) state_event_id is NOT the envelope's own event_id. It is the id of the domain ReviewStateEvent row -- the record carrying its own revision_number and timestamp that this envelope event describes -- minted by the domain transition itself, not by the outbox writer. Carrying it lets a consumer join this event back to the exact domain row that caused it, which the envelope's freshly-minted event_id cannot do. (3) aggregate_version is event.revision_number, a REAL counter, unlike most events in this producer, which are write-once aggregates pinned at 1 (import batches, decisions, conflicts, adjudications). A review is a long-lived aggregate that transitions repeatedly across its life, and ReviewStateEvent already maintains a revision counter for exactly that reason; passing a constant 1 here would silently disable the envelope's per-aggregate ordering guarantee (document 13 section 8.2) for every review after its second transition. (4) NO rationale member. Document 09 line 238 mandates a rationale on pause, resume and close, and the producer does not carry one -- emit_review_lifecycle's four keys are exhaustive and _write is never called with a fifth for this event family. A rationale is unbounded operator prose, and the outbox is append-only with no per-consumer redaction layer: once written it is disclosed to every consumer of this stream permanently, whatever a free-text field happens to reveal. That is the same shape of problem review-decision-recorded.v1's authoring decision (2) solves for disposition -- an unbounded or sensitive fact that document 13 section 8.2 already routes through 'consumers fetch authorized detail from the producer' rather than through the event itself. A consumer that needs the rationale asks this service for the ReviewStateEvent named by state_event_id. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member to this document is minor and keeps this $id; a change to what any of the six registered event types mean, or a seventh transition with a different payload shape, mints urn:datacompany:review-lifecycle-transition:2 rather than editing this one, per document 13 section 8.1's additive versioning. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this transition belongs to, equal to the envelope's aggregate_id for this event since aggregate_type is 'review'. Carried in the payload too -- see authoring decision (1).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "from_state": {
+      "$comment": "The review's state-machine value before this transition, e.g. 'draft', 'configured', 'active', 'paused', 'closed'. Together with to_state it distinguishes which of the six registered events this occurrence is; event_type already encodes the same fact, but a consumer holding only the payload of a mixed batch needs it here too.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "to_state": {
+      "$comment": "The review's state-machine value this transition arrives at: 'active', 'paused', 'closed' or 'archived'. See from_state.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "state_event_id": {
+      "$comment": "The domain ReviewStateEvent row's own identity -- NOT the envelope's event_id. See authoring decision (2).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

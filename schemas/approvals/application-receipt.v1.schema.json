@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:application-receipt:1",
+  "title": "ApplicationReceiptV1",
+  "description": "The record a domain service writes to its `approval_applications` table after it verifies an ApprovalAttestation and applies (or declines to apply) the command that attestation approved. Document 13 section 5.2 names the table's contents as exactly four things -- attestation, command binding, verification and application receipt -- and this document is structured around those four groups.",
+  "$comment": "WHY THIS DOCUMENT EXISTS. `13-new-services-shared-implementation-foundation.md:374` lists `approval_applications` in the common-service-tables table with purpose 'attestation, command binding, verification and application receipt'. That is the only place in the corpus that names this record's contents, and it names four groups, not a field list -- so this schema is a DERIVATION from that sentence plus the three surrounding design points below, not a transcription of an already-specified grammar. Say that plainly: no source document enumerates this object's members. AUTHORING DECISION 1 -- FOUR GROUPS, ONE OBJECT. The properties below are grouped exactly as `13-...:374` orders them: (a) attestation -- which attestation this receipt is for; (b) command binding -- what command, against what target, was approved; (c) verification -- that the attestation was checked, timestamped, before anything was applied; (d) application receipt -- the outcome and, when applicable, what version resulted. A flatter or differently-grouped object would sever the traceability the table exists to hold. AUTHORING DECISION 2 -- NAMES ARE REUSED VERBATIM FROM `urn:datacompany:approval-attestation:1`. `attestation_id`, `approval_id`, `approval_round`, `command_hash`, `command_operation`, `target` and `resource_scope` name the SAME facts this document's sibling names, about the SAME attestation and the SAME approved command -- this receipt records the application of what that attestation approved, not a second description of it. `target` is `$ref`-composed from the attestation schema's own `$defs/attestation_target` rather than respelled, so the two documents cannot drift on what 'the exact thing approved' means. AUTHORING DECISION 3 -- THE OUTCOME ENUM IS CLOSED BY ONE SENTENCE. `08-product-scope-and-architecture-decisions.md:419-421`: 'Approval and application are distinct: a domain service verifies an `ApprovalAttestation` and records whether the approved command was applied, stale or rejected.' That sentence is the entire source for `outcome`, and its three values -- `applied`, `stale`, `rejected` -- are the complete set it names. A fourth value (e.g. an `invalid` or `pending`) would be an invention this schema does not make; a domain service that cannot classify an application attempt into one of these three has not finished verifying. AUTHORING DECISION 4 -- VERIFICATION AND APPLICATION ARE SEPARATE MEMBERS, NOT ONE STATUS. `13-...:648`: the verifier 'produces a typed verification result; it does not apply the command.' The corpus does not hand this document that typed result's shape, so this schema does not inline or fake one -- doing so would invent a grammar for an object defined nowhere. What IS sourced is the ORDERING: `17-adr-datacompany-regulatory-model.md:390-391` states 'the domain owner records an application receipt only after verifying the exact control-plane approval attestation', so `verified_at` is carried as its own timestamp, always at or before `recorded_at`, so a reader can see the verify-then-apply sequence happened rather than being told it did by a status word shared with the outcome. AUTHORING DECISION 5 -- `applied_version_id` IS PRESENT ONLY WHEN `outcome` IS `applied`. This is a design point, not sourced text: a `stale` or `rejected` receipt has no applied version, and writing one anyway would be a lie about what happened. Expressed with an `if`/`then` cross-field rule (the same idiom `urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional` uses and `urn:datacompany:approval-attestation:1` composes), not merely stated in a `$comment`, because the sibling schema shows the idiom is available here and a claim of enforcement that is not machine-checked would be exactly the kind of confident gap this corpus does not tolerate. AUTHORING DECISION 6 -- `recorded_at` IS PERMITTED HERE, UNLIKE IN AN EVENT PAYLOAD. `16-datacompany-canonical-domain-data-model.md:335-336` says `recorded_at` 'is assigned by the authoritative service transaction clock, never accepted from a domain request body'. Event payloads in this corpus forbid timestamps because the envelope already carries one and a domain-supplied second one would be forgeable; this document is not an event payload, it is the stored record itself, and a stored record legitimately carries the clock time its own transaction assigned it. A future reader who moves `recorded_at` out of this schema on the general 'no timestamps in domain objects' instinct would be re-breaking what this authoring decision deliberately kept. AUTHORING DECISION 7 -- NO APPROVER IDENTITY MEMBER. `16-...:392-394`: 'Actor, tenant, reviewer, and approver identity come from verified context and attestations, not from mutable domain payload fields.' The attestation this receipt's `attestation_id` points at already carries `approvers` (subject, role, decision, decided_at each). Repeating any of that here would create a second, independently-editable copy of who approved what -- exactly the forgeable duplicate document 16 rules out. A reader who needs approver identity follows `attestation_id` to the attestation. AUTHORING DECISION 8 -- WHAT THIS SCHEMA COULD NOT SOURCE, STATED PLAINLY. `receipt_id` (this record's own identity) and `verified_at` (the verification timestamp) are NOT named by any passage cited above. `receipt_id` is included because a row that FR reconciles from (`13-...:662-663`, next decision) has to be addressable by something, and every other identity-bearing document in this corpus (the attestation, the review decision) carries its own id for exactly that reason -- this is pattern-matched from siblings, not read from a sentence naming `receipt_id`. `verified_at` is included because decision 4 above requires SOME machine-checkable trace that verification preceded application, and a timestamp is the minimal honest way to carry that without inventing the typed verification result's shape. Neither field name appears in the corpus; both are flagged here rather than presented as sourced. AUTHORING DECISION 9 -- THIS IS THE RECONCILIATION SOURCE OF TRUTH, NOT A CALLBACK. `13-...:662-663`: 'FR reconciles from the signed/domain-readable receipt. Callback delivery alone never changes FR state to `applied`.' This document IS that receipt. A consumer (FR or otherwise) that wants to know whether a command was actually applied reads this record, or a signed transport of it; it does not infer `applied` from having received a callback, because callback delivery and this record's `outcome` are allowed to disagree (a callback can be lost, retried, or arrive before a crash-recovered re-verification changes the outcome). COMPATIBILITY RULE. Per `research_contracts/OWNERS.yaml` `schema_version_policy`: adding an optional member is a minor change and keeps this `$id`; changing what a released member means, or narrowing `outcome`'s enum, mints `urn:datacompany:application-receipt:2` as a new, coexisting document, because this corpus ships schema versions additively.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/receipt_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "receipt_fields": {
+      "type": "object",
+      "required": [
+        "schema_ref",
+        "receipt_id",
+        "attestation_id",
+        "approval_id",
+        "approval_round",
+        "resource_scope",
+        "target",
+        "command_operation",
+        "command_hash",
+        "verified_at",
+        "outcome",
+        "recorded_at"
+      ],
+      "properties": {
+        "schema_ref": {
+          "$comment": "A const, the envelope idiom this corpus uses on every self-describing stored record (matches `urn:datacompany:approval-attestation:1#/properties/schema_ref`). A reader holding a bare row has to know which grammar it is reading before it can check anything else in it.",
+          "const": "urn:datacompany:application-receipt:1"
+        },
+        "receipt_id": {
+          "$comment": "This receipt's own identity -- the `approval_applications` row's primary key. Not named by any cited source; included because authoring decision 9's reconciliation reader has to address a specific receipt, and every sibling identity-bearing document (attestation_id on the attestation, decision_id on the review decision) carries its own id for the same reason. See authoring decision 8.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "attestation_id": {
+          "$comment": "The exact ApprovalAttestation this receipt was verified against. Same name and same fact as `urn:datacompany:approval-attestation:1#/properties/attestation_id` -- see authoring decision 2. Ordering: `17-...:390-391` requires verification of this attestation before any application, which `verified_at` below evidences.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "approval_id": {
+          "$comment": "The FR approval the attestation attested, carried through so this receipt is traceable to the approval without a join through the attestation. Same name as the sibling's `approval_id`.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "approval_round": {
+          "$comment": "The round the attestation attested, reused verbatim. A receipt for a re-opened approval's second round must not be confusable with one for the first round's attestation -- see the sibling schema's authoring decision 5.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "resource_scope": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope"
+        },
+        "resource_tenant_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_tenant_id"
+        },
+        "target": {
+          "$comment": "The exact thing the command was applied against (or declined against). `$ref`-composed from the attestation schema's own target shape rather than respelled -- see authoring decision 2 -- so the approved target and the applied-against target can never independently drift in field shape.",
+          "$ref": "urn:datacompany:approval-attestation:1#/$defs/attestation_target"
+        },
+        "command_operation": {
+          "$comment": "The operation name, reused verbatim from the attestation's `command_operation` so a reader can confirm this receipt is for the operation it claims without recomputing anything.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "command_hash": {
+          "$comment": "RFC 8785 canonical hash of the exact command that was applied, reused verbatim from the attestation's `command_hash` (see `urn:datacompany:approval-attestation:1` authoring decision 2). Equal to the attested hash for `applied` and `rejected` outcomes; a `stale` outcome still names the hash the attestation approved, even though the current aggregate had moved past it.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+        },
+        "verified_at": {
+          "$comment": "When the exact attestation named by `attestation_id` was verified, always at or before `recorded_at`. Carries authoring decision 4's ordering requirement (`17-...:390-391`: verification precedes application, always) as a timestamp rather than as a shared status word with `outcome`, because the verifier's own typed result is not a shape this corpus hands to this document -- see authoring decision 8.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        },
+        "outcome": {
+          "$comment": "Whether the approved command was applied, stale or rejected. The enum is closed by exactly one sentence, `08-product-scope-and-architecture-decisions.md:419-421`, and that sentence names three values and no more -- see authoring decision 3. A fourth value would be an invention this schema refuses to make.",
+          "type": "string",
+          "enum": ["applied", "stale", "rejected"]
+        },
+        "applied_version_id": {
+          "$comment": "The resulting aggregate version, present ONLY when `outcome` is `applied` -- see authoring decision 5. A `stale` or `rejected` receipt has no applied version; the `if`/`then` rule below enforces that this key is absent for those two outcomes rather than merely stating it here. Nullable-or-uuid at the type level because the corpus's own conditional idiom (`resource_scope_conditional`) pairs an optional/conditionally-required field with a plain type rather than inventing a tri-state; the `if`/`then` rule is what actually forbids a false-but-present null.",
+          "oneOf": [
+            { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+            { "type": "null" }
+          ]
+        },
+        "recorded_at": {
+          "$comment": "When THIS receipt was written, assigned by the authoritative service transaction clock -- never accepted from a domain request body. Permitted here though forbidden in event payloads: see authoring decision 6, sourced to `16-datacompany-canonical-domain-data-model.md:335-336`. Do not remove this field on the general envelope-timestamp instinct; that instinct does not apply to a stored record.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        }
+      },
+      "if": {
+        "properties": { "outcome": { "const": "applied" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "required": ["applied_version_id"],
+        "properties": {
+          "applied_version_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" }
+        }
+      },
+      "else": {
+        "not": { "required": ["applied_version_id"] }
+      }
+    },
+    "sealed": {
+      "$comment": "The closed form, for a context that wants to refuse any property this document does not name. Matches `urn:datacompany:approval-attestation:1#/$defs/sealed` and `urn:datacompany:review-decision-recorded:1#/$defs/sealed`.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "fixture_id": "evidence-location-nested-ref-global-with-a-resource-tenant",
+  "schema_ref": "urn:datacompany:evidence-location-version:1",
+  "rationale": "The 'identical at every nesting depth' clause of the shared foundation (section 4.2), exercised AT DEPTH and INSIDE an active selector branch. The record is tabular-kinded, so the tabular guard is the one applying, and the violation is three levels down in a composed artifact_ref rather than at the root: a global-scoped pin carrying a resource tenant. The conditional arrives by $ref into typed-refs:1 into pinned-version-ref:1, so a location that had restated it locally would accept this.",
+  "expected_error_contains": [
+    "resource_tenant_id"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/artifact_ref",
+      "keyword": "not"
+    }
+  ],
+  "instance": {
+    "owner_context": "ingestion-documents",
+    "entity_type": "evidence_location",
+    "entity_id": "e71d3333-3333-4333-8333-333333333333",
+    "resource_scope": "global",
+    "version_id": "e71d4444-4444-4444-8444-444444444444",
+    "version_number": 3,
+    "schema_ref": "urn:datacompany:evidence-location-version:1",
+    "content_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "evidence_location_id": "e71d3333-3333-4333-8333-333333333333",
+    "artifact_ref": {
+      "owner_context": "artifact-storage",
+      "entity_type": "artifact_version",
+      "entity_id": "a47f1111-1111-4111-8111-111111111111",
+      "resource_scope": "global",
+      "version_id": "a47f2222-2222-4222-8222-222222222222",
+      "version_number": 2,
+      "schema_ref": "urn:datacompany:artifact-version:1",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "resolved_at": "2026-07-30T10:00:00Z",
+      "resource_tenant_id": "11111111-1111-4111-8111-111111111111"
+    },
+    "selector_type": "tabular",
+    "selector": {
+      "sheet_or_table_id": "primary-outcomes",
+      "row_index": 4,
+      "cell_range": "C4:C4",
+      "value_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "selector_schema_ref": "urn:datacompany:locator-selector:1",
+    "language": "pl-PL"
+  }
+}

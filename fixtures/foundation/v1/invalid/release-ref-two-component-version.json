@@ -1,0 +1,15 @@
+{
+  "fixture_id": "release-ref-two-component-version",
+  "schema_ref": "urn:datacompany:release-ref:1#/$defs/release_ref",
+  "rationale": "SemVer requires all three numbers. '1.0' is the single most common way an unpinned dependency reaches production.",
+  "expected_error_contains": [
+    "does not match"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "pattern"
+    }
+  ],
+  "instance": "systematic-review@1.0"
+}

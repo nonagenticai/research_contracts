@@ -1,0 +1,349 @@
+{
+  "profile_id": "urn:datacompany:canonical-hash-profile:1",
+  "profile_version": 2,
+  "schema_ref": "urn:datacompany:run-manifest:1",
+  "serialization": "rfc8785",
+  "encoding": "utf-8",
+  "byte_order_mark": false,
+  "digest_algorithm": "sha256",
+  "digest_prefix": "sha256:",
+  "absent_vs_null": "distinct",
+  "unicode_normalization": "none",
+  "timestamp_representation": "rfc3339_utc_z",
+  "decimal_representation": "decimal_string",
+  "binary_float_policy": "reject",
+  "included_pointers": [
+    "/approvals",
+    "/approvals/approval_refs",
+    "/approvals/approval_refs/-/content_hash",
+    "/approvals/approval_refs/-/entity_id",
+    "/approvals/approval_refs/-/entity_type",
+    "/approvals/approval_refs/-/owner_context",
+    "/approvals/approval_refs/-/resource_scope",
+    "/approvals/approval_refs/-/resource_tenant_id",
+    "/approvals/approval_refs/-/schema_ref",
+    "/approvals/approval_refs/-/version_id",
+    "/approvals/approval_refs/-/version_number",
+    "/approvals/supersedes_ref",
+    "/approvals/supersedes_ref/content_hash",
+    "/approvals/supersedes_ref/entity_id",
+    "/approvals/supersedes_ref/entity_type",
+    "/approvals/supersedes_ref/owner_context",
+    "/approvals/supersedes_ref/resource_scope",
+    "/approvals/supersedes_ref/resource_tenant_id",
+    "/approvals/supersedes_ref/schema_ref",
+    "/approvals/supersedes_ref/version_id",
+    "/approvals/supersedes_ref/version_number",
+    "/created_at",
+    "/created_by",
+    "/entity_id",
+    "/entity_type",
+    "/environment",
+    "/environment/application_commit",
+    "/environment/hardware_class",
+    "/environment/image_digest",
+    "/environment/numerical_library_versions",
+    "/environment/operating_system",
+    "/environment/validation_suite_version",
+    "/extraction",
+    "/extraction/extraction_model_ref",
+    "/extraction/extraction_model_ref/content_hash",
+    "/extraction/extraction_model_ref/entity_id",
+    "/extraction/extraction_model_ref/entity_type",
+    "/extraction/extraction_model_ref/owner_context",
+    "/extraction/extraction_model_ref/resource_scope",
+    "/extraction/extraction_model_ref/resource_tenant_id",
+    "/extraction/extraction_model_ref/schema_ref",
+    "/extraction/extraction_model_ref/version_id",
+    "/extraction/extraction_model_ref/version_number",
+    "/extraction/parser_version",
+    "/extraction/prompt_ref",
+    "/extraction/prompt_ref/content_hash",
+    "/extraction/prompt_ref/entity_id",
+    "/extraction/prompt_ref/entity_type",
+    "/extraction/prompt_ref/owner_context",
+    "/extraction/prompt_ref/resource_scope",
+    "/extraction/prompt_ref/resource_tenant_id",
+    "/extraction/prompt_ref/schema_ref",
+    "/extraction/prompt_ref/version_id",
+    "/extraction/prompt_ref/version_number",
+    "/extraction/proposal_ref",
+    "/extraction/proposal_ref/content_hash",
+    "/extraction/proposal_ref/entity_id",
+    "/extraction/proposal_ref/entity_type",
+    "/extraction/proposal_ref/owner_context",
+    "/extraction/proposal_ref/resource_scope",
+    "/extraction/proposal_ref/resource_tenant_id",
+    "/extraction/proposal_ref/schema_ref",
+    "/extraction/proposal_ref/version_id",
+    "/extraction/proposal_ref/version_number",
+    "/inputs",
+    "/inputs/input_hash",
+    "/inputs/input_refs",
+    "/inputs/input_refs/-/content_hash",
+    "/inputs/input_refs/-/entity_id",
+    "/inputs/input_refs/-/entity_type",
+    "/inputs/input_refs/-/owner_context",
+    "/inputs/input_refs/-/resource_scope",
+    "/inputs/input_refs/-/resource_tenant_id",
+    "/inputs/input_refs/-/schema_ref",
+    "/inputs/input_refs/-/version_id",
+    "/inputs/input_refs/-/version_number",
+    "/inputs/parameters",
+    "/inputs/parameters/-/name",
+    "/inputs/parameters/-/value_boolean",
+    "/inputs/parameters/-/value_decimal",
+    "/inputs/parameters/-/value_integer",
+    "/inputs/parameters/-/value_text",
+    "/method",
+    "/method/convergence_policy",
+    "/method/engine_provider",
+    "/method/engine_version",
+    "/method/method_id",
+    "/method/packages",
+    "/method/seed",
+    "/method/tolerance_policy",
+    "/outputs",
+    "/outputs/artifact_refs",
+    "/outputs/artifact_refs/-/artifact_ref",
+    "/outputs/artifact_refs/-/artifact_ref/content_hash",
+    "/outputs/artifact_refs/-/artifact_ref/entity_id",
+    "/outputs/artifact_refs/-/artifact_ref/entity_type",
+    "/outputs/artifact_refs/-/artifact_ref/owner_context",
+    "/outputs/artifact_refs/-/artifact_ref/resource_scope",
+    "/outputs/artifact_refs/-/artifact_ref/resource_tenant_id",
+    "/outputs/artifact_refs/-/artifact_ref/schema_ref",
+    "/outputs/artifact_refs/-/artifact_ref/version_id",
+    "/outputs/artifact_refs/-/artifact_ref/version_number",
+    "/outputs/artifact_refs/-/payload_digest",
+    "/resource_scope",
+    "/resource_tenant_id",
+    "/rights",
+    "/rights/rights_status",
+    "/rights/translation_status",
+    "/run_manifest_id",
+    "/run_ref",
+    "/run_ref/content_hash",
+    "/run_ref/entity_id",
+    "/run_ref/entity_type",
+    "/run_ref/owner_context",
+    "/run_ref/resource_scope",
+    "/run_ref/resource_tenant_id",
+    "/run_ref/schema_ref",
+    "/run_ref/version_id",
+    "/run_ref/version_number",
+    "/schema_ref",
+    "/sources",
+    "/sources/-/document_hash",
+    "/sources/-/edition",
+    "/sources/-/etag",
+    "/sources/-/last_modified",
+    "/sources/-/retrieved_at",
+    "/sources/-/source_url",
+    "/versions",
+    "/versions/mapping_refs",
+    "/versions/mapping_refs/-/content_hash",
+    "/versions/mapping_refs/-/entity_id",
+    "/versions/mapping_refs/-/entity_type",
+    "/versions/mapping_refs/-/owner_context",
+    "/versions/mapping_refs/-/resource_scope",
+    "/versions/mapping_refs/-/resource_tenant_id",
+    "/versions/mapping_refs/-/schema_ref",
+    "/versions/mapping_refs/-/version_id",
+    "/versions/mapping_refs/-/version_number",
+    "/versions/pack_refs",
+    "/versions/profile_ref",
+    "/versions/protocol_version_ref",
+    "/versions/protocol_version_ref/content_hash",
+    "/versions/protocol_version_ref/entity_id",
+    "/versions/protocol_version_ref/entity_type",
+    "/versions/protocol_version_ref/owner_context",
+    "/versions/protocol_version_ref/resource_scope",
+    "/versions/protocol_version_ref/resource_tenant_id",
+    "/versions/protocol_version_ref/schema_ref",
+    "/versions/protocol_version_ref/version_id",
+    "/versions/protocol_version_ref/version_number",
+    "/versions/schema_refs",
+    "/versions/template_refs",
+    "/versions/template_refs/-/content_hash",
+    "/versions/template_refs/-/entity_id",
+    "/versions/template_refs/-/entity_type",
+    "/versions/template_refs/-/owner_context",
+    "/versions/template_refs/-/resource_scope",
+    "/versions/template_refs/-/resource_tenant_id",
+    "/versions/template_refs/-/schema_ref",
+    "/versions/template_refs/-/version_id",
+    "/versions/template_refs/-/version_number",
+    "/versions/terminology_release_refs",
+    "/versions/terminology_release_refs/-/content_hash",
+    "/versions/terminology_release_refs/-/entity_id",
+    "/versions/terminology_release_refs/-/entity_type",
+    "/versions/terminology_release_refs/-/owner_context",
+    "/versions/terminology_release_refs/-/resource_scope",
+    "/versions/terminology_release_refs/-/resource_tenant_id",
+    "/versions/terminology_release_refs/-/schema_ref",
+    "/versions/terminology_release_refs/-/version_id",
+    "/versions/terminology_release_refs/-/version_number"
+  ],
+  "excluded_pointers": [
+    {
+      "pointer": "/aggregate_version",
+      "reason": "aggregate_version"
+    },
+    {
+      "pointer": "/approvals/approval_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/approvals/supersedes_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/content_hash",
+      "reason": "own_content_hash"
+    },
+    {
+      "pointer": "/extraction/extraction_model_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/extraction/prompt_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/extraction/proposal_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/inputs/input_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/outputs/artifact_refs/-/artifact_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/run_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/versions/mapping_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/versions/protocol_version_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/versions/template_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/versions/terminology_release_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    }
+  ],
+  "opaque_pointers": [],
+  "arrays": [
+    {
+      "pointer": "/approvals/approval_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    },
+    {
+      "pointer": "/environment/numerical_library_versions",
+      "kind": "set",
+      "order_key": [
+        ""
+      ]
+    },
+    {
+      "pointer": "/inputs/input_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    },
+    {
+      "pointer": "/inputs/parameters",
+      "kind": "set",
+      "order_key": [
+        "/name"
+      ]
+    },
+    {
+      "pointer": "/method/packages",
+      "kind": "set",
+      "order_key": [
+        ""
+      ]
+    },
+    {
+      "pointer": "/outputs/artifact_refs",
+      "kind": "set",
+      "order_key": [
+        "/payload_digest"
+      ]
+    },
+    {
+      "pointer": "/sources",
+      "kind": "set",
+      "order_key": [
+        "/source_url",
+        "/document_hash"
+      ]
+    },
+    {
+      "pointer": "/versions/mapping_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    },
+    {
+      "pointer": "/versions/pack_refs",
+      "kind": "set",
+      "order_key": [
+        ""
+      ]
+    },
+    {
+      "pointer": "/versions/schema_refs",
+      "kind": "set",
+      "order_key": [
+        ""
+      ]
+    },
+    {
+      "pointer": "/versions/template_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    },
+    {
+      "pointer": "/versions/terminology_release_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    }
+  ]
+}

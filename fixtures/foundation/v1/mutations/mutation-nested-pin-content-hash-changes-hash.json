@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-nested-pin-content-hash-changes-hash",
+  "base_fixture": "run-manifest-all-nine-groups",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/run_ref/content_hash",
+      "value": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    }
+  ],
+  "rationale": "A NESTED target's content_hash stays INCLUDED. Section 4.3 step 3 says so explicitly, and this is the half that a naive 'exclude every content_hash' rule would break."
+}

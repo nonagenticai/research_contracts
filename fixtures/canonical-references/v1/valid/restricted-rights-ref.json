@@ -1,0 +1,18 @@
+{
+  "fixture_id": "restricted-rights-ref",
+  "description": "A restricted-rights decision snapshot. Tenant-scoped, so its hash may not enter a global projection.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "valid",
+  "instance": {
+    "owner_context": "rights-registry",
+    "entity_type": "rights_decision",
+    "entity_id": "60c4c66a-07ff-0aab-d026-d00a730afd83",
+    "version_id": "53d69719-4a50-7557-e8ac-c8735b7822f5",
+    "version_number": 3,
+    "resource_scope": "tenant",
+    "schema_ref": "urn:datacompany:rights-decision-version:1",
+    "content_hash": "sha256:8c659fe8cb2e010d03e69f59a3de8d7c360480f85537f288067aee82fe98cf80",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "resource_tenant_id": "1a2b3c4d-0000-4000-8000-000000000001"
+  }
+}

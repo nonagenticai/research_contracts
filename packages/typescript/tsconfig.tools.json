@@ -1,0 +1,11 @@
+{
+  "//": "Build config for tools/, which is NOT part of the published library surface. It keeps rootDir at the package root so tools/ and the src/ it imports both land under dist-tools/. The library build (tsconfig.build.json) still emits src/ only, so nothing here widens what the package would publish.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist-tools",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "tools/**/*.ts"],
+  "exclude": ["node_modules", "dist", "dist-tools", "test"]
+}

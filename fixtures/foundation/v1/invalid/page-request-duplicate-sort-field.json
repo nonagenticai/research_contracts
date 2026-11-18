@@ -1,0 +1,25 @@
+{
+  "fixture_id": "page-request-duplicate-sort-field",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_request",
+  "rationale": "Two keys naming the same field with opposite directions. uniqueItems cannot express this -- the two objects genuinely differ -- so the root unique_by rule is the only thing that catches it, and this fixture is what proves that rule is evaluated.",
+  "cross_field_only": true,
+  "cross_field_note": "The JSON Schema layer ACCEPTS this instance; only the released x-datacompany-cross-field rules reject it. Both engines evaluate those rules, so this fixture is replayed at full parity — Python via validate_instance and TypeScript via evaluateCrossFieldRules — and expected_error_contains for it is the RULE NAME, which both emit verbatim from the schema, rather than a validator's English prose (defect D2f). expected_schema_failures is empty by construction: that emptiness is the definition of cross_field_only, and both harnesses assert it.",
+  "expected_error_contains": [
+    "one_sort_key_per_field",
+    "declared at most once"
+  ],
+  "expected_schema_failures": [],
+  "instance": {
+    "page_size": 25,
+    "sort": [
+      {
+        "field": "published_at",
+        "direction": "ascending"
+      },
+      {
+        "field": "published_at",
+        "direction": "descending"
+      }
+    ]
+  }
+}

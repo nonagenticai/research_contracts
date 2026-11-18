@@ -1,0 +1,83 @@
+{
+  "fixture_id": "immutable-version-nested-pins",
+  "description": "Composed immutable version. Every nested pinned target content_hash stays in the hash view; the object's own content_hash, its signatures and every nested resolved_at are removed. pack_refs is set-like and is sorted by its released canonical key.",
+  "axis": [
+    "nested-pinned-refs",
+    "excluded-fields",
+    "set-like-arrays",
+    "timestamps"
+  ],
+  "schema_ref": "urn:datacompany:immutable-version:1",
+  "hash_profile_ref": "urn:datacompany:canonical-hash-profile:1",
+  "instance": {
+    "version_id": "05429a3e-703a-1f90-421c-5cfb8a063bb7",
+    "entity_id": "40363bf9-b2b3-197f-b13c-cdca2cdabb59",
+    "version_number": 2,
+    "supersedes_version_id": "ed2c1e70-d895-a22d-df12-8844410cd16a",
+    "schema_ref": "urn:datacompany:recommendation-version:1",
+    "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "profile_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "91e4f131-bdbd-73fc-9512-8e5e0bb1a2e1",
+      "version_id": "cc7d6567-3773-32db-cb64-881cebc0e1c9",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:1900eab6c028483d7126599ee6f50de0d27907b5c65fa90524580b4b0f9852b0",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "pack_refs": [
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "2c3c0d67-2fec-23da-2146-1f2b550b4fdf",
+        "version_id": "01ffd48f-2770-0316-0c33-d3d7335ce22b",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:f48f480d7d76f72ade8670fc4ff78cfc64d83301df503aa7b77eca9c5c94488a",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      },
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "b50dbe7f-1353-e156-2a99-f1ec86cc8d1f",
+        "version_id": "bde49ece-ea90-86f3-a645-9f361539e1c8",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:6b257e16389924362f71c099f41f7daf4b88c79c3ed905f43edc3b205437844a",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ],
+    "provenance_refs": [
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "b6601dfe-5bed-d79f-11fe-4a1d596de7ef",
+        "version_id": "d04ccf1c-9f10-f7de-017f-d6c3f56e0e14",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:5597864e5f6ae9eefee9ddbb72cc13babb1ff7c7882bf6d052a9789f388cc9a3",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ],
+    "decision_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "2623f058-fc49-47a0-ca3f-f2856bbc6c15",
+      "version_id": "257042db-c5aa-ca7a-7f14-ff7adc397ce5",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:86ae35d58a6aa3b5742df94ef9d7162219f0106a911ae1954c1f0604aaec805d",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "created_at": "2026-07-30T09:15:00Z",
+    "created_by": "service:kag-research"
+  },
+  "expected_hash_view_canonical_json": "{\"created_at\":\"2026-07-30T09:15:00Z\",\"created_by\":\"service:kag-research\",\"decision_ref\":{\"content_hash\":\"sha256:86ae35d58a6aa3b5742df94ef9d7162219f0106a911ae1954c1f0604aaec805d\",\"entity_id\":\"2623f058-fc49-47a0-ca3f-f2856bbc6c15\",\"entity_type\":\"approved_mapping\",\"owner_context\":\"terminology-broker\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:approved-mapping-version:1\",\"version_id\":\"257042db-c5aa-ca7a-7f14-ff7adc397ce5\",\"version_number\":3},\"entity_id\":\"40363bf9-b2b3-197f-b13c-cdca2cdabb59\",\"pack_refs\":[{\"content_hash\":\"sha256:f48f480d7d76f72ade8670fc4ff78cfc64d83301df503aa7b77eca9c5c94488a\",\"entity_id\":\"2c3c0d67-2fec-23da-2146-1f2b550b4fdf\",\"entity_type\":\"approved_mapping\",\"owner_context\":\"terminology-broker\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:approved-mapping-version:1\",\"version_id\":\"01ffd48f-2770-0316-0c33-d3d7335ce22b\",\"version_number\":3},{\"content_hash\":\"sha256:6b257e16389924362f71c099f41f7daf4b88c79c3ed905f43edc3b205437844a\",\"entity_id\":\"b50dbe7f-1353-e156-2a99-f1ec86cc8d1f\",\"entity_type\":\"approved_mapping\",\"owner_context\":\"terminology-broker\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:approved-mapping-version:1\",\"version_id\":\"bde49ece-ea90-86f3-a645-9f361539e1c8\",\"version_number\":3}],\"profile_ref\":{\"content_hash\":\"sha256:1900eab6c028483d7126599ee6f50de0d27907b5c65fa90524580b4b0f9852b0\",\"entity_id\":\"91e4f131-bdbd-73fc-9512-8e5e0bb1a2e1\",\"entity_type\":\"approved_mapping\",\"owner_context\":\"terminology-broker\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:approved-mapping-version:1\",\"version_id\":\"cc7d6567-3773-32db-cb64-881cebc0e1c9\",\"version_number\":3},\"provenance_refs\":[{\"content_hash\":\"sha256:5597864e5f6ae9eefee9ddbb72cc13babb1ff7c7882bf6d052a9789f388cc9a3\",\"entity_id\":\"b6601dfe-5bed-d79f-11fe-4a1d596de7ef\",\"entity_type\":\"approved_mapping\",\"owner_context\":\"terminology-broker\",\"resource_scope\":\"global\",\"schema_ref\":\"urn:datacompany:approved-mapping-version:1\",\"version_id\":\"d04ccf1c-9f10-f7de-017f-d6c3f56e0e14\",\"version_number\":3}],\"schema_ref\":\"urn:datacompany:recommendation-version:1\",\"supersedes_version_id\":\"ed2c1e70-d895-a22d-df12-8844410cd16a\",\"version_id\":\"05429a3e-703a-1f90-421c-5cfb8a063bb7\",\"version_number\":2}",
+  "expected_content_hash": "sha256:b48fe5349f9062fbc0412f1acb5bba8cee2305cb064278e755a92122f7248d65"
+}

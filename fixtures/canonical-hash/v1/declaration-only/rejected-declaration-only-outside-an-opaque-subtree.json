@@ -1,0 +1,27 @@
+{
+  "fixture_id": "rejected-declaration-only-outside-an-opaque-subtree",
+  "description": "The flag is legal only STRICTLY inside an x-datacompany-hash-opaque subtree. Outside one it silently removes a member from the hash view with no recorded reason and no excluded_pointers entry, which is a second and reasonless spelling of x-datacompany-hash-excluded. Derivation refuses it.",
+  "expect": "rejects",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-outside-opaque-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "x-datacompany-hash-declaration-only": true,
+        "x-datacompany-array": {
+          "kind": "ordered"
+        }
+      }
+    }
+  },
+  "expected_error": "HashProfileError",
+  "expected_message_contains": "x-datacompany-hash-declaration-only at [\"/tags\"] is not strictly inside an x-datacompany-hash-opaque subtree"
+}

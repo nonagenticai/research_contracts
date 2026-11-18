@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:pinned-version-ref:1",
+  "title": "PinnedVersionRefV1",
+  "description": "Exact immutable cross-context reference (document 16 section 3.3, shared foundation section 4.2). Every IdentityRef field plus the exact version identity, schema and canonical content hash. Required for decisions, approvals, evidence, mappings, runs, publications, exports and reproducible projections.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "urn:datacompany:identity-ref:1#/$defs/identity_ref_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" },
+    { "$ref": "#/$defs/pin_fields" }
+  ],
+  "unevaluatedProperties": false,
+  "$comment": "The global/tenant conditional is $ref-composed, so it is byte-identical at every nesting depth. No nullable tenant ID, bare UUID, latest alias or owner-free {id, version} pair may replace this shape.",
+  "$defs": {
+    "pin_fields": {
+      "type": "object",
+      "required": ["version_id", "version_number", "schema_ref", "content_hash", "resolved_at"],
+      "properties": {
+        "version_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+        "version_number": { "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number" },
+        "schema_ref": { "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref" },
+        "content_hash": {
+          "$comment": "The pinned target's own hash. As a nested target hash it REMAINS INCLUDED in the enclosing canonical hash view (shared foundation section 4.3 step 3).",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+        },
+        "resolved_at": {
+          "$comment": "Consumer resolution observation. Excluded from every enclosing canonical hash view.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp",
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "resolution_observation"
+        }
+      }
+    },
+    "singleton": {
+      "$comment": "Registered owner adapters only. Document 16 section 3.3 singleton rule for intrinsically immutable owner types: entity_id == version_id and version_number == 1. Consumers MUST NOT invent this mapping locally; the equality is enforced by the released cross-field rule below.",
+      "allOf": [{ "$ref": "#" }],
+      "properties": { "version_number": { "const": 1 } },
+      "required": ["version_number"],
+      "x-datacompany-cross-field": [
+        { "rule": "equal", "scope": "relative", "left": "/entity_id", "right": "/version_id" }
+      ]
+    },
+    "set_of_pins": {
+      "$comment": "Set-like collection of pins. Duplicates are rejected and members are sorted by the released canonical key before hashing.",
+      "type": "array",
+      "items": { "$ref": "#" },
+      "uniqueItems": true,
+      "x-datacompany-array": {
+        "kind": "set",
+        "order_key": ["/owner_context", "/entity_type", "/entity_id", "/version_id"]
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "fixture_id": "immutable-version-first-version-no-supersession",
+  "description": "First version of an identity: supersedes_version_id is absent, not null, and the set-like pack_refs array is empty rather than omitted.",
+  "axis": [
+    "absent-vs-null",
+    "set-like-arrays"
+  ],
+  "schema_ref": "urn:datacompany:immutable-version:1",
+  "hash_profile_ref": "urn:datacompany:canonical-hash-profile:1",
+  "instance": {
+    "version_id": "ed2c1e70-d895-a22d-df12-8844410cd16a",
+    "entity_id": "40363bf9-b2b3-197f-b13c-cdca2cdabb59",
+    "version_number": 1,
+    "schema_ref": "urn:datacompany:recommendation-version:1",
+    "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "pack_refs": [],
+    "created_at": "2026-07-30T09:00:00Z",
+    "created_by": "service:kag-research"
+  },
+  "expected_hash_view_canonical_json": "{\"created_at\":\"2026-07-30T09:00:00Z\",\"created_by\":\"service:kag-research\",\"entity_id\":\"40363bf9-b2b3-197f-b13c-cdca2cdabb59\",\"pack_refs\":[],\"schema_ref\":\"urn:datacompany:recommendation-version:1\",\"version_id\":\"ed2c1e70-d895-a22d-df12-8844410cd16a\",\"version_number\":1}",
+  "expected_content_hash": "sha256:48abb16461731e31538c87d156e948c3b036d5837ce707374a9ed5fa65d70728"
+}

@@ -1,0 +1,33 @@
+{
+  "fixture_id": "capability-available-and-qualified",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "Available requires the whole installed -> enabled -> qualified chain, and carries NO unavailable_reason.",
+  "instance": {
+    "capability_id": "network_meta_analysis",
+    "method_id": "bayesian_nma",
+    "installed": true,
+    "enabled": true,
+    "qualified": true,
+    "available": true,
+    "required_for_publication": true,
+    "use_modes": [
+      "exploratory",
+      "publication"
+    ],
+    "data_classes": [
+      "public_literature"
+    ],
+    "provider_health": "healthy",
+    "qualification_report_ref": {
+      "owner_context": "method-qualification",
+      "entity_type": "qualification_report",
+      "entity_id": "ffffffff-0000-4000-8000-000000000001",
+      "resource_scope": "global",
+      "version_id": "ffffffff-0000-4000-8000-000000000002",
+      "version_number": 1,
+      "schema_ref": "urn:datacompany:qualification-report:1",
+      "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    }
+  }
+}

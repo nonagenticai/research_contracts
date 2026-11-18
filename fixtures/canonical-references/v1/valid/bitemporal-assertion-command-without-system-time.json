@@ -1,0 +1,39 @@
+{
+  "fixture_id": "bitemporal-assertion-command-without-system-time",
+  "description": "Command form: recorded_at and recorded_until are read-only system time and are absent. An omitted valid_to means positive infinity.",
+  "schema_ref": "urn:datacompany:bitemporal-assertion:1#/$defs/command",
+  "expect": "valid",
+  "instance": {
+    "assertion_id": "7d8dfe58-f509-4c3e-c1b5-a21b21b7dd86",
+    "assertion_version_id": "cc2b9b3f-82db-378e-edaa-f9474d757a3c",
+    "subject_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "56106073-6e59-9d9d-44db-c730cc47550c",
+      "version_id": "51209703-a897-09af-5871-0af15b0bbde2",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:3c34afbf093a32d61b0acd9218366396c22c10e77c8bdcad0e5b5e5d264e96a1",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "assertion_type": "recommendation_strength",
+    "value": {
+      "strength": "strong"
+    },
+    "valid_from": "2026-01-01T00:00:00Z",
+    "basis_refs": [
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "cf6358f0-147c-f2de-c867-e8347bf4846a",
+        "version_id": "a26d23e9-8e14-1d9c-09da-ed9594b2b597",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:49ebed29d9dcebfef16f3dfd5c0e6c0038b1e9a46a34e196f295864080c16fa8",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ]
+  }
+}

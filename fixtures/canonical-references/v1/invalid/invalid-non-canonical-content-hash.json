@@ -1,0 +1,20 @@
+{
+  "fixture_id": "invalid-non-canonical-content-hash",
+  "description": "content_hash is sha256: followed by exactly 64 lower-case hexadecimal characters.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "content_hash"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "640d9493-270e-5ac0-d3bc-1b785c7f5e38",
+    "version_id": "5a465240-5230-effd-6711-e5c28038c42b",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

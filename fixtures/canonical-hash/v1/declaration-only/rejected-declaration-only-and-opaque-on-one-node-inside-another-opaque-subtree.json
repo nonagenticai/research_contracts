@@ -1,0 +1,39 @@
+{
+  "fixture_id": "rejected-declaration-only-and-opaque-on-one-node-inside-another-opaque-subtree",
+  "description": "The pair refusal is unconditional, not merely 'unless it has an opaque ancestor'. Checking only 'strictly under some opaque pointer' was walk-past-able ONE LEVEL DEEPER: a node carrying both annotations satisfies the ancestor test whenever it happens to sit inside another opaque subtree, which is the exact bypass the ancestor test exists to prevent, merely relocated. Found by an independent refuter.",
+  "expect": "rejects",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-pair-one-level-deeper-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "value": {
+        "type": "object",
+        "x-datacompany-hash-opaque": true,
+        "properties": {
+          "inner": {
+            "type": "object",
+            "x-datacompany-hash-opaque": true,
+            "x-datacompany-hash-declaration-only": true,
+            "properties": {
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "x-datacompany-array": {
+                  "kind": "ordered"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "expected_error": "HashProfileError",
+  "expected_message_contains": "[\"/value/inner\"] carries x-datacompany-hash-declaration-only AND x-datacompany-hash-opaque on one node"
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-assertion-recorded:1",
+  "title": "ReviewAssertionRecordedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.assertion.recorded.v1': one version of a research assertion, located by review and named by its own version identity and by a stable key, and carrying nothing else. It deliberately carries NO claim text and NO scope. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the RESEARCH_ASSERTION, named by research_assertion_id), the aggregate version (this version's own number) and the content hash.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "research_assertion_id",
+    "research_assertion_version_id",
+    "assertion_key",
+    "version_number"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. evidence_review_service/src/application/services/events.py already contains emit_assertion_recorded and it writes exactly five keys to the outbox, under the database's own ck_domain_outbox_payload_is_minimal CHECK. This document is authored from that running producer, not from the specification alone, following the correction review-decision-recorded.v1 already recorded in this repository for the identical reason: a schema derived from a spec while a deliberate implementation of the same event sits unread is how the two diverge on the day both ship. FOUR AUTHORING DECISIONS THAT ARE NOT STYLE. (1) review_id IS CARRIED. The producer sets aggregate_type to 'research_assertion' and aggregate_id to assertion.research_assertion_id -- the aggregate of this event is the ASSERTION, not the review -- so the payload's review_id is the only place the review is named. Mirrors review-decision-recorded.v1 authoring decision (1). (2) NO CLAIM TEXT AND NO SCOPE. Document 13 section 8.2 bounds a payload to identifiers, versions, hashes and minimal facts, and is explicit that content -- here, the assertion's claim text and the scope it is claimed over -- is exactly what a consumer fetches from the producer under authorization rather than reads off the event. Carrying either would also make the outbox's append-only channel a second, permanent copy of research content the assertion's own version table already owns, with no mechanism to correct it if the claim is later revised. (3) assertion_key IS A STABLE KEY, NOT PROSE, AND IS BOUNDED WELL UNDER THE ENVELOPE'S 512-CHARACTER CEILING. A key is what a consumer joins, dedupes and groups versions of the same assertion by across its correction chain; it is authored as a short structured token, not free text describing the claim. Bounding it to 128 characters -- the same order as the envelope's own propertyNames and canonical_type_token bounds elsewhere in this repository -- does two things at once: it is generous for a key (a token an order of magnitude under 512 has no legitimate reason to need more), and it keeps the field far enough from the 512-character minimal_fact ceiling that assertion_key cannot become a back door for the claim content decision (2) just excluded -- a key sized close to the ceiling would invite exactly that smuggling. The pattern requires a lowercase, dot-segmented token so a value that is actually prose fails validation rather than passing as an oversized key. (4) THE DELIBERATE REPETITION OF THE VERSION NUMBER. This aggregate has a REAL counter -- ResearchAssertionVersion.version_number -- so the envelope's aggregate_version carries that number rather than the literal 1 a written-once aggregate would use, and this payload repeats it as version_number. That repetition is deliberate, not redundant: the envelope's copy is the ordering key per (resource_scope, resource_tenant_id, aggregate_type, aggregate_id); the payload's copy is the same fact travelling WITH the record, so a consumer that keeps only payloads out of a mixed batch can still read which version this is. NO CONTENT HASH IN THIS DOCUMENT. The producer sets the envelope's content_hash from version.content_hash for this event; the hash lives on the ENVELOPE, exactly as research-event-envelope.v1 describes, so this document declares no hash member. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is a minor change that keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-assertion-recorded:2 as a new, coexisting document, because document 13 section 8.1 ships event versions additively -- 'review.assertion.recorded.v1' and a future '.v2' are two registered types, not one type that changed. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this assertion belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the assertion, so this is the only place the review is named. See authoring decision (1).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "research_assertion_id": {
+      "$comment": "The assertion's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a mixed batch of events never has to reach back into the envelope to learn which assertion each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "research_assertion_version_id": {
+      "$comment": "This version row's own identity -- the version being recorded now, NOT the assertion's overall identity and NOT the predecessor it may correct.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "assertion_key": {
+      "$comment": "A stable, machine-comparable key naming which assertion this version belongs to, never the claim's prose. See authoring decision (3) for the bound. NOT a duplicate of research_assertion_id: the id is a surface identity for this database row, the key is the stable business identity a consumer recognizes across the correction chain and, potentially, across the assertion's originating source.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+    },
+    "version_number": {
+      "$comment": "This version's ordinal within the assertion's correction chain, from the version row the producer just wrote. Required with no nullable escape, for the reason the envelope requires aggregate_version: an absent ordinal silently disables ordering for exactly the rows that omit it. Deliberately repeated from the envelope's aggregate_version -- see authoring decision (4).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    },
+    "supersedes_version_id": {
+      "$comment": "The version this one corrects, where the producer recorded one. Optional and nullable, matching the shape of this event's sibling supersession chains elsewhere in the twenty-one (review.observation.superseded.v1, review.duplicate_cluster.resolved.v1, review.conflict.resolved.v1, review.evidence_snapshot.created.v1).",
+      "oneOf": [
+        {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:approval-attestation:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

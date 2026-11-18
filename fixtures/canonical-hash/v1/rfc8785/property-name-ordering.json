@@ -1,0 +1,19 @@
+{
+  "fixture_id": "rfc8785-property-name-ordering",
+  "description": "The RFC 8785 property-name sorting sample. The discriminating pair is U+1F602 (UTF-16 D83D DE02) against U+FB33: UTF-16 code-unit order puts the astral character FIRST, while a Unicode code-point sort - which is what json.dumps(sort_keys=True) performs - puts U+FB33 first and is wrong.",
+  "source": "{\n  \"\\u20ac\": \"Euro Sign\",\n  \"\\r\": \"Carriage Return\",\n  \"\\u000a\": \"Newline\",\n  \"1\": \"One\",\n  \"\\u0080\": \"Control\\u007f\",\n  \"\\ud83d\\ude02\": \"Smiley\",\n  \"\\u00f6\": \"Latin Small Letter O With Diaeresis\",\n  \"\\ufb33\": \"Hebrew Letter Dalet With Dagesh\",\n  \"</script>\": \"Browser Challenge\"\n}\n",
+  "expected_canonical_json": "{\"\\n\":\"Newline\",\"\\r\":\"Carriage Return\",\"1\":\"One\",\"</script>\":\"Browser Challenge\",\"\u0080\":\"Control\u007f\",\"\u00f6\":\"Latin Small Letter O With Diaeresis\",\"\u20ac\":\"Euro Sign\",\"\ud83d\ude02\":\"Smiley\",\"\ufb33\":\"Hebrew Letter Dalet With Dagesh\"}",
+  "expected_sha256": "sha256:6af595a9aa80110b964b4de3f82a05fa6ae7423005019bacfa2620dddc4e94d1",
+  "expected_key_order": [
+    "\n",
+    "\r",
+    "1",
+    "</script>",
+    "\u0080",
+    "\u00f6",
+    "\u20ac",
+    "\ud83d\ude02",
+    "\ufb33"
+  ],
+  "contains_binary_floats": false
+}

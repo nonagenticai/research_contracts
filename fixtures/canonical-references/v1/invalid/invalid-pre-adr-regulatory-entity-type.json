@@ -1,0 +1,20 @@
+{
+  "fixture_id": "invalid-pre-adr-regulatory-entity-type",
+  "description": "Pre-ADR negative guard: no generic canonical type token may activate a regulatory canonical type before ADR-DATACOMPANY-REGULATORY-MODEL is accepted. The instance carries a regulatory-family stem rather than one of the ten pinned denylist token spellings: this file is scanned by scripts/lint_contracts.py like every other JSON document in the repository, and spelling a pinned token here would be an activation the denylist must reject. Rejection of each pinned spelling is asserted directly in tests/test_canonical_schemas.py, which is Python and therefore not a contract document.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "entity_type"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "regulatory_subject",
+    "entity_id": "efc1868c-885a-d0ab-a259-275517e0a2cb",
+    "version_id": "48c34916-f783-96b3-0bfd-6ab26334ac2c",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:748d8735530048af931c59b9a6566dfc6d39276fa049c6050f1e75d324aad8da",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

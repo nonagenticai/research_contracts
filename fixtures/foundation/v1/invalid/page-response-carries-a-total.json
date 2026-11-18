@@ -1,0 +1,24 @@
+{
+  "fixture_id": "page-response-carries-a-total",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_response",
+  "rationale": "IMP-DEC-FND002-016. A total is a count over a rights-filtered set, and document 21 section 5 makes counts protected data. The sealed boundary refuses it rather than leaving it optional.",
+  "expected_error_contains": [
+    "total"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "unevaluatedProperties"
+    }
+  ],
+  "instance": {
+    "items": [],
+    "total": 4211,
+    "sort": [
+      {
+        "field": "entity_id",
+        "direction": "ascending"
+      }
+    ]
+  }
+}

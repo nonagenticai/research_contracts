@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:problem-details:1",
+  "title": "ProblemDetailsV1",
+  "description": "FND-002 task 3: the shared problem-details error body (document 09 section 2.1, foundation freeze list at shared foundation section 3). Served as application/json (IMP-DEC-FND002-005). It is a NON-DISCLOSING body: it carries no tenant identifier, no target data and no upstream topology, and the sealed boundary is what enforces that rather than a convention.",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [{ "$ref": "#/$defs/problem_fields" }],
+  "x-datacompany-composition-point": "#/$defs/problem_extension",
+  "$comment": "NOT RFC 7807/9457-shaped, and that is a decision, not an oversight — IMP-DEC-FND002-005. The corpus requires the application/problem+json MEDIA TYPE in five places (document 15 section 6, KAG gateway sections 3/5/7, evidence review section 3) and never once names an RFC 7807 member: 'type', 'title', 'detail' and 'instance' appear nowhere in any error context, and RFC 9457 is never cited. The only member list that exists anywhere is document 09 section 2.1's 'stable code, status, message, retryable, correlation_id, and field-level issues', and that is what this schema releases. Serving a non-7807 body under the 7807 media type WAS the conflict, and it is closed: on 2026-07-30 the media type gave. The five corpus places now specify application/json, so the body and its declared media type agree, and no 7807-aware client is told to expect members this body does not carry.",
+  "$defs": {
+    "problem_code": {
+      "$comment": "The stable machine-readable code. Reuses the released canonical type token rather than restating its pattern, which also carries the pre-ADR regulatory guard: an error code may not activate a regulatory family stem before ADR-DATACOMPANY-REGULATORY-MODEL is accepted. 'Stable' in document 09 section 2.1 constrains churn across releases, not the value space, so the space is deliberately OPEN — document 07 section 3 and document 21 section 4 each release their own <domain>-problem-codes schema on top of this envelope.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "released_problem_code": {
+      "$comment": "Every problem code the specification names, as a closed set, for the consumers that want the shared vocabulary rather than an open token. Sources: document 06 section 7.8's fourteen provider families ('at least', so the list is extensible and this enum is NOT imposed on /code); document 09 section 2.1 and document 13 section 6 for idempotency_conflict and request_in_progress; document 15 section 9 and KAG gateway section 6 for entitlement_denied.",
+      "enum": [
+        "artifact_unavailable",
+        "cancellation_not_supported",
+        "capability_unavailable",
+        "entitlement_denied",
+        "idempotency_conflict",
+        "invalid_state",
+        "job_not_found",
+        "protocol_incompatible",
+        "provider_temporarily_unavailable",
+        "request_in_progress",
+        "resource_limit_exceeded",
+        "result_invalid",
+        "result_not_ready",
+        "rights_or_egress_denied",
+        "schema_incompatible",
+        "signature_invalid"
+      ]
+    },
+    "http_status": {
+      "$comment": "IMP-DEC-FND002-006: document 09 section 2.1 names the member but never its type. Bounded to the error half of the HTTP status space, because a problem body carrying 200 is a category error and 'unavailable status presented as success' is a named rollout-abort trigger (document 15 section 10).",
+      "type": "integer",
+      "minimum": 400,
+      "maximum": 599
+    },
+    "issue_severity": {
+      "$comment": "IMP-DEC-FND002-007. Document 09 section 2.1 says only 'field-level issues'. The nearest normative shape is the PERSISTED validation issue at document 14 section 6.3 ('stable code, severity, blocking status, subject ref, rule/profile version and resolution state'), which is a different, stored object. Only code, severity and location are carried in a transport body; blocking status, rule version and resolution state belong to the stored issue and would leak review state into an error response.",
+      "enum": ["error", "warning"]
+    },
+    "field_issue": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["code", "severity", "pointer"],
+      "properties": {
+        "code": { "$ref": "#/$defs/problem_code" },
+        "severity": { "$ref": "#/$defs/issue_severity" },
+        "pointer": {
+          "$comment": "RFC 6901 JSON Pointer into the REQUEST body. A pointer, not a dotted path or a field name, so the same location language the hash-view manifests and cross-field rules already use is used here too. The empty pointer addresses the whole request body.",
+          "type": "string",
+          "pattern": "^(/([^/~]|~[01])*)*$",
+          "maxLength": 1024
+        }
+      }
+    },
+    "problem_extension": {
+      "$comment": "Declared composition point. A domain adds namespaced members here and re-seals. It may NOT add a tenant identifier, a target identifier, a resolved value or an upstream host: shared foundation section 4.2 requires a 'non-disclosing ProblemDetails', document 21 section 5 makes counts, hashes, existence and ranking signals protected data, and KAG gateway section 7 requires topology and sensitive response fragments to be redacted from synthesized failures.",
+      "type": "object"
+    },
+    "problem_fields": {
+      "type": "object",
+      "required": ["code", "status", "message", "retryable", "correlation_id"],
+      "$comment": "All five members of document 09 section 2.1's list are REQUIRED — IMP-DEC-FND002-008. The specification gives no required/optional split. Making any of them optional would make the whole contract unusable in the direction it exists for: a client that cannot rely on 'retryable' being present has to guess retry safety, and guessing is what document 10 section 3 forbids ('The proxy does not retry an unsafe mutation'). 'issues' is the only optional member because most failures are not field-level.",
+      "properties": {
+        "code": { "$ref": "#/$defs/problem_code" },
+        "status": { "$ref": "#/$defs/http_status" },
+        "message": {
+          "$comment": "Human-readable, non-disclosing. It must not embed another tenant's data, a resolved target, an object key, a bucket, an endpoint, a credential or a signed URL (document 07 section 9).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "retryable": {
+          "$comment": "IMP-DEC-FND002-009: typed as a boolean. Document 09 section 2.1 names it and gives no type or value domain. A boolean is the narrowest reading and the one the code families support — document 06 section 7.8 releases both capability_unavailable and provider_temporarily_unavailable, i.e. the permanent/transient split is carried by the CODE, leaving this member as the single yes/no a client acts on. Retry TIMING stays in the HTTP Retry-After header, which the corpus treats as a header to preserve in eight places and never as a body member.",
+          "type": "boolean"
+        },
+        "correlation_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+        "issues": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/field_issue" },
+          "x-datacompany-array": { "kind": "ordered" }
+        }
+      }
+    }
+  }
+}

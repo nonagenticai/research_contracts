@@ -1,0 +1,16 @@
+{
+  "fixture_id": "invalid-identity-ref-carrying-version-id",
+  "description": "IdentityRef has exactly five fields. A version_id on it is a pin in disguise and is rejected by the sealed boundary.",
+  "schema_ref": "urn:datacompany:identity-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "version_id"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "64def9e5-8ef9-7dc4-2c0d-e6af46d764db",
+    "resource_scope": "global",
+    "version_id": "2d711642-b726-b044-0162-7ca9fbac32f5"
+  }
+}

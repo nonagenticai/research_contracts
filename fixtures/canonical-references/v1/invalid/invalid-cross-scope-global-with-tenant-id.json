@@ -1,0 +1,21 @@
+{
+  "fixture_id": "invalid-cross-scope-global-with-tenant-id",
+  "description": "Global scope with a tenant ID. The scope conditional forbids resource_tenant_id when resource_scope is global.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "resource_tenant_id"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "822401f0-5425-46da-bab6-08a09ba6a09d",
+    "version_id": "28dc0149-1cb7-c581-076a-791b65467b95",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:e2500da9a6033137a1e30b41a0de3383c43d6d8fc818b0480273f3628ddc0494",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "resource_tenant_id": "1a2b3c4d-0000-4000-8000-000000000001"
+  }
+}

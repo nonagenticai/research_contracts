@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-nested-pin-resolved-at-does-not-change-hash",
+  "base_fixture": "run-manifest-all-nine-groups",
+  "expect": "unchanged",
+  "mutations": [
+    {
+      "pointer": "/run_ref/resolved_at",
+      "value": "2031-01-01T00:00:00Z"
+    }
+  ],
+  "rationale": "resolved_at is a consumer resolution OBSERVATION and is excluded at every composed pin. This is the exclusion that cascades furthest in this schema."
+}

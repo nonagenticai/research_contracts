@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:typed-refs:1",
+  "title": "TypedRefsV1",
+  "description": "FND-002 task 4: the registered reference types named in the foundation contract freeze (shared foundation section 4, document 16 sections 3.3, 7.2 and 14.5). Each is a CONSTRAINED COMPOSITION of the released PinnedVersionRef, never a shape of its own, so 'every registered reference type uses one complete shape' is structurally true rather than conventionally true. This document declares no root type: it is a $defs library, referenced by the domain schemas that carry these slots.",
+  "$comment": "IMP-DEC-FND002-019 records why each ref pins schema_ref and nothing else. Composing pinned-version-ref:1 by $ref is what makes the global/tenant conditional byte-identical at every nesting depth (shared foundation section 4.2: 'The global/tenant conditional is identical at every nesting depth. No schema may replace it with a nullable tenant ID, bare UUID, latest alias, owner-free {id, version} pair, or locally invented singleton mapping.'). A ref that restated any member locally would be exactly that forbidden re-spelling. Three of the four schema_ref constants below name documents this repository does not yet release; IMP-DEC-FND002-020 governs that, and binds each one to the bounded context that owes it rather than leaving it an invisible dangling reference.",
+  "$defs": {
+    "document_version_ref": {
+      "$comment": "Shared foundation section 4 freeze list: 'DocumentVersionRef'. Document 16 section 7.2 makes it one of the two XOR alternatives an EvidenceLocation addresses. The spec gives no member list for it anywhere, and under this composition it needs none.",
+      "allOf": [{ "$ref": "urn:datacompany:pinned-version-ref:1" }],
+      "properties": {
+        "schema_ref": { "const": "urn:datacompany:document-version:1" }
+      },
+      "required": ["schema_ref"]
+    },
+    "evidence_location_ref": {
+      "$comment": "Document 16 section 7.2. The registered adapter MAY additionally expose an evidence location as a singleton version (section 3.3, 'entity_id == version_id, version_number = 1'), which is why this does NOT compose pinned-version-ref:1#/$defs/singleton: the model says MAY, and the released fixture table-cell-locator-ref pins version_number 3. A slot that requires the singleton composes that definition explicitly instead of getting it by accident here.",
+      "allOf": [{ "$ref": "urn:datacompany:pinned-version-ref:1" }],
+      "properties": {
+        "schema_ref": { "const": "urn:datacompany:evidence-location-version:1" }
+      },
+      "required": ["schema_ref"]
+    },
+    "rights_decision_ref": {
+      "$comment": "Shared foundation section 4 freeze list: 'action/use-basis-specific RightsDecisionRef'. Document 16 section 3.9: 'Domain records store a pinned RightsDecisionRef for the exact action, use basis, and decision time.' The action/use-basis specificity is a property of the RESOLUTION RECEIPT that carries this ref beside requested_action and requested_use_basis, not of the ref itself -- a rights decision pinned without its action would be the perpetual grant section 3.9 forbids.",
+      "allOf": [{ "$ref": "urn:datacompany:pinned-version-ref:1" }],
+      "properties": {
+        "schema_ref": { "const": "urn:datacompany:rights-decision-version:1" }
+      },
+      "required": ["schema_ref"]
+    },
+    "artifact_ref": {
+      "$comment": "Document 16 section 14.5: 'ArtifactRef points to an immutable Artifact Service object/version/hash and carries its semantic role, classification, and rights snapshot -- never a raw storage key.' The pin carries object/version/hash and NOTHING ELSE. Semantic role, classification and the rights snapshot are SIBLING MEMBERS OF THE OBJECT THAT HOLDS THIS REF, never additional members of the ref: the enclosing slot is an object with one member whose value is this ref and further members beside it, exactly as run-manifest:1#/$defs/artifact_output already carries payload_digest beside artifact_ref. The inline reading -- role and classification written inside the ref -- does not merely violate a convention, it FAILS VALIDATION: pinned-version-ref:1 sets unevaluatedProperties:false, so any member beyond the ten is refused, and so is an expiring URL or a raw object key. Fixtures typed-ref-artifact-slot-carries-its-siblings-beside-the-ref (valid) and typed-ref-artifact-carrying-slot-members-inline (invalid) pin both halves of that sentence.",
+      "allOf": [{ "$ref": "urn:datacompany:pinned-version-ref:1" }],
+      "properties": {
+        "schema_ref": { "const": "urn:datacompany:artifact-version:1" }
+      },
+      "required": ["schema_ref"]
+    }
+  }
+}

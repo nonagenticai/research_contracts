@@ -1,0 +1,58 @@
+{
+  "profile_id": "urn:datacompany:canonical-hash-profile:1",
+  "profile_version": 2,
+  "schema_ref": "urn:datacompany:reference-verification-receipt:1",
+  "serialization": "rfc8785",
+  "encoding": "utf-8",
+  "byte_order_mark": false,
+  "digest_algorithm": "sha256",
+  "digest_prefix": "sha256:",
+  "absent_vs_null": "distinct",
+  "unicode_normalization": "none",
+  "timestamp_representation": "rfc3339_utc_z",
+  "decimal_representation": "decimal_string",
+  "binary_float_policy": "reject",
+  "included_pointers": [
+    "/consumer_context",
+    "/failure_code",
+    "/pinned_version_ref",
+    "/pinned_version_ref/content_hash",
+    "/pinned_version_ref/entity_id",
+    "/pinned_version_ref/entity_type",
+    "/pinned_version_ref/owner_context",
+    "/pinned_version_ref/resource_scope",
+    "/pinned_version_ref/resource_tenant_id",
+    "/pinned_version_ref/schema_ref",
+    "/pinned_version_ref/version_id",
+    "/pinned_version_ref/version_number",
+    "/reference_verification_receipt_id",
+    "/result",
+    "/subject_local_ref",
+    "/subject_local_ref/content_hash",
+    "/subject_local_ref/entity_id",
+    "/subject_local_ref/entity_type",
+    "/subject_local_ref/owner_context",
+    "/subject_local_ref/resource_scope",
+    "/subject_local_ref/resource_tenant_id",
+    "/subject_local_ref/schema_ref",
+    "/subject_local_ref/version_id",
+    "/subject_local_ref/version_number",
+    "/verification_profile_ref",
+    "/verified_at",
+    "/verified_content_hash",
+    "/verified_owner_context",
+    "/verified_schema_ref"
+  ],
+  "excluded_pointers": [
+    {
+      "pointer": "/pinned_version_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/subject_local_ref/resolved_at",
+      "reason": "resolution_observation"
+    }
+  ],
+  "opaque_pointers": [],
+  "arrays": []
+}

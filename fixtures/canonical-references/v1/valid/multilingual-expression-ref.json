@@ -1,0 +1,17 @@
+{
+  "fixture_id": "multilingual-expression-ref",
+  "description": "One language expression of a work. A translation is a separate pinned version, never a mutable field on the work.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "valid",
+  "instance": {
+    "owner_context": "guideline-registry",
+    "entity_type": "language_expression",
+    "entity_id": "74324a75-8f5b-d248-9048-da940d6dd5e5",
+    "version_id": "f909d984-1d5a-690f-536d-48baf4e40c20",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:language-expression-version:1",
+    "content_hash": "sha256:e73e3c0eabca3a04e200a969e1bd75d20889af7b8d10916dbf538ba7aff793c9",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

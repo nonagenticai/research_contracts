@@ -1,0 +1,20 @@
+{
+  "fixture_id": "invalid-uppercase-uuid",
+  "description": "UUIDs are opaque lower-case canonical strings on exchange.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "entity_id"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "5897B7B9-CE94-C807-B9FD-F089FC24B4F4",
+    "version_id": "a8a5b213-b2c5-b0f0-604e-4827aabda8a3",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:aee610558292023758a4229ddcf75f167c9904313a83cf795232ed7f7e2131c9",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

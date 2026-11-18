@@ -1,0 +1,4 @@
+# BLOCKED: accountable owner and reviewer are UNASSIGNED (IMP-DEC-001).
+# Add enforceable path rules only after OWNERS.yaml is updated by an accepted
+# governance decision. An invented placeholder account would create false review
+# evidence, so this draft intentionally owns no paths.

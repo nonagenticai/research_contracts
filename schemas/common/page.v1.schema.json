@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:page:1",
+  "title": "PageV1",
+  "description": "FND-002 task 2: the shared cursor-page and sort contract (document 09 section 2.1, document 13 section 12.5, foundation freeze list at shared foundation section 3). Cursor pagination over a stable tie-break order; the cursor is opaque and is scoped to the tenant, filter and sort it was issued for.",
+  "$comment": "MOST OF THIS IS A LOCAL DECISION, and the register says so field by field. The complete normative text for pagination is four sentences and for sort three fragments, and between them they name ZERO field names, no direction enum, no page-size bound and no envelope shape. What they DO decide is carried here as enforceable structure: cursor rather than offset, opacity, binding to filter and sort, a declared sort with a stable tie-break, and no total. Everything else is IMP-DEC-FND002-012..016 in config/foundation-decisions.json.",
+  "$defs": {
+    "cursor": {
+      "$comment": "Document 13 section 12.5: 'Collection endpoints use opaque cursors over a stable tie-break order. A cursor is scoped to the filter and sort hash and cannot be replayed against a different tenant/query.' Opaque means the schema asserts NOTHING about the contents: no base64 rule, no embedded pointer, no decodable structure. A schema that constrained the encoding would be telling clients the cursor is inspectable, which is the opposite of the contract. Cursor binding and replay refusal are server obligations that no JSON Schema can express; they are gated by the fixtures for the page-cursor-binding record below.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "sort_direction": {
+      "$comment": "IMP-DEC-FND002-012. The corpus contains no direction enum at all — 'asc', 'desc', 'ascending' and 'descending' appear in no normative API context. The long spellings are chosen over asc/desc because every other released enum in this contract is spelled out in full ('global'/'tenant', 'verified'/'rejected', 'ordered'/'set'), and an abbreviation would be the only one.",
+      "enum": ["ascending", "descending"]
+    },
+    "sort_field": {
+      "$comment": "A field the operation DECLARES sortable. Document 09 section 2.1: 'declared sorting' — an operation publishes its sortable fields and a field outside that set is refused. The token space is the released canonical type token, so a sort field cannot smuggle a regulatory family stem in either.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "sort_key": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["field", "direction"],
+      "properties": {
+        "field": { "$ref": "#/$defs/sort_field" },
+        "direction": { "$ref": "#/$defs/sort_direction" }
+      }
+    },
+    "sort_request": {
+      "$comment": "IMP-DEC-FND002-013: multi-key, as an ORDERED array. 'Stable tie-break order' presupposes at least a primary key and a tie-breaker, so a single scalar sort field could not express the contract it is required to have. Ordered rather than set-like because sort precedence IS the order — this is the one array in the foundation tier where 'ordered' is the semantically correct declaration rather than a D8 workaround.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/sort_key" },
+      "x-datacompany-array": { "kind": "ordered" }
+    },
+    "page_request": {
+      "$comment": "First page: omit 'cursor'. Continuation: send the exact 'next_cursor' from the previous response and NOTHING else that changes the query — the cursor is bound to the filter and sort it was issued for, so re-sending a different 'sort' beside it is a replay against a different query and must be refused.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "allOf": [{ "$ref": "#/$defs/page_request_fields" }],
+      "x-datacompany-cross-field": [
+        {
+          "rule": "unique_by",
+          "name": "one_sort_key_per_field",
+          "scope": "relative",
+          "at": "/sort",
+          "key": "/field",
+          "$comment": "uniqueItems cannot express this: two keys naming the same field with different directions are distinct objects and pass it, and the resulting order is whatever the server's stable sort happens to do with a contradiction. Declared at the ROOT of page_request and scoped `relative`, so it resolves against wherever page_request is reached. Before D3 closed (option B, 2026-07-30) the operands were instance-root-absolute and page_request could only be validated as its OWN schema_ref, never composed as a property of an operation request; it may now be composed as a member and the rule is evaluated against that member."
+        }
+      ]
+    },
+    "page_request_fields": {
+      "type": "object",
+      "required": ["sort"],
+      "$comment": "'sort' is REQUIRED — IMP-DEC-FND002-018, and it was forced by the released rule vocabulary rather than chosen freely. Document 09 section 2.1 pairs 'stable cursor pagination' with 'declared sorting', and document 13 section 12.5 makes the cursor an opaque handle 'over a stable tie-break order', so a page request with no declared order has no order for the cursor to be stable over. The vocabulary then removes the choice: the released unique_by operator has no when-both-present variant (equal_when_both_present exists; unique_by_when_present does not), so since WS1 closed the D2c fail-open an ABSENT /sort is a loud failure rather than a vacuous pass. Making it optional would mean either dropping the duplicate-field guard or shipping a schema whose own cross-field rule rejects half its legal instances. Recorded as a vocabulary asymmetry in config/foundation-decisions.json.",
+      "properties": {
+        "page_size": {
+          "$comment": "IMP-DEC-FND002-014: a minimum and NO maximum, deliberately. Document 09 section 2.2 states that 'per-tenant/per-capability payload, artifact, concurrency, rate and execution limits are declared in capability metadata' and that 'numerical limits are set after workload discovery rather than hidden in implementation defaults'. A maximum written here would be exactly such a hidden default, and would be the wrong place besides: the cap is per-tenant and per-capability, so it belongs to capability metadata and a breach is a typed 413/422/429 problem, not a schema failure.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "cursor": { "$ref": "#/$defs/cursor" },
+        "sort": { "$ref": "#/$defs/sort_request" }
+      }
+    },
+    "page_response": {
+      "$comment": "IMP-DEC-FND002-015: 'items' is the collection member and 'next_cursor' signals continuation by PRESENCE, never by an explicit null. The absent-versus-null distinction is a released canonical rule (shared foundation section 4.3 step 5) and 'next_cursor: null' would be a second spelling of the same fact — the identical error the released bitemporal 'valid_to' comment calls out, where absence means positive infinity and null is not a spelling of it.\n\nIMP-DEC-FND002-016: there is NO 'total'. It is not merely omitted, it is refused by the sealed boundary. Document 21 section 5 makes counts protected data ('Counts, hashes, existence, path length, and ranking signals are protected data and cannot leak an excluded tenant or rights-restricted node'), and document 17 section 8 requires blinding to 'cover counts, filters, cursors, errors, events and exports'. A total is a count over a rights-filtered set, so releasing one in the shared envelope would hand every collection endpoint a rights-leak channel by default. A domain that has a rights-safe count releases it through its own extension, having made that argument once.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["items", "sort"],
+      "properties": {
+        "items": {
+          "$comment": "The page's members. The element schema is supplied by the composing operation; this envelope constrains only the collection. It is ordered because a page IS the sort order applied — declaring it set-like would discard the very ordering the sort contract exists to establish.",
+          "type": "array",
+          "x-datacompany-array": { "kind": "ordered" }
+        },
+        "next_cursor": { "$ref": "#/$defs/cursor" },
+        "sort": {
+          "$comment": "The effective sort, echoed so a client can see the tie-break the server actually applied rather than the one it asked for.",
+          "$ref": "#/$defs/sort_request"
+        }
+      }
+    }
+  }
+}

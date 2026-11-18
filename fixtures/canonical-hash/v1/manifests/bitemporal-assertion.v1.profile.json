@@ -1,0 +1,88 @@
+{
+  "profile_id": "urn:datacompany:canonical-hash-profile:1",
+  "profile_version": 2,
+  "schema_ref": "urn:datacompany:bitemporal-assertion:1",
+  "serialization": "rfc8785",
+  "encoding": "utf-8",
+  "byte_order_mark": false,
+  "digest_algorithm": "sha256",
+  "digest_prefix": "sha256:",
+  "absent_vs_null": "distinct",
+  "unicode_normalization": "none",
+  "timestamp_representation": "rfc3339_utc_z",
+  "decimal_representation": "decimal_string",
+  "binary_float_policy": "reject",
+  "included_pointers": [
+    "/assertion_id",
+    "/assertion_type",
+    "/assertion_version_id",
+    "/basis_refs",
+    "/basis_refs/-/content_hash",
+    "/basis_refs/-/entity_id",
+    "/basis_refs/-/entity_type",
+    "/basis_refs/-/owner_context",
+    "/basis_refs/-/resource_scope",
+    "/basis_refs/-/resource_tenant_id",
+    "/basis_refs/-/schema_ref",
+    "/basis_refs/-/version_id",
+    "/basis_refs/-/version_number",
+    "/decision_ref",
+    "/decision_ref/content_hash",
+    "/decision_ref/entity_id",
+    "/decision_ref/entity_type",
+    "/decision_ref/owner_context",
+    "/decision_ref/resource_scope",
+    "/decision_ref/resource_tenant_id",
+    "/decision_ref/schema_ref",
+    "/decision_ref/version_id",
+    "/decision_ref/version_number",
+    "/recorded_at",
+    "/subject_ref",
+    "/subject_ref/content_hash",
+    "/subject_ref/entity_id",
+    "/subject_ref/entity_type",
+    "/subject_ref/owner_context",
+    "/subject_ref/resource_scope",
+    "/subject_ref/resource_tenant_id",
+    "/subject_ref/schema_ref",
+    "/subject_ref/version_id",
+    "/subject_ref/version_number",
+    "/supersedes_assertion_version_id",
+    "/valid_from",
+    "/valid_to",
+    "/value"
+  ],
+  "excluded_pointers": [
+    {
+      "pointer": "/basis_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/decision_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/recorded_until",
+      "reason": "recorded_until"
+    },
+    {
+      "pointer": "/subject_ref/resolved_at",
+      "reason": "resolution_observation"
+    }
+  ],
+  "opaque_pointers": [
+    "/value"
+  ],
+  "arrays": [
+    {
+      "pointer": "/basis_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    }
+  ]
+}

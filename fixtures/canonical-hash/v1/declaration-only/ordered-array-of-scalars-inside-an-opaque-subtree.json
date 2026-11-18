@@ -1,0 +1,197 @@
+{
+  "fixture_id": "ordered-array-of-scalars-inside-an-opaque-subtree",
+  "description": "D9, the motivating case. bitemporal-assertion.v1 /value states that arrays inside an opaque subtree 'still require their own ordered/set-like declaration', and canonical-hash-profile.v1 states that an undeclared array is rejected 'including inside an opaque subtree'. Before x-datacompany-hash-declaration-only, satisfying both from a committed schema was impossible: reaching /value/tags needed a properties chain, every properties name entered included_pointers, and a declared member revoked the opacity so the undeclared sibling /value/other raised UndeclaredPathError. The flag keeps the array declaration and drops the pointer, so the array is declared AND the subtree stays opaque. The undeclared sibling in the instance is what proves opacity survived.",
+  "expect": "derives",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-scalar-array-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "value": {
+        "type": "object",
+        "x-datacompany-hash-opaque": true,
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      }
+    },
+    "x-datacompany-composition-point": "#/$defs/domain_extension",
+    "$defs": {
+      "domain_extension": {
+        "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+        "type": "object"
+      }
+    }
+  },
+  "expected_manifest_canonical_json": "{\"absent_vs_null\":\"distinct\",\"arrays\":[{\"kind\":\"ordered\",\"pointer\":\"/value/tags\"}],\"binary_float_policy\":\"reject\",\"byte_order_mark\":false,\"decimal_representation\":\"decimal_string\",\"digest_algorithm\":\"sha256\",\"digest_prefix\":\"sha256:\",\"encoding\":\"utf-8\",\"excluded_pointers\":[],\"included_pointers\":[\"/id\",\"/value\"],\"opaque_pointers\":[\"/value\"],\"profile_id\":\"urn:datacompany:canonical-hash-profile:1\",\"profile_version\":2,\"schema_ref\":\"urn:datacompany:declaration-only-scalar-array-probe:1\",\"serialization\":\"rfc8785\",\"timestamp_representation\":\"rfc3339_utc_z\",\"unicode_normalization\":\"none\"}",
+  "instance": {
+    "id": "x",
+    "value": {
+      "tags": [
+        "b",
+        "a"
+      ],
+      "other": 1,
+      "nested": {
+        "k": true
+      }
+    }
+  },
+  "expected_hash_view_canonical_json": "{\"id\":\"x\",\"value\":{\"nested\":{\"k\":true},\"other\":1,\"tags\":[\"b\",\"a\"]}}",
+  "expected_content_hash": "sha256:f4b80294cef5137f8eb0821cf355e10a8ba81bee8dc6a4b915b42b210efb76ce",
+  "also_derived_from": [
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-scalar-array-probe:1",
+      "type": "object",
+      "$defs": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-datacompany-hash-declaration-only": true,
+          "x-datacompany-array": {
+            "kind": "ordered"
+          }
+        },
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true,
+          "properties": {
+            "tags": {
+              "$ref": "#/$defs/tags"
+            }
+          }
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension"
+    },
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-scalar-array-probe:1",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true,
+          "properties": {
+            "tags": {
+              "allOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-datacompany-hash-declaration-only": true,
+                  "x-datacompany-array": {
+                    "kind": "ordered"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension",
+      "$defs": {
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      }
+    },
+    {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-scalar-array-probe:1",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true,
+          "properties": {
+            "tags": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-datacompany-hash-declaration-only": true,
+                  "x-datacompany-array": {
+                    "kind": "ordered"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension",
+      "$defs": {
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "equivalent_runtime_route": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-scalar-array-probe:1",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension",
+      "$defs": {
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      }
+    },
+    "extensions": {
+      "arrays": [
+        {
+          "pointer": "/value/tags",
+          "kind": "ordered"
+        }
+      ]
+    }
+  }
+}

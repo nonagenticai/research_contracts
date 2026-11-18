@@ -1,0 +1,23 @@
+{
+  "fixture_id": "capability-available-with-an-unavailable-reason",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "The forbidden direction of the same conditional. A reason beside available:true is a record that contradicts itself.",
+  "expected_error_contains": [
+    "unavailable_reason"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "not"
+    }
+  ],
+  "instance": {
+    "capability_id": "survival_extrapolation",
+    "installed": true,
+    "enabled": true,
+    "qualified": true,
+    "available": true,
+    "unavailable_reason": "unhealthy",
+    "required_for_publication": false
+  }
+}

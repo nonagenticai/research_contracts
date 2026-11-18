@@ -1,0 +1,23 @@
+{
+  "fixture_id": "page-request-zero-page-size",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_request",
+  "rationale": "A page of zero items is a request for nothing that renders as a successful empty page.",
+  "expected_error_contains": [
+    "page_size"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/page_size",
+      "keyword": "minimum"
+    }
+  ],
+  "instance": {
+    "page_size": 0,
+    "sort": [
+      {
+        "field": "entity_id",
+        "direction": "ascending"
+      }
+    ]
+  }
+}

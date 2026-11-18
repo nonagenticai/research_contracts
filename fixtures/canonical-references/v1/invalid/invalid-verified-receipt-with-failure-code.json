@@ -1,0 +1,42 @@
+{
+  "fixture_id": "invalid-verified-receipt-with-failure-code",
+  "description": "failure_code is permitted only when result is rejected.",
+  "schema_ref": "urn:datacompany:reference-verification-receipt:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "failure_code"
+  ],
+  "instance": {
+    "reference_verification_receipt_id": "dde2ff76-2759-41a4-0785-111350ea3773",
+    "consumer_context": "kag-research",
+    "subject_local_ref": {
+      "owner_context": "kag-research",
+      "entity_type": "research_recommendation",
+      "entity_id": "44cc9ed0-55d2-a5f7-9aa3-bdd08deaa0a0",
+      "version_id": "d45c2083-0fab-9257-edc6-7d337cb355d6",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:research-recommendation-version:1",
+      "content_hash": "sha256:f7953de2e60cc1b4ffdf59ab1f86934ef52f30ea6d589cea7e658309eea9b085",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "pinned_version_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "a7ab7373-d6d9-19df-7210-d7bd4ae207b4",
+      "version_id": "3771fad8-2960-506a-b1b5-c6b866a5251c",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:f90772e194163096efaca67c0f4d292dd6c007a8efdae404a2dd6dbc6238c1d1",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "verification_profile_ref": "urn:datacompany:verification-profile-strict:1",
+    "verified_owner_context": "terminology-broker",
+    "verified_schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "verified_content_hash": "sha256:f90772e194163096efaca67c0f4d292dd6c007a8efdae404a2dd6dbc6238c1d1",
+    "verified_at": "2026-07-30T10:00:05Z",
+    "result": "verified",
+    "failure_code": "content_hash_mismatch"
+  }
+}

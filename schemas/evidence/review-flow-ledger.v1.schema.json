@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-flow-ledger:1",
+  "title": "ReviewFlowLedgerV1",
+  "description": "The DERIVED screening-flow ledger of one evidence review: which review, which flow revision it was derived against, the flat conservation tallies, the per-stage PRISMA split, the canonical hash of the flat tallies, and whether the producing service's projection cache agreed. It is the exact body evidence_review_service returns from GET /api/reviews/{review_id}/flow (repository evidence_review_service, src/application/services/flow.py, _compute_flow). It is a PROJECTION and not a seal: nothing signs it, it is recomputed on every read, and it carries no payload.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "flow_revision_id",
+    "flow_revision_number",
+    "counts",
+    "counts_by_stage",
+    "canonical_counts_hash",
+    "schema_ref",
+    "projection_stale",
+    "projection_computed_at"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS AT ALL, AND WHY IT IS NOT A SEAL. evidence_review_service has advertised schema_ref 'https://contracts.nonagentic.ai/evidence/review-flow-ledger.v1.schema.json' on every flow response since the endpoint shipped, naming a document that did not exist. That constant's own docstring is explicit about the state and about the remedy: it stayed a URL DELIBERATELY, because minting 'urn:datacompany:review-flow-ledger:1' for a document the registry does not have would be a worse claim than an unresolvable URL, and 'when that changes, the schema gets authored first and this constant follows it -- never the other way round'. This file is that authoring. The producer's constant follows in the same unit of work, and the producer ships a tripwire (tests/unit/test_a_schema_ref_that_resolves_is_a_promise.py) that fails the moment this document appears, precisely so the switch cannot be forgotten. FOUR AUTHORING DECISIONS THAT ARE NOT STYLE. (1) counts is NOT respelled here. It is $ref'd from urn:datacompany:inclusion-set-export:2#/$defs/flow_counts, because it is the SAME BLOCK: the producer derives the tallies once and puts that one object into both the sealed export manifest and this projection, and canonical_counts_hash below is computed over it in both places. Two spellings would be two answers to what the counts block is, and the first divergence would make a hash comparison between an export and the ledger it was taken from mean nothing. (2) counts_by_stage is declared ordered, not set-like. The producer emits `sorted(declared.values())`, a total order over (stage_order, stage_key, name), and the order is the reading order of a PRISMA diagram -- title/abstract before full text. A set-like declaration would need an order_key and would assert that the sequence carries no meaning, which is false. (3) stage_key and name are bounded opaque strings and NOT the released canonical_type_token. The producing columns are `text NOT NULL` with no shape constraint of any kind (evidence_review_service, alembic 0002, review_stages), and a synthesized stage takes its name FROM its key, so narrowing to a released identifier grammar would refuse real bodies -- the failure mode inclusion-set-export.v2 records for tenant_id, in the same tier, for the same reason. minLength 1 is a deliberate exception to that permissiveness: a stage nobody can name is not a stage, and a body that trips it is evidence of a defect upstream rather than of an over-narrow contract. (4) schema_ref composes the released grammar rather than pinning a const of this document's own $id. Not laziness and not symmetry: tests/test_schema_ref_resolution.py sweeps the whole corpus for the const spelling and pins the resulting population as an equality, so a const here would move a count that is measuring a different question. inclusion-set-export.v1 records the same choice for the same reason. THIS DOCUMENT IS DELIBERATELY NOT SEALED-AND-SIGNED. It has no items_hash, no payload digest and no supersession chain, because it describes nothing durable: the ledger is recomputed from history on every read and the producer will not serve a cached copy as the answer. What it does carry is canonical_counts_hash, which IS evidence -- it is the hash a consumer compares against the export's, and it is why a downstream report can state that it carried the producer's numbers rather than recomputing its own.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this ledger describes. Composed from the released uuid primitive rather than respelled.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "flow_revision_id": {
+      "$comment": "The flow revision the derivation was taken against. A revision opens when the inputs change, so this is what makes two ledgers of the same review comparable: identical revision ids and differing counts is a producer defect, and differing revision ids explains a difference without anyone having to guess.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "flow_revision_number": {
+      "$comment": "That revision's monotonic number within the review. Composed from the released version_number so the exact-IEEE-754-double bound arrives with it: a counter beyond that range has no stable canonical form and could never be hashed.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    },
+    "counts": {
+      "$comment": "The flat conservation tallies. $ref'd, never respelled -- see constraint (1) in the document $comment. The producer refuses to derive a flow whose conservation identities do not hold, so a body that reaches a consumer has already been checked; this document does not restate the arithmetic because the released rule vocabulary has no arithmetic operator and inventing one here would be a second, weaker answer.",
+      "$ref": "urn:datacompany:inclusion-set-export:2#/$defs/flow_counts"
+    },
+    "counts_by_stage": {
+      "$comment": "The PRISMA split: one tally per stage, in reading order. Beside counts and never inside it, which is the producer's own arrangement and the reason it costs no export version -- nothing is sealed against this member. An EMPTY ARRAY is valid and is the honest body for a review whose stages are declared but unworked, so no minItems is declared.",
+      "type": "array",
+      "x-datacompany-array": { "kind": "ordered" },
+      "items": { "$ref": "#/$defs/stage_tally" }
+    },
+    "canonical_counts_hash": {
+      "$comment": "The canonical hash the producer computes over the counts block ALONE (evidence_review_service, src/domain/policies/flow_derivation.py, canonical_counts_hash). Carried here so a consumer can bind a rendered output to the exact tallies it was built from without re-deriving them -- which is the whole mechanism by which a downstream report can claim it carried the producer's numbers. The grammar arrives by $ref from the released content_hash and is never respelled.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "schema_ref": {
+      "$comment": "The released document this body claims to be. Composes the released grammar rather than pinning a const of this document's own $id -- see constraint (4) in the document $comment.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref"
+    },
+    "projection_stale": {
+      "$comment": "The producer's own answer to 'was my cached projection behind when I derived this?'. Required and never omitted: the producing service's contract is that a stale cache must be VISIBLE rather than silently served, so a body that simply left the member out would defeat the guarantee by looking like a body with nothing to report.",
+      "type": "boolean"
+    },
+    "projection_computed_at": {
+      "$comment": "When the cached projection was last written, or null when no projection has ever been written for this review. Required-and-nullable, never optional, and the distinction is load-bearing: the released canonical profile fixes absent-vs-null to 'distinct', so an explicit null is kept in the hash view and hashed, and a schema that made the two interchangeable would let one ledger produce two canonical forms. Composed from the released timestamp primitive, which requires the trailing-Z spelling; the producer emits datetime.isoformat(), which does not, so the producer normalises to UTC-Z in the same unit of work that switches its schema_ref to this document. The contract states the fleet's grammar and the producer conforms to it -- the other direction would have been a released document widened to accommodate a stringification accident.",
+      "oneOf": [{ "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" }, { "type": "null" }]
+    }
+  },
+  "$defs": {
+    "stage_tally": {
+      "$comment": "One review stage's screening outcome. Sealed with additionalProperties: false: check_stage_conservation asserts settled_include + settled_exclude + settled_uncertain <= reached over exactly these members, and a fourth settled_* tally arriving unnoticed would make the block say something that identity was never checked against.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_order",
+        "stage_key",
+        "name",
+        "reached",
+        "settled_include",
+        "settled_exclude",
+        "settled_uncertain",
+        "exclusion_reasons"
+      ],
+      "properties": {
+        "stage_order": {
+          "$comment": "Where this stage sits in the review's sequence. Deliberately NOT the released version_number, whose minimum is 1: the producing column is a bare `integer NOT NULL` with no CHECK, so this states the range a body can actually carry rather than the range the producer intends (it materialises the value from enumerate(stage_definitions, start=1), so 1 is the real floor). The upper bound is the exact IEEE-754 double range, for the reason the released version_number states it: RFC 8785 serializes numbers with the ECMAScript Number::toString algorithm, so a larger integer has no stable canonical form and the boundary must never accept a value the canonical hash algorithm could not serialize.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740992
+        },
+        "stage_key": {
+          "$comment": "The stage's key within the review, unique by constraint. A bounded opaque string and NOT the released canonical_type_token -- see constraint (3) in the document $comment.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "name": {
+          "$comment": "The stage's label. A PRISMA diagram is LABELLED, so the name has to reach the reader; a stage the review declared carries its declared name, and a stage synthesized from screening rows that the declaration does not mention carries its own key as its name. Same bounded-opaque-string treatment as stage_key, for the same reason.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "reached": {
+          "$comment": "Records with at least one current decision at this stage. NOT 'was assessed': the position exists the moment any one of the required reviewers records anything, so this leads the truth on a stage in progress and is a ceiling for one still running. The producer's own docstring publishes that limitation and it is restated here because this is the member a PRISMA author will read.",
+          "$ref": "urn:datacompany:inclusion-set-export:2#/$defs/tally"
+        },
+        "settled_include": {
+          "$comment": "Records whose NEWEST work anywhere in the review is an `include` recorded at THIS stage. NOT a PRISMA box at any stage but the last, and named for the mechanism rather than the outcome precisely so it does not read as one: the review's inclusion set is counts.included and only ever that. The producer renamed it from `included` after a real review reported the same three records twice -- once as a stage-1 outcome and once as the review's result.",
+          "$ref": "urn:datacompany:inclusion-set-export:2#/$defs/tally"
+        },
+        "settled_exclude": {
+          "$comment": "Records that settled at this stage with an `exclude` disposition. Broken down by reason code below. Named by the same convention as its two siblings, so that three tallies partitioning one population do not read as two different kinds of number.",
+          "$ref": "urn:datacompany:inclusion-set-export:2#/$defs/tally"
+        },
+        "settled_uncertain": {
+          "$comment": "Records that settled at this stage in neither bucket.",
+          "$ref": "urn:datacompany:inclusion-set-export:2#/$defs/tally"
+        },
+        "exclusion_reasons": {
+          "$comment": "The per-reason breakdown of THIS stage's settled_exclude tally: reason code -> count. PRISMA 2020 requires the full-text exclusion box to be broken down by reason, which is the box this member exists to fill. THE MEMBER SET CANNOT BE DECLARED, because the keys are the review's own configured exclusion reason codes and no fixed vocabulary enumerates them; without x-datacompany-hash-opaque this subtree raises UndeclaredPathError the moment any reason code is present, because the released rule is declare-none-or-declare-all and silence is not a third option. With it the subtree is hashed exactly as it arrives, member by member, so every code and every count still reaches the digest. Opacity is inherited by the whole subtree and revoked by a DECLARED member, so no member of this object is declared: additionalProperties constrains each count's TYPE without contributing a declared pointer. propertyNames is deliberately left unconstrained rather than narrowed to the released canonical_type_token, whose negative guard would refuse a legitimate reason code outright. This is the same treatment, for the same reasons, that the flat counts block already gives its own exclusion_reasons.",
+          "type": "object",
+          "additionalProperties": { "$ref": "urn:datacompany:inclusion-set-export:2#/$defs/tally" },
+          "x-datacompany-hash-opaque": true
+        }
+      }
+    }
+  }
+}

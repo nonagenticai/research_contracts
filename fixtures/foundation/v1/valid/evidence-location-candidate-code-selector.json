@@ -1,0 +1,47 @@
+{
+  "fixture_id": "evidence-location-candidate-code-selector",
+  "schema_ref": "urn:datacompany:evidence-location-candidate:1",
+  "rationale": "The candidate against the artifact_ref arm and the code selector kind, whose source_digest is deliberately not called content_hash (IMP-DEC-FND002-029). column_range is the optional half of document 10 line 220's 'line/column range' and is present.",
+  "instance": {
+    "artifact_ref": {
+      "owner_context": "artifact-storage",
+      "entity_type": "artifact_version",
+      "entity_id": "a47f1111-1111-4111-8111-111111111111",
+      "resource_scope": "global",
+      "version_id": "a47f2222-2222-4222-8222-222222222222",
+      "version_number": 2,
+      "schema_ref": "urn:datacompany:artifact-version:1",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "selector_type": "code",
+    "selector": {
+      "bundle_version": "1.4.0",
+      "source_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "path": "src/markov_cohort.py",
+      "line_range": {
+        "first": 118,
+        "last": 142
+      },
+      "column_range": {
+        "first": 5,
+        "last": 61
+      }
+    },
+    "selector_schema_ref": "urn:datacompany:locator-selector:1",
+    "language": "en",
+    "derivation_provenance_refs": [
+      {
+        "owner_context": "hirag",
+        "entity_type": "decomposition_block",
+        "entity_id": "b10c1111-1111-4111-8111-111111111111",
+        "resource_scope": "global",
+        "version_id": "b10c2222-2222-4222-8222-222222222222",
+        "version_number": 1,
+        "schema_ref": "urn:datacompany:decomposition-block:1",
+        "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ]
+  }
+}

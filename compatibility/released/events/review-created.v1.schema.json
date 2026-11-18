@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-created:1",
+  "title": "ReviewCreatedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.created.v1': the first event in a review's life, naming the review's own identity, the project it belongs to, and the caller-supplied key it was created under. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event IS the review), the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "project_id",
+    "external_key"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. evidence_review_service/src/application/services/events.py already contains emit_review_created and it writes exactly three keys -- review_id, project_id, external_key -- to a DomainOutbox row with aggregate_type 'review' and aggregate_id review.review_id. This schema matches that producer, derived from the running code rather than respelled from the specification, per the correction recorded on urn:datacompany:review-decision-recorded:1's own $comment. THREE AUTHORING DECISIONS THAT ARE NOT STYLE. (1) review_id IS carried even though aggregate_type is 'review' and the envelope's aggregate_id already equals it. The duplication is deliberate, for the same reason review-decision-recorded.v1 carries review_id despite its aggregate being the decision, not the review: a consumer reading only the payload column of a batch of mixed event rows should not have to reach back into the envelope to learn which review a row is about. (2) aggregate_version is 1 for every review.created.v1 event, and that is NOT the same fact as the write-once aggregates elsewhere in this producer (import batches, screening decisions, conflicts) whose id is never reused for a second event. A review is a long-lived aggregate with a real revision counter -- ReviewStateEvent.revision_number, see urn:datacompany:review-lifecycle-transition:1 -- but its FIRST revision is always 1, minted by create_review in the same transaction as the review row itself. This one event type is pinned at 1 by construction, not by the write-once convention that pins the others. (3) external_key is bounded to 256 characters, well under the envelope's 512-character minimal_fact ceiling. It is caller-supplied and the producer does not clamp it before writing -- review.external_key lands in the payload verbatim -- so this schema is the only length guard the value gets before it becomes a permanent row in an append-only log. 256 characters leaves no real caller (a PROSPERO registration id, a DOI, a ClinicalTrials.gov NCT number, an internal ticket key) anywhere near the bound, while refusing the pathological case of a caller pasting free text into what is supposed to be an identifier field. That is a narrower, field-specific version of the same failure the envelope's 512-character ceiling exists to catch one level up; catching it here, on the one field in this document with no other shape constraint, is cheaper than waiting for the envelope-wide floor to catch it. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-created:2 as a new document that coexists with this one, because document 13 section 8.1 ships event versions additively. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review's own identity, equal to the envelope's aggregate_id for this event since aggregate_type is 'review'. Carried in the payload too -- see authoring decision (1).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "project_id": {
+      "$comment": "The project this review belongs to. Not part of the envelope's ordering key (resource_scope/resource_tenant_id/aggregate_type/aggregate_id) -- carried so a consumer routing or filtering by project does not need a fetch back to the producer for the one fact it needs before deciding whether to fetch anything else.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "external_key": {
+      "$comment": "The caller-supplied key this review was created under (e.g. a registry id). Bounded to 256 characters -- well under the envelope's 512-character minimal_fact ceiling -- because the producer does not clamp this value itself. See authoring decision (3).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

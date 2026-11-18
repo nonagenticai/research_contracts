@@ -1,0 +1,18 @@
+{
+  "fixture_id": "external-collaborator-ref",
+  "description": "An external-collaborator grant stays inside the granting tenant's scope and is pinned by exact version like any other cross-context reference.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "valid",
+  "instance": {
+    "owner_context": "collaboration-broker",
+    "entity_type": "external_collaborator_grant",
+    "entity_id": "6beee170-f340-96f0-3234-0fc2a1f4f08e",
+    "version_id": "c864c9a1-ab27-dd3c-5a0e-94451f3078ea",
+    "version_number": 3,
+    "resource_scope": "tenant",
+    "schema_ref": "urn:datacompany:external-collaborator-grant-version:1",
+    "content_hash": "sha256:53adf83d9f7b4dd136fee848946a5ea6d28640406aa260d1bb6adb79dccb58ee",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "resource_tenant_id": "1a2b3c4d-0000-4000-8000-000000000001"
+  }
+}

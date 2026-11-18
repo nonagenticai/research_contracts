@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:assigned-identifier-meta:1",
+  "title": "AssignedIdentifierMetaV1",
+  "description": "The vocabulary a governance identifier must satisfy before it counts as assigned: non-empty, no leading or trailing whitespace, and not any spelling of a placeholder in any letter case. Read by the draft-governance gate, never restated in code.",
+  "$defs": {
+    "assignedIdentifier": {
+      "description": "A string that has actually been assigned: non-empty, no leading or trailing whitespace, and not any spelling of a placeholder in any letter case.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(?:.*\\S)?$",
+      "not": {
+        "pattern": "^(?:[Uu][Nn][Aa][Ss][Ss][Ii][Gg][Nn][Ee][Dd]|[Uu][Nn][Kk][Nn][Oo][Ww][Nn]|[Tt][Bb][Dd]|[Pp][Ll][Aa][Cc][Ee][Hh][Oo][Ll][Dd][Ee][Rr]|[Tt][Oo][Dd][Oo]|[Ff][Ii][Xx][Mm][Ee]|[Cc][Hh][Aa][Nn][Gg][Ee][Mm][Ee]|[Nn][Oo][Nn][Ee]|[Nn][Uu][Ll][Ll]|[Nn]/[Aa]|[Nn][Aa]|[Xx][Xx][Xx]|[Aa][Cc][Cc][Oo][Uu][Nn][Tt][Aa][Bb][Ll][Ee]_[Rr][Ee][Vv][Ii][Ee][Ww][Ee][Rr]|[Aa][Cc][Cc][Oo][Uu][Nn][Tt][Aa][Bb][Ll][Ee]_[Oo][Ww][Nn][Ee][Rr]|[Ii][Mm][Mm][Uu][Tt][Aa][Bb][Ll][Ee]_[Rr][Ee][Vv][Ii][Ss][Ii][Oo][Nn])$"
+      }
+    }
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:durable-job:1",
+  "title": "DurableJobV1",
+  "description": "One durable background job as a service records it (document 13 section 6.4). Carries the command binding, the externally visible state, the lease a worker holds, cancellation intent, the waiting reason when progress is blocked, and the terminal result. A reader validates a stored row against this before believing any field in it.",
+  "$comment": "WHY THIS DOCUMENT EXISTS. `FND-003` task 2 owes 'durable job states/attempts/leases/cancellation/terminal result', and `schemas/jobs/` held only a `.gitkeep` since 2026-07-30 -- the directory was not even in `FOUNDATION_SCHEMA_DIRS`, so anything dropped into it resolved to nothing. Meanwhile `evidence_review_service` shipped the whole subsystem (`ER-M020`/`FND-006`, migration 0020) and runs it in production against no released grammar at all, which is the same defect the event-envelope release repaired. AUTHORING DECISION 1 - THIS DOCUMENT IS FLAT, AND DELIBERATELY. The obvious tidier shape groups lease, cancellation and waiting into sub-objects. It was rejected: the justification for releasing this grammar now is that a second service must be able to implement the SAME subsystem, and the only unambiguous description of `durable_jobs` is its own column set. A nested regrouping would be a design invented here, and every consumer would have to translate. Member names are the live column names. AUTHORING DECISION 2 - `state` IS THE SIX-VALUE EXTERNAL ENUM, AND `cancel_requested` IS NOT IN IT. Section 13.6.4 is explicit that cancellation intent is a timestamped flag while external status remains `queued`, `running` or `waiting`; a seventh state would make every consumer's switch wrong. The intent is carried by `cancel_requested_at`/`cancel_requested_by`, both-or-neither. AUTHORING DECISION 3 - TERMINALITY IS EXPRESSED AS A CROSS-FIELD RULE, NOT A COMMENT. `terminal_at` is required exactly when `state` is terminal, and `error_code` exactly when `state` is `failed`. Document 13 says 'terminal state is immutable'; a grammar that admits a terminal row with no terminal instant cannot detect the row that broke it. AUTHORING DECISION 4 - THE LEASE HAS NO FENCE TOKEN, BECAUSE THE IMPLEMENTATION HAS NONE. `worker_id` + `lease_expires_at` + `heartbeat_at` is the whole mechanism: a running row is never a claim candidate, so a lease is not stealable and expiry is repaired by a reaper that seals the attempt as `lease_expired`. Adding a fence field here would describe a system that does not exist. AUTHORING DECISION 5 - PAYLOAD-MINIMAL IS ENFORCED, NOT REQUESTED. Section 13.6.4 says large inputs and outputs are immutable artifact refs and progress carries bounded structured facts. So `progress` and `result_summary` are objects, `error_detail` is capped at 512 characters to match the live CHECK, and there is no member anywhere in this document that can hold licensed text, an extracted value or a credential. THIS DOCUMENT IS DELIBERATELY NOT a queue protocol. It does not describe how a worker claims, how long a lease may be, what the retry policy is, or what a job type means. Those are configuration and per-service policy; section 13.6.4 leaves them open on purpose and pinning them here would freeze one service's tuning into a fleet contract.",
+  "type": "object",
+  "required": [
+    "schema_ref",
+    "job_id",
+    "tenant_id",
+    "job_type",
+    "state",
+    "command_hash",
+    "attempt",
+    "max_attempts",
+    "progress",
+    "queued_at"
+  ],
+  "properties": {
+    "schema_ref": {
+      "$comment": "A const, the envelope idiom. A reader holding a stored row has to know which grammar it is reading before it can check anything in it.",
+      "const": "urn:datacompany:durable-job:1"
+    },
+    "job_id": {
+      "$comment": "This job's own identity. Section 09 says IDs are opaque UUIDs; a retry is a new attempt under this same id, never a second job.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "tenant_id": {
+      "$comment": "The owning tenant. Required and never null: section 13.6.2 forbids binding a global operation to an empty tenant value, so a job with no tenant is not expressible rather than silently global.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "job_type": {
+      "$comment": "Which registered command this job runs. A canonical type token, so the value space is the fleet's and not one service's spelling.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "state": {
+      "$comment": "The externally visible state. See authoring decision 2 -- `cancel_requested` is deliberately absent.",
+      "enum": ["queued", "running", "waiting", "succeeded", "failed", "cancelled"]
+    },
+    "command_hash": {
+      "$comment": "Binds the job to its exact command. Section 13.3.2 requires RFC 8785 canonicalisation for command, idempotency and input-snapshot hashes; a service that invents a local JSON sorting recipe produces a hash no other service can reproduce.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "input_snapshot_hash": {
+      "$comment": "The inputs as they stood when the job was enqueued, where the command reads any. Same canonicalisation as `command_hash`.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "idempotency_key": {
+      "$comment": "The caller's key, when one was supplied. Uniqueness is scoped per service and is not expressible in a document grammar; this member only says the key was recorded.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "profile_version": {
+      "$comment": "The profile pinned at enqueue time, so a later profile change cannot retroactively reinterpret a finished run.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "capability_version": {
+      "$comment": "The capability version the worker claimed under. Section 13.6.4 records it at claim time precisely so an attempt can be read back against the code that ran it.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "pack_refs": {
+      "$comment": "References to the packs in force. References, never pack contents -- section 13.6.1 keeps operational rows to IDs, hashes and authorized refs.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 512 },
+      "maxItems": 64,
+      "uniqueItems": true,
+      "x-datacompany-array": { "kind": "set", "order_key": [""] }
+    },
+    "correlation_id": {
+      "$comment": "The correlation this job belongs to. Excluded from `command_hash` by section 13.3.2, because a retry under a new correlation is the same command.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "causation_id": {
+      "$comment": "What caused this job. Same exclusion from the hash as `correlation_id`.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "workflow_ref": {
+      "$comment": "The workflow step that enqueued this, where one did.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "originating_subject_id": {
+      "$comment": "WHO asked, as a reference. Section 09 derives actor and tenant from authentication and never accepts them as authoritative body fields; this records the derived subject and carries no credential.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject"
+    },
+    "originating_actor_role": {
+      "$comment": "The role that subject held. A reference to a role name, not an entitlement grant.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "attempt": {
+      "$comment": "How many attempts have been started. Zero for a job that has never been claimed; monotonic thereafter.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "max_attempts": {
+      "$comment": "The attempt ceiling from the retry policy. At least one: a job that may never be attempted is not a job.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "worker_id": {
+      "$comment": "The lease holder. Present exactly while a lease is held; the reaper clears it when a lease expires. See authoring decision 4.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 127
+    },
+    "lease_expires_at": {
+      "$comment": "When this lease stops being valid. Bounded by service configuration, which this document deliberately does not pin.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "heartbeat_at": {
+      "$comment": "The last heartbeat from the holder. A heartbeat extends the lease; it does not re-grant it.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "cancel_requested_at": {
+      "$comment": "When cancellation was requested. Intent cannot be withdrawn, so this member only ever appears.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "cancel_requested_by": {
+      "$comment": "Who requested cancellation, as a subject reference. Both-or-neither with `cancel_requested_at`: a request with no requester is not attributable and is refused here rather than stored.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject"
+    },
+    "waiting_reason": {
+      "$comment": "The typed reason a job cannot progress. Section 13.6.4 requires it on entering `waiting`, and requires that entering `waiting` never retains a human credential -- so this is a token, not a message.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "waiting_dependency_ref": {
+      "$comment": "The dependency or provider attempt being waited on, as a reference.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "reconcile_after": {
+      "$comment": "When a reconciler should look again. An instant, not a duration: a duration is only meaningful relative to a write time the reader may not have.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "callback_state": {
+      "$comment": "How the callback to the originating system stands. Section 13.10.2 is emphatic that callback delivery is never proof of application, so this is a delivery fact and never a domain outcome.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "progress": {
+      "$comment": "Bounded structured facts only. See authoring decision 5 -- never full licensed text, never an unbounded array.",
+      "type": "object"
+    },
+    "result_summary": {
+      "$comment": "The terminal result as bounded facts. Anything large is a ref in `result_artifact_ref`, never inlined here.",
+      "type": "object"
+    },
+    "result_artifact_ref": {
+      "$comment": "The immutable artifact holding the real output. A ref, never an expiring URL -- section 13.3.2 is explicit.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "run_manifest_ref": {
+      "$comment": "The run manifest for this execution, where the job type produces one.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "error_code": {
+      "$comment": "The typed failure. Required exactly when `state` is `failed` -- see authoring decision 3 -- so a failed job can never be untriageable.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "error_detail": {
+      "$comment": "A bounded diagnostic. Capped at 512 characters to match the live constraint, because an uncapped detail field is where licensed text leaks into an operational table.",
+      "type": "string",
+      "maxLength": 512
+    },
+    "queued_at": {
+      "$comment": "When the job entered the queue. Always present: every job was queued, including one already terminal.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "started_at": {
+      "$comment": "When the first attempt started. Absent for a job never claimed.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "terminal_at": {
+      "$comment": "When the job reached a terminal state. Required exactly when `state` is terminal; see authoring decision 3.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    }
+  },
+  "additionalProperties": false,
+  "dependentRequired": {
+    "cancel_requested_at": ["cancel_requested_by"],
+    "cancel_requested_by": ["cancel_requested_at"],
+    "waiting_dependency_ref": ["waiting_reason"]
+  },
+  "allOf": [
+    {
+      "$comment": "Terminality, in the grammar. A terminal state without the instant it became terminal is the row that proves the writer skipped the transition guard.",
+      "if": { "properties": { "state": { "enum": ["succeeded", "failed", "cancelled"] } }, "required": ["state"] },
+      "then": { "required": ["terminal_at"] },
+      "else": { "not": { "required": ["terminal_at"] } }
+    },
+    {
+      "$comment": "A failed job names its failure. Section 13.6.4 gives `error_code` as the typed outcome; without this rule `failed` with no code validates and nothing downstream can route it.",
+      "if": { "properties": { "state": { "const": "failed" } }, "required": ["state"] },
+      "then": { "required": ["error_code"] }
+    },
+    {
+      "$comment": "Waiting declares why and when to look again -- both, per section 13.6.4. A `waiting` row missing either is a job nothing will ever reconcile.",
+      "if": { "properties": { "state": { "const": "waiting" } }, "required": ["state"] },
+      "then": { "required": ["waiting_reason", "reconcile_after"] }
+    }
+  ],
+  "$defs": {
+    "sealed": {
+      "$comment": "The closed form, for a consumer that composes this document into a larger one and still wants unknown members refused.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

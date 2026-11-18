@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:evidence-location-candidate:1",
+  "title": "EvidenceLocationCandidateV1",
+  "description": "FND-002 task 4: the pre-registration proposal a deriving context submits to Ingestion/Documents (document 16 section 7.2 lines 838-843). It is the registered location minus its identity, plus the provenance of the derivation that produced it. Ingestion validates it against authoritative source bytes and manifests and either returns an existing identical registered location or creates a new immutable one; the candidate itself is never a canonical reference and never authorizes anything.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/candidate_fields" },
+    {
+      "$comment": "The same exclusive alternative the registered location carries (document 16 line 839, 'the proposed document_version_ref or artifact_ref', and line 859). Stated here rather than inherited, because the candidate composes no part of the registered location's envelope and there is nothing to inherit it from.",
+      "oneOf": [
+        {
+          "required": ["document_version_ref"],
+          "not": { "required": ["artifact_ref"] }
+        },
+        {
+          "required": ["artifact_ref"],
+          "not": { "required": ["document_version_ref"] }
+        }
+      ]
+    },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/selector_fields" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/document_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/tabular_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/media_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/transcript_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/notebook_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/code_selector_guard" }
+  ],
+  "unevaluatedProperties": false,
+  "$comment": "IMP-DEC-FND002-039 records why this composes NO identity, version or pin envelope: document 16 line 841 says the candidate 'has no evidence_location_id, no canonical reference status, and no authorization meaning', and every one of owner_context, entity_id, version_id, version_number, schema_ref and content_hash is a statement of exactly the canonical reference status it is denied. unevaluatedProperties: false is what refuses them, and it refuses evidence_location_id by the same mechanism rather than by a special case. IMP-DEC-FND002-040 records the name and shape taken for derivation provenance, which is the one member of this document that the corpus names in prose and spells nowhere. selection_digest is refused here for the reason implementation-plans/13-hirag-service.md line 367 gives -- a deriving context must 'not emit the receipt-only selection_digest' -- and the identical refusal on the registered location is IMP-DEC-FND002-035. The selector union arrives by $ref from locator-selector:1, so a candidate and the location it becomes cannot disagree about what a selector is; and the global/tenant conditional inside every composed ref is byte-identical at depth here too, because it arrives by $ref rather than being restated.",
+  "$defs": {
+    "candidate_fields": {
+      "$comment": "Document 16 line 838-840: 'the proposed document_version_ref or artifact_ref, selector type/value/schema, coordinate manifest, optional quoted-text digest, language, and derivation provenance'. selector_type and selector are declared by locator-selector:1#/$defs/selector_fields and are not restated here. Only the quoted-text digest is marked optional in that sentence; coordinate_manifest_ref is optional because document 16 line 851 marks it so on the registered location and IMP-DEC-FND002-038 keeps the two documents in step.",
+      "type": "object",
+      "required": ["selector_schema_ref", "language", "derivation_provenance_refs"],
+      "properties": {
+        "document_version_ref": {
+          "$ref": "urn:datacompany:typed-refs:1#/$defs/document_version_ref"
+        },
+        "artifact_ref": { "$ref": "urn:datacompany:typed-refs:1#/$defs/artifact_ref" },
+        "selector_schema_ref": { "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref" },
+        "coordinate_manifest_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "quoted_text_digest": {
+          "$comment": "Document 16 lines 861-863. The producer emits it only when it can reproduce the selector schema's versioned canonical-text digest profile, which is what makes it optional rather than a member a producer may simply omit.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest"
+        },
+        "language": { "$ref": "urn:datacompany:release-ref:1#/$defs/bcp47_locale" },
+        "derivation_provenance_refs": {
+          "$comment": "IMP-DEC-FND002-040. Document 16 line 840 names 'derivation provenance' and spells no member; implementation-plans/13-hirag-service.md line 379 names 'derivation trace metadata' and spells none either. Taken as a NON-EMPTY set of exact pins, composed from the released set_of_pins, because implementation-plans/13-hirag-service.md lines 361-362 say the derivation runs 'from the immutable block, decomposition, source-version and selector mapping' -- four exact immutable inputs, which is what a set of pins is. minItems sits beside the composed $ref rather than replacing it: an empty set would record that a candidate was derived from nothing.",
+          "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins",
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

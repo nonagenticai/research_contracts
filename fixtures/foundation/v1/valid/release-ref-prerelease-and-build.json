@@ -1,0 +1,6 @@
+{
+  "fixture_id": "release-ref-prerelease-and-build",
+  "schema_ref": "urn:datacompany:release-ref:1#/$defs/release_ref",
+  "rationale": "The SemVer 2.0.0 grammar in full: a prerelease chain and build metadata. A hand-rolled three-number pattern would reject this.",
+  "instance": "systematic-review@2.0.0-rc.1.alpha+build.20260730"
+}

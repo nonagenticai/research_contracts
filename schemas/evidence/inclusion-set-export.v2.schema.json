@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:inclusion-set-export:2",
+  "title": "InclusionSetExportV2",
+  "description": "The sealed inclusion-set export MANIFEST of a completed evidence review: which review, which locked protocol version, which sealed corpus version, the screening-flow counts, how many items the export carries, and -- new in :2 -- the canonical hash of the items themselves. It is the exact instance evidence_review_service seals with the released content-hash algorithm (repository evidence_review_service, src/application/services/flow.py, create_export -- the manifest, not the enclosing envelope, is what is hashed). The included-record and omission arrays are still NOT members: they remain the payload. What changes in :2 is that the manifest now CARRIES A HASH OF THEM, so the sealed envelope and the items it describes can no longer be separated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "tenant_id",
+    "flow_revision_number",
+    "protocol_version_id",
+    "protocol_content_hash",
+    "corpus_version_id",
+    "member_manifest_hash",
+    "counts",
+    "canonical_counts_hash",
+    "included_count",
+    "omissions_count",
+    "items_hash",
+    "shadow_mode",
+    "schema_ref"
+  ],
+  "$comment": "WHY :2 EXISTS, AND WHY IT IS A VERSION RATHER THAN A PATCH. :1 sealed the envelope and left the cargo loose. Its own $comment says so plainly -- 'the included-record and omission arrays are deliberately NOT members' -- and the reasoning was sound for what it was solving: two hashes that can never be substituted for one another. What it did not notice is that NOTHING then sealed the items. payload_digest lives in an ordinary sibling column of the producing service's inclusion_exports table; it is not inside the manifest and no signature covers it. MEASURED, and pinned as a passing test in evidence_review_service before this document existed (tests/security/test_export_verification_outcomes.py): rewrite the title of an included record in the stored payload, recompute payload_digest over the edited bytes, leave the counts untouched -- manifest_matches true, payload_matches true, counts_match true, verified TRUE, for an inclusion set naming a study that is not the study the reviewers screened. In a regulated evidence review the export IS the artefact; a seal that certifies the envelope and not the records is a seal that certifies nothing anyone cares about. items_hash closes it by carrying a canonical hash of the two arrays INSIDE the manifest, where the content-hash algorithm already reaches. It cannot be added to :1 because :1 is released with additionalProperties: false and refuses the member outright -- widening a released contract in place would silently change what every already-sealed :1 hash meant. FIVE AUTHORING CONSTRAINTS ARE NOT STYLE, THEY ARE THE ONLY WAY THIS RESOLVES. (1) The $id is a URN and could never be an HTTPS URL: derive_hash_profile validates the derived manifest, whose schema_ref member is the released stable-identity grammar '^urn:datacompany:[a-z][a-z0-9-]*:[1-9][0-9]*$', so a URL-shaped reference is refused before a single byte is hashed. (2) The file sits in schemas/evidence/ because canonical/registry.py globs the canonical tier plus exactly six named foundation directories; a new directory would be invisible to the registry and the $id would resolve to nothing, which is the fallback again with extra steps. (3) protocol_version_id and protocol_content_hash are nullable UNIONS rather than optional members, because the released profile fixes absent_vs_null to 'distinct': an explicit null is KEPT in the hash view and hashed, so 'absent' and 'null' are two different digests and a schema that made them interchangeable would let one export produce two canonical hashes. (4) schema_ref composes the released grammar rather than pinning a const of this document's own $id. A const would be the stronger statement about instances and is deliberately not made here: tests/test_schema_ref_resolution.py sweeps the corpus for exactly the const spelling and pins the resulting population as an equality, so a const here would move a count that is measuring something else. (5) items_hash is a required member and NOT nullable, unlike protocol_version_id beside it. There is no such thing as an export with no items to hash: a review with an empty inclusion set still has an omissions array, and the two-member object is always constructible. A nullable items_hash would give a producer a legal way to seal an export that binds nothing, which is the state :2 exists to make unreachable. THERE ARE STILL NO ARRAYS ANYWHERE IN THIS MANIFEST, which is why no x-datacompany-array declaration appears: the two collections the export carries live in the payload, and :2 adds a hash OF them, not the collections themselves -- items_hash is a string. Every object member is declared one by one, and the single subtree that cannot be -- the exclusion-reason tally -- is marked opaque at its own node rather than by leaving the rule silent, because silence is what the declare-none-or-declare-all rule exists to refuse.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review whose inclusion set this is. Composed from the released uuid primitive rather than respelled.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "tenant_id": {
+      "$comment": "The tenant the exporting actor acted inside. Deliberately a bounded opaque string and NOT the released uuid: the producing service carries tenant_id as a free-form authenticated-context string, and narrowing it to a UUID here would refuse real exports and drop them straight back onto the unvalidated fallback this document exists to retire. It is also deliberately NOT the released resource_tenant_id, which is meaningful only beside a resource_scope discriminator this manifest does not carry.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "flow_revision_number": {
+      "$comment": "Which revision of the derived screening flow this export was taken against. Composed from the released version_number so the exact-IEEE-754-double bound arrives with it: a counter beyond that range has no stable canonical form and could never be hashed, and the boundary must not accept an instance the hash algorithm cannot process.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    },
+    "protocol_version_id": {
+      "$comment": "The locked protocol version in force, or null when the review has no active protocol. Required-and-nullable, never optional: see constraint (3) in the document $comment.",
+      "oneOf": [{ "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" }, { "type": "null" }]
+    },
+    "protocol_content_hash": {
+      "$comment": "The content hash of that protocol version, or null on the same condition and for the same reason. The grammar arrives by $ref from the released content_hash; it is never respelled, so it cannot drift from the primitive every other document composes.",
+      "oneOf": [
+        { "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash" },
+        { "type": "null" }
+      ]
+    },
+    "corpus_version_id": {
+      "$comment": "The sealed corpus version the inclusion set was derived from.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "member_manifest_hash": {
+      "$comment": "The corpus version's own member-manifest hash, carried so a consumer can bind this export to the exact membership it was taken over without re-reading the corpus.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "counts": {
+      "$comment": "The screening-flow tallies. A nested object rather than eleven flattened members, because the producing service derives them as one block and hashes that block on its own as canonical_counts_hash below.",
+      "$ref": "#/$defs/flow_counts"
+    },
+    "canonical_counts_hash": {
+      "$comment": "The canonical hash the producing service computes over the counts block alone (repository evidence_review_service, src/domain/policies/flow_derivation.py). It is carried IN the hash view, not excluded: it is a hash of a DIFFERENT object, not this manifest's own content hash, so removing it would be removing evidence rather than avoiding a self-reference.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "included_count": {
+      "$comment": "How many records the payload's included list carries. Redundant with the payload by construction, and that is the point: an export whose manifest and payload disagree is detectable without trusting either.",
+      "$ref": "#/$defs/tally"
+    },
+    "omissions_count": {
+      "$comment": "How many omissions the payload enumerates. Every record that is not included is an omission and is listed explicitly; an absent or abbreviated list would be an assertion that nothing was left out.",
+      "$ref": "#/$defs/tally"
+    },
+    "items_hash": {
+      "$comment": "THE MEMBER :2 EXISTS FOR. The canonical hash of the export's two item arrays, carried inside the sealed manifest so that the seal is item-sensitive. WHAT IS HASHED, EXACTLY -- and this spelling is the contract, because a consumer who guesses differently gets a different digest and reads a sound export as forged: the object {\"included\": <the included array, verbatim>, \"omissions\": <the omissions array, verbatim>}, with those two members and no others, serialized as RFC 8785 canonical JSON and SHA-256'd; i.e. research_contracts.canonical.engine.canonical_sha256 applied to that two-member object. Array ORDER is part of the hash and is not re-sorted: the producer emits included sorted by review_record_id and omissions as records-then-quarantine, each block sorted by its own id, and a consumer hashes what it received. WHY A BARE CANONICAL HASH AND NOT compute_content_hash AGAINST A DECLARED ITEMS CONTRACT: the same reason canonical_counts_hash beside it is one. This member is a hash of a DIFFERENT document, carried as evidence; the algorithm that seals THIS manifest is still the full ordered content-hash algorithm, and it now covers the items transitively. Declaring the item arrays as their own released contract is a strictly stronger statement and is deliberately deferred rather than smuggled in here -- it would validate the items as well as bind them, which is a separate claim needing its own gates. WHAT THIS CLOSES, measured against :1: the item arrays sat outside the manifest and payload_digest was an ordinary sibling column that nothing sealed, so rewriting a record IN PLACE, recomputing payload_digest and leaving the counts alone reproduced every check and the export still answered verified. included_count and omissions_count catch a record being ADDED or REMOVED; only a hash catches one being SUBSTITUTED. NOT USING JSON.stringify: an integral float renders as 1.0 in Python and 1 in ECMAScript, so a JavaScript consumer must use the released canonicaliser, not the built-in serializer -- this is the identical defect discovery-engine #56 fixed at its own seal.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    },
+    "shadow_mode": {
+      "$comment": "Whether this export was produced while the deriving stage was running in shadow. It is a property OF the export and belongs in the sealed manifest: an export that silently changed its shadow status after the fact would otherwise reproduce the same hash.",
+      "type": "boolean"
+    },
+    "schema_ref": {
+      "$comment": "The contract this manifest declares itself against. The released grammar, composed rather than pinned as a const -- see constraint (4) in the document $comment.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref"
+    }
+  },
+  "$defs": {
+    "tally": {
+      "$comment": "A non-negative count. The upper bound is the exact IEEE-754 double range, for the same reason the released version_number states it: RFC 8785 serializes numbers with the ECMAScript Number::toString algorithm, so a larger integer has no stable canonical form and the boundary must never accept a value the canonical hash algorithm could not serialize. Deliberately NOT the released version_number itself, whose minimum is 1: a tally of zero is a real and common measurement, and 'no records were quarantined' must be expressible.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740992
+    },
+    "flow_counts": {
+      "$comment": "The eleven screening-flow tallies the producing service derives, plus the per-reason exclusion breakdown. Sealed with additionalProperties: false: the conservation identities the producer checks (identified_total = quarantined + rejected + records_total; records_total = duplicates_removed + records_screened + not_yet_screened; records_screened = included + excluded + uncertain) are arithmetic over exactly these members, and a twelfth tally arriving unnoticed would make the sealed block say something the identities were never checked against. The identities themselves are NOT restated as released cross-field rules: the rule vocabulary has no arithmetic operator, so declaring them here would be inventing one, and the producer already refuses to derive a flow that violates them.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identified_total",
+        "quarantined",
+        "rejected",
+        "records_total",
+        "duplicates_removed",
+        "records_screened",
+        "not_yet_screened",
+        "included",
+        "excluded",
+        "uncertain",
+        "adjudicated",
+        "exclusion_reasons"
+      ],
+      "properties": {
+        "identified_total": {
+          "$comment": "Everything the imports identified, before any triage.",
+          "$ref": "#/$defs/tally"
+        },
+        "quarantined": {
+          "$comment": "Import rows held back from becoming records.",
+          "$ref": "#/$defs/tally"
+        },
+        "rejected": {
+          "$comment": "Import rows refused outright.",
+          "$ref": "#/$defs/tally"
+        },
+        "records_total": {
+          "$comment": "Rows that became records.",
+          "$ref": "#/$defs/tally"
+        },
+        "duplicates_removed": {
+          "$comment": "Records removed by deduplication before screening.",
+          "$ref": "#/$defs/tally"
+        },
+        "records_screened": {
+          "$comment": "Records that reached a screening disposition.",
+          "$ref": "#/$defs/tally"
+        },
+        "not_yet_screened": {
+          "$comment": "Records still awaiting a disposition. An export is refused while this is non-zero, so a sealed manifest carrying a non-zero value would itself be evidence of a bypass -- which is exactly why the member stays in the hash view rather than being dropped as always-zero.",
+          "$ref": "#/$defs/tally"
+        },
+        "included": {
+          "$comment": "Records screened in.",
+          "$ref": "#/$defs/tally"
+        },
+        "excluded": {
+          "$comment": "Records screened out, broken down by reason code below.",
+          "$ref": "#/$defs/tally"
+        },
+        "uncertain": {
+          "$comment": "Records screened to neither bucket.",
+          "$ref": "#/$defs/tally"
+        },
+        "adjudicated": {
+          "$comment": "Records whose disposition came from an adjudication rather than from agreeing reviewers.",
+          "$ref": "#/$defs/tally"
+        },
+        "exclusion_reasons": {
+          "$comment": "The per-reason breakdown of the excluded bucket: reason code -> tally. THE ONE MEMBER SET THAT CANNOT BE DECLARED, because the keys are the review's own configured exclusion reason codes and no fixed vocabulary exists to enumerate. MEASURED against this repository's engine: without x-datacompany-hash-opaque this subtree raises UndeclaredPathError the moment any reason code is present, because the released rule is declare-none-or-declare-all and silence is not a third option. With it, the subtree is hashed exactly as it arrives, member by member -- which is the correct semantics here and not merely the one that works: every reason code and every tally still reaches the digest, so changing one changes the seal. Opacity is inherited by the whole subtree and is revoked by a DECLARED member, so no member of this object is declared: additionalProperties constrains each tally's TYPE without contributing a declared pointer, which is what keeps the opacity intact. propertyNames is deliberately left unconstrained rather than narrowed to the released canonical_type_token: that primitive carries a negative guard, an over-narrow key grammar would refuse a legitimate export outright, and a refused export falls back to the unvalidated bare digest -- the precise failure this document was authored to end.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/tally" },
+          "x-datacompany-hash-opaque": true
+        }
+      }
+    }
+  }
+}

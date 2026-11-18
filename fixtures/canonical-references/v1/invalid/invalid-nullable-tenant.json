@@ -1,0 +1,21 @@
+{
+  "fixture_id": "invalid-nullable-tenant",
+  "description": "A nullable tenant ID may never stand in for the scope XOR.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "resource_tenant_id"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "d8ff78d7-7cd7-bd99-be78-2e0bf170616f",
+    "version_id": "fe143869-1af4-0e03-3b6f-c27f9f15f7bb",
+    "version_number": 3,
+    "resource_scope": "tenant",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:e31de1ad143062105015b88a47e8b0c96d1e6dc53a555b8d87afdbe13640eb40",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "resource_tenant_id": null
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "fixture_id": "registered-singleton-ref",
+  "description": "The document 16 singleton rule for an intrinsically immutable owner type: entity_id == version_id and version_number == 1, declared by the registered owner adapter and never invented by a consumer.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1#/$defs/singleton",
+  "expect": "valid",
+  "instance": {
+    "owner_context": "run-registry",
+    "entity_type": "analysis_run",
+    "entity_id": "e234ee35-f82c-5dd3-f2f2-0ef0835225e3",
+    "version_id": "e234ee35-f82c-5dd3-f2f2-0ef0835225e3",
+    "version_number": 1,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:analysis-run:1",
+    "content_hash": "sha256:e234ee35f82c5dd3f2f20ef0835225e326805e56b5fe83ee5e56c0f899f4901d",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

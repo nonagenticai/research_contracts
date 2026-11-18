@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:evidence-location-version:1",
+  "title": "EvidenceLocationVersionV1",
+  "description": "FND-002 task 4: the rights-neutral exact locator into an immutable document or artifact (document 16 section 7.2). Ingestion/Documents owns registration and validation of this record; other contexts may derive a candidate but only Ingestion registers the canonical location against the authoritative source version. The $id is fixed by the released fixture typed-ref-evidence-location and by typed-refs:1#/$defs/evidence_location_ref, which pins this exact URN.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "urn:datacompany:identity-ref:1#/$defs/identity_ref_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" },
+    { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/pin_fields" },
+    { "$ref": "#/$defs/evidence_location_fields" },
+    {
+      "$comment": "Document 16 section 7.2 line 859: 'Exactly one of document_version_ref and artifact_ref is present.' Declared as a oneOf over two constraint-only branches rather than as a released cross-field rule: the rule vocabulary has no exclusive-or operator, and a rule declared in a branch of this document would be collected unconditionally and evaluated for every instance. Both directions are refused here -- neither present, and both present.",
+      "oneOf": [
+        {
+          "required": ["document_version_ref"],
+          "not": { "required": ["artifact_ref"] }
+        },
+        {
+          "required": ["artifact_ref"],
+          "not": { "required": ["document_version_ref"] }
+        }
+      ]
+    },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/selector_fields" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/document_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/tabular_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/media_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/transcript_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/notebook_selector_guard" },
+    { "$ref": "urn:datacompany:locator-selector:1#/$defs/code_selector_guard" }
+  ],
+  "unevaluatedProperties": false,
+  "x-datacompany-cross-field": [
+    {
+      "rule": "equal",
+      "name": "evidence_location_id_is_the_typed_alias_of_entity_id",
+      "scope": "relative",
+      "$comment": "IMP-DEC-FND002-034. Document 16 lines 232-235 permit one typed alias for a generic envelope field and require that 'The schema maps that alias explicitly and MUST NOT allow both names with different values.' JSON Schema cannot compare two members, so the mapping is stated as a released equality rather than left to prose. Both operands are required members, so `equal` is the correct operator: `equal_when_both_present` would hold by vacuity if either were dropped.",
+      "left": "/evidence_location_id",
+      "right": "/entity_id"
+    }
+  ],
+  "$comment": "IMP-DEC-FND002-033 records why this composes identity_ref_fields + resource_scope_conditional + pin_fields -- the ten-member shape every registered reference type uses -- rather than immutable-version:1's version_fields, and what that costs. RIGHTS-NEUTRALITY IS STRUCTURAL, NOT CONVENTIONAL (IMP-DEC-FND002-035): document 16 section 7.2 lines 867-868 state that this record 'contains no current right, actor, requested action, requested use basis, expiring URL, or rendered bytes'; implementation-plans/13-hirag-service.md line 367 adds that selection_digest is receipt-only; implementation-plans/11-ingestion-documents.md line 122 adds that no object or storage key is ever accepted, BY ANALOGY with byte staging rather than directly -- the register records that citation as an inference; and implementation-plans/05-guideline-registry-8814.md lines 1086-1087 add the NINTH, 'never hash the expiring/current authorization receipt back into the location or recommendation version', which matters most of all here because content_hash is computed over this record's own composed hash view, so a receipt carried here would bind an expiring authorization into an immutable locator permanently. All nine are refused by unevaluatedProperties: false rather than by an author remembering not to add them. THAT KEYWORD IS NOT A GENERAL GUARANTEE AGAINST AN ACTOR: it refuses a member no composed subschema evaluated, and it is powerless against one a composed $ref DECLARES. The composed identity_ref_fields carries exactly owner_context, entity_type, entity_id, resource_scope and resource_tenant_id -- five members, no created_by -- and that is a MEASURED fact pinned by an equality in tests/test_foundation_schemas.py (COMPOSED_MEMBERS) rather than a property of the keyword: adding created_by to identity_ref_fields makes an actor-bearing location VALID, which is exactly what the pin exists to catch. IMP-DEC-FND002-036 records why document 10 section 2.5 line 209's selection_hash is NOT carried here, and IMP-DEC-FND002-041 records that the EvidenceResolutionReceipt its compatibility mapping routes to is DEFERRED and unreleased. IMP-DEC-FND002-037 records the disagreement between this repository's released table-cell-locator-ref fixture and the corpus, which is unanimous the other way. IMP-DEC-FND002-038 records coordinate_manifest_ref staying optional. IMP-DEC-FND002-043 accounts for every member of document 10's illustrative JSON, including asset_type and source_record_id, which no released member implements. THE SELECTOR UNION ARRIVES BY $REF from locator-selector:1, so this document and evidence-location-candidate:1 carry ONE union rather than two copies, and the scope/tenant conditional inside every composed ref is byte-identical at every nesting depth because it too arrives by $ref.",
+  "$defs": {
+    "evidence_location_fields": {
+      "$comment": "The type-specific members document 16 section 7.2 lines 846-853 names, on top of the envelope that arrives by $ref. selector_type and selector are declared by locator-selector:1#/$defs/selector_fields and are not restated here.",
+      "type": "object",
+      "required": ["evidence_location_id", "selector_schema_ref", "language"],
+      "properties": {
+        "evidence_location_id": {
+          "$comment": "Document 16 line 846. The typed alias of entity_id under document 16 lines 232-235; the released equality above is the explicit mapping that citation demands.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid",
+          "readOnly": true
+        },
+        "document_version_ref": {
+          "$comment": "Document 16 line 847, first alternative. Composed from typed-refs:1 so the ten-member pinned shape and its schema_ref const arrive by $ref rather than being restated.",
+          "$ref": "urn:datacompany:typed-refs:1#/$defs/document_version_ref"
+        },
+        "artifact_ref": {
+          "$comment": "Document 16 line 847, second alternative. Document 16 section 14.5 forbids a raw storage key inside it, which pinned-version-ref:1's own unevaluatedProperties: false already refuses.",
+          "$ref": "urn:datacompany:typed-refs:1#/$defs/artifact_ref"
+        },
+        "selector_schema_ref": {
+          "$comment": "Document 16 line 850 and line 859: 'A selector declares its selector schema/version.' The released schema_ref grammar, so a selector schema is named the same way every other schema in this contract is.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref"
+        },
+        "coordinate_manifest_ref": {
+          "$comment": "Document 16 line 851 marks it optional; lines 859-861 and implementation-plans/11-ingestion-documents.md lines 272-273 require Ingestion to validate it against the asset type and exact source version. IMP-DEC-FND002-038: optional stays, because 'validate it when it is there' is a registration obligation and not a shape constraint, and a selector kind that depends on no coordinate manifest has none to name.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "quoted_text_digest": {
+          "$comment": "Document 16 lines 852 and 861-863: it 'uses the selector schema's versioned canonical-text digest profile; it is present only when the candidate producer can reproduce that profile', which is why it is optional. The released payload_digest is the exact-byte digest grammar; it is deliberately NOT content_hash, which attests a canonical metadata envelope.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest"
+        },
+        "language": {
+          "$comment": "Document 16 line 853, with the tag grammar from document 16 line 922: 'Language tags use BCP 47.' Composed from the released bcp47_locale rather than respelled.",
+          "$ref": "urn:datacompany:release-ref:1#/$defs/bcp47_locale"
+        },
+        "content_hash": {
+          "$comment": "NARROWED, not restated: the grammar still arrives by $ref from the released content_hash, and only the hash-view annotation is added. pin_fields declares content_hash as a PINNED TARGET's hash, which stays inside the enclosing hash view; at the root of a record the same member is the record's OWN hash and has to be removed from its own view and recomputed, exactly as immutable-version:1 declares it. Without this the derived profile leaves /content_hash included and computing the record's content hash depends on the value it produces. Measured: derive_hash_profile listed four resolution_observation exclusions and no own_content_hash entry until this was added. IMP-DEC-FND002-033 records the composition that makes the narrowing necessary.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash",
+          "readOnly": true,
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "own_content_hash"
+        }
+      }
+    }
+  }
+}

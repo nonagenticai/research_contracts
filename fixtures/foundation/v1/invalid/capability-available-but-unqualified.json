@@ -1,0 +1,22 @@
+{
+  "fixture_id": "capability-available-but-unqualified",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "The silent-substitution shape: an unqualified method reporting itself available. Document 20 section 8 and scientific processor section 9 forbid the behaviour; this makes the RECORD that would describe it unrepresentable.",
+  "expected_error_contains": [
+    "qualified"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/qualified",
+      "keyword": "const"
+    }
+  ],
+  "instance": {
+    "capability_id": "network_meta_analysis",
+    "installed": true,
+    "enabled": true,
+    "qualified": false,
+    "available": true,
+    "required_for_publication": true
+  }
+}

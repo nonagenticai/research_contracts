@@ -1,0 +1,10 @@
+{
+  "fixture_id": "locator-selector-notebook-minimal",
+  "schema_ref": "urn:datacompany:locator-selector:1#/$defs/notebook_selector",
+  "rationale": "The notebook selector on its own, at its minimum: document 10 line 219 marks output_id optional and every other member required, and this instance omits exactly that one. It targets the $def rather than a whole location so the branch body is exercised as a shape in its own right, which is what the guards narrow selector to.",
+  "instance": {
+    "notebook_id": "analysis-nb",
+    "cell_id": "cell-9",
+    "cell_version": "2026-07-30T09:00:00Z-3"
+  }
+}

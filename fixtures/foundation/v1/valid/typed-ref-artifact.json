@@ -1,0 +1,16 @@
+{
+  "fixture_id": "typed-ref-artifact",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/artifact_ref",
+  "rationale": "IMP-DEC-FND002-019. Document 16 section 14.5: an ArtifactRef points to an immutable object/version/hash and never a raw storage key. The pin is exactly that and nothing more; the sibling members the same sentence names are carried by the enclosing slot, which typed-ref-artifact-slot-carries-its-siblings-beside-the-ref pins and typed-ref-artifact-carrying-slot-members-inline refutes the other reading of.",
+  "instance": {
+    "owner_context": "artifact-storage",
+    "entity_type": "artifact_version",
+    "entity_id": "44444444-4444-4444-8444-444444444444",
+    "version_id": "55555555-5555-4555-8555-555555555555",
+    "version_number": 7,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:artifact-version:1",
+    "content_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

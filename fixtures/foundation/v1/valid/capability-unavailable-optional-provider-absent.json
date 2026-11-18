@@ -1,0 +1,15 @@
+{
+  "fixture_id": "capability-unavailable-optional-provider-absent",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "An absent OPTIONAL provider. Document 09 section 3.4: this appears here and does not make the base service unready.",
+  "instance": {
+    "capability_id": "survival_extrapolation",
+    "installed": true,
+    "enabled": true,
+    "qualified": true,
+    "available": false,
+    "unavailable_reason": "optional_provider_absent",
+    "required_for_publication": false,
+    "provider_health": "absent"
+  }
+}

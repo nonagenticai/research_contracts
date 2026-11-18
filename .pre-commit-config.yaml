@@ -1,0 +1,135 @@
+# Pre-commit hooks
+# Install: pre-commit install -t pre-commit -t pre-push
+# Run all: pre-commit run --all-files
+#
+# Every hook here must also exist as a CI step. A local gate that is stricter
+# than CI cannot pass and only teaches `--no-verify`.
+#
+# That rule is now EXECUTABLE: tests/test_precommit_ci_parity.py asserts it in
+# both directions. It was prose only until 2026-07-30, and prose does not fail --
+# the seven `pre-commit-hooks` entries below had no CI step at all.
+#
+# Worse than the inversion the rule warns about: `.git/hooks/pre-commit` in this
+# repository is the FLEET ruff+ty script (gitops-production/scripts/hooks/), not
+# the pre-commit framework, so this config never ran automatically either. Those
+# seven checks executed NOWHERE -- not on commit, not in CI. CI now runs them.
+#
+# Installing this config as the real hook is a separate, still-open question: the
+# fleet installer owns .git/hooks/pre-commit, so chaining the two is an archetype
+# change, not a repository one.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # `trailing-whitespace` and `end-of-file-fixer` used to be here. Both REWRITE
+  # tracked files, and neither existed as a CI step — the same
+  # local-stricter-than-CI inversion as the detect-secrets block below, in its
+  # most damaging form. `end-of-file-fixer` rewrote
+  # tests/fixtures/canonical-model.md, whose bytes are frozen on purpose and
+  # whose SHA-256 three records under examples/invalid/ assert: it turned 183
+  # bytes / sha256:d44f007a… into 182 bytes / sha256:e1a7c16a…, leaving a working
+  # tree whose digest reproduces exactly and exists in no revision. It also
+  # rewrote 28 other tracked files, so `pre-commit run --all-files` could not
+  # pass on main while CI was green.
+  #
+  # Replaced by the `file-hygiene` hook below, which asserts the same two
+  # properties, reports instead of writing, exempts the byte-frozen fixture from
+  # the whitespace rules and holds it to a stricter digest rule instead. The
+  # identical command is a CI step; tests/test_file_hygiene.py asserts the two
+  # entry points are one command and that the gate is falsifiable.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+
+  # The exclusion regex below is byte-identical to EXCLUDE_FILES in
+  # .github/workflows/ci-public.yml and to the pattern persisted in
+  # .detect-secrets-baseline.json; tests/test_secret_scanning.py asserts all three agree and
+  # that none of them excludes .github/workflows/.
+  #
+  # It used to differ in both directions: CI excluded ^.github/workflows/ (the
+  # one place people paste secrets) and this hook did not, which is a
+  # local-stricter-than-CI inversion — the thing that teaches `--no-verify`. The
+  # exclusion is expressed as --exclude-files, the flag detect-secrets itself
+  # reads, not as pre-commit's `exclude:`, so both entry points evaluate the same
+  # regex against the same paths.
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args:
+          - --baseline
+          - .detect-secrets-baseline.json
+          - --exclude-files
+          - '\.detect-secrets-baseline\.json$|^uv\.lock$'
+
+  - repo: local
+    hooks:
+      # Checks, never rewrites. `always_run` and `pass_filenames: false` are what
+      # make the hook and the CI step see one identical file set (the git index),
+      # so neither can be stricter than the other. The entry below is
+      # byte-identical to the `run:` of the corresponding step in
+      # .github/workflows/ci-public.yml; tests/test_file_hygiene.py asserts that.
+      - id: file-hygiene
+        name: file hygiene (trailing whitespace, final newline, frozen fixtures)
+        entry: uv run python scripts/check_file_hygiene.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: ty
+        name: ty type checking
+        entry: uv run ty check src/ scripts/ tests/ generated/
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: contract-gates
+        name: contract gates (lint + governance + canonical fixtures)
+        entry: bash -c 'uv run python scripts/lint_contracts.py && uv run python scripts/check_draft_governance.py && uv run python scripts/verify_canonical_fixtures.py && uv run python scripts/verify_foundation_fixtures.py && uv run python scripts/generate_types.py --check'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: pytest
+        name: pytest
+        entry: uv run pytest tests/ -q --tb=short
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: bandit
+        name: bandit security scan
+        entry: uv run bandit -q -r src/ scripts/ -ll
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: pip-audit
+        name: pip-audit security scan
+        entry: scripts/pip-audit.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+ci:
+  autofix_prs: false
+  autoupdate_schedule: monthly

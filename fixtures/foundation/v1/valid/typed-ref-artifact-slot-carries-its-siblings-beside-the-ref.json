@@ -1,0 +1,19 @@
+{
+  "fixture_id": "typed-ref-artifact-slot-carries-its-siblings-beside-the-ref",
+  "schema_ref": "urn:datacompany:run-manifest:1#/$defs/artifact_output",
+  "rationale": "The POSITIVE half of the artifact_ref $comment, made executable. Document 16 section 14.5 says an ArtifactRef 'carries its semantic role, classification, and rights snapshot', and the only reading that validates is the nested one: the enclosing slot is an object holding the ref under one member with the further members BESIDE it. artifact_output is the released instance of that shape -- payload_digest sits beside artifact_ref, not inside it -- and the ref it holds is a typed-refs:1 artifact_ref by construction, since its schema_ref is the pinned const. The inline reading is refused by typed-ref-artifact-carrying-slot-members-inline.",
+  "instance": {
+    "artifact_ref": {
+      "owner_context": "artifact-storage",
+      "entity_type": "artifact_version",
+      "entity_id": "44444444-4444-4444-8444-444444444444",
+      "version_id": "55555555-5555-4555-8555-555555555555",
+      "version_number": 7,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:artifact-version:1",
+      "content_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "payload_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666"
+  }
+}

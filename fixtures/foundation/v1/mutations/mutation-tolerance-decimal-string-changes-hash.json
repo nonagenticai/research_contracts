@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-tolerance-decimal-string-changes-hash",
+  "base_fixture": "run-manifest-all-nine-groups",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/method/tolerance_policy",
+      "value": "0.00010"
+    }
+  ],
+  "rationale": "'0.0001' and '0.00010' are the SAME number and DIFFERENT decimal strings. The released decimal_representation is 'decimal_string', so the bytes decide -- no numeric normalization is applied, and a port that parsed these into floats would agree they are equal and produce the wrong digest."
+}

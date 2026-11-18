@@ -1,0 +1,597 @@
+{
+  "$comment": "Evaluation vectors for the released cross-field operators, replayed by BOTH engines against the EXACT failure list. EXTENSIONS.md sections 4.2 (what `equal` means across languages) and 4.5 (a member missing its key is reported by `unique_by` and was skipped in silence by `disjoint`) are the two divergences these close, and section 9's principle is why they are committed as a shared file rather than as two independent test suites: a Python-only closure derives a result the other engine cannot derive, which is a cross-language split. Every `expect.failures` list is compared element by element, in order, byte for byte. The `expect.failures: []` cases are the false-positive controls: without them an engine that reported every pair as violating would satisfy the whole suite.",
+  "$comment_on_what_this_file_can_and_cannot_detect": "READ THIS BEFORE TRUSTING A GREEN RUN. Exact byte comparison is possible here only because no message in this file interpolates a VALUE whose rendering the two engines disagree about. `equal`, the uncomparable-operand message and the missing-member-key message interpolate pointers only. The one overlap case deliberately uses the NUMBER 7 as its shared value, because Python's `repr` and RFC 8785 canonical text both render it as `7`. That is a corpus built AROUND a live divergence, not evidence of its absence: on a STRING the same released `disjoint` message is `'a' appears in both` in Python and `\"a\" appears in both` in the port, on `true` it is `True` versus `true`, `unique_by` on a duplicate `null` is `None` versus `null`, and a non-list target is `'notalist'` versus `\"notalist\"`. All of it is reachable on `run-manifest:1`, the one released `disjoint` rule that can fire, whose members are UUID strings -- and the committed fixture that exercises it asserts only the rule name and `must be disjoint`, so nothing in the repository would notice. The fix is to route both engines' rendered values through `json_text` / `jsonText`; it spans sections 4.1, 4.4 and 4.5 at once and is recorded as residual rather than taken here. So: this file pins that the NEW missing-key and uncomparable-operand messages are byte-identical. It does NOT pin that `disjoint`'s overlap message is, and that message is measurably not.",
+  "$comment_on_per_engine_expectations": "`expect.failures` is the Python engine's result and, wherever `expect.failures_port` is absent, the port's too -- which is the case for every vector but one. A case may carry `failures_port` ONLY together with `port_divergence` stating why, and the replaying suites pin the NUMBER of such cases as an equality in both languages, so a second divergence cannot be admitted by quietly adding a key. The single declared case is not an engine defect and no engine change can remove it: the two languages' JSON PARSERS disagree before either engine runs. `JSON.parse` collapses an integer literal outside the exact IEEE-754 double range to the nearest double, so `9007199254740993` reaches the port as `9007199254740992`, while Python's `json.loads` yields the exact `int` and RFC 8785 refuses it. The mirror image is `NaN` and `Infinity`, which Python's `json.loads` accepts by default and `JSON.parse` rejects outright -- they cannot be written in this file at all, because it must stay strict JSON, and are covered by an in-code test in each suite instead.",
+  "sections": ["4.2", "4.5"],
+  "replayed_by": [
+    "tests/test_cross_field_operator_vectors.py",
+    "packages/typescript/test/crossFieldOperatorVectors.test.ts"
+  ],
+  "cases": [
+    {
+      "name": "4.2-true-and-1-are-not-the-same-json-value",
+      "section": "4.2",
+      "divergence": "Python `bool` IS an `int`, so `True == 1` held and this rule reported HOLDING. JavaScript `===` and RFC 8785 canonical bytes both reject the pair. A boolean and a number are different JSON values and the released `type` keyword can tell them apart, so the equality operator must too.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": true, "right": 1 },
+      "expect": {
+        "failures": ["left_equals_right: /left and /right must both be present and equal"]
+      }
+    },
+    {
+      "name": "4.2-zero-and-false-are-not-the-same-json-value",
+      "section": "4.2",
+      "divergence": "The other half of the same Python coercion: `0 == False` held. Written as a separate vector because a port could special-case `true` and still accept this one.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": 0, "right": false },
+      "expect": {
+        "failures": ["left_equals_right: /left and /right must both be present and equal"]
+      }
+    },
+    {
+      "name": "4.2-one-and-one-point-zero-are-the-same-json-value",
+      "section": "4.2",
+      "divergence": "The direction that must NOT change. JSON has one number type; RFC 8785 renders both as `1`. An engine that closed sections 4.2 by rejecting every pair that is not byte-identical in the SOURCE text fails here, and so does one that compares raw serialized input rather than canonical form.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": 1, "right": 1.0 },
+      "expect": { "failures": [] }
+    },
+    {
+      "name": "4.2-the-string-1-and-the-number-1-are-not-the-same-json-value",
+      "section": "4.2",
+      "divergence": "Rules out a port written with JavaScript `==`, which accepts this pair. Python `==` and canonical bytes both reject it, so this vector is unchanged by the fix and exists to pin the third language's answer out.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": "1", "right": 1 },
+      "expect": {
+        "failures": ["left_equals_right: /left and /right must both be present and equal"]
+      }
+    },
+    {
+      "name": "4.2-object-member-order-is-not-part-of-the-value",
+      "section": "4.2",
+      "divergence": "Rules out a port written with JavaScript `===`, which is reference identity for objects and rejects this pair. Any JSON round trip through a non-Python serializer can reorder members, so `===` would make a released equality fail on the same document read twice. D1 already moved `unique_by` and `disjoint` off the equivalent Python-only answer for exactly this reason.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": {
+        "left": { "a": 1, "b": 2 },
+        "right": { "b": 2, "a": 1 }
+      },
+      "expect": { "failures": [] }
+    },
+    {
+      "name": "4.2-equal-when-both-present-uses-the-same-comparator",
+      "section": "4.2",
+      "divergence": "Section 4.2's note names both operators. Fixing only `equal` would leave the coercion live in the operator whose whole difference from it is the PRESENCE requirement.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal_when_both_present",
+            "name": "left_matches_right_when_both_present",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": false, "right": 0 },
+      "expect": {
+        "failures": [
+          "left_matches_right_when_both_present: /left and /right must be equal when both present"
+        ]
+      }
+    },
+    {
+      "name": "4.2-equal-when-both-present-still-passes-when-one-is-absent",
+      "section": "4.2",
+      "divergence": "The control for the operator above: the comparator change must not turn an absent operand into a failure, which is the entire difference between the two operators and the reason `no_cross_tenant_receipt` exists.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal_when_both_present",
+            "name": "left_matches_right_when_both_present",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": false },
+      "expect": { "failures": [] }
+    },
+    {
+      "name": "4.2-equal-still-fails-when-one-operand-is-absent",
+      "section": "4.2",
+      "divergence": "The mirror control. `equal` asserts PRESENCE as well as equality, and a comparator that canonicalized a missing operand into some sentinel byte string could silently satisfy the rule instead.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": 1 },
+      "expect": {
+        "failures": ["left_equals_right: /left and /right must both be present and equal"]
+      }
+    },
+    {
+      "name": "4.2-a-lone-surrogate-operand-is-a-recorded-failure-and-not-a-crash",
+      "section": "4.2",
+      "divergence": "The first version of this closure turned a documented RETURN into a RAISE. `allow_binary_float` / `allowBinaryFloat` is not a blanket permit -- a lone surrogate has no RFC 8785 representation and still throws -- so routing `equal` through the canonicalizer made `validate_instance` raise on exactly the malformed input it exists to report. Measured before the fix: an instance carrying two integers past the exact double range returned 16 failures on main and raised `UnstableFloatError` on the branch. Section 4.1 had already decided the same question the same way, an unparseable interval bound being a recorded failure and never a comparison. This vector is the symmetric one: a lone surrogate is reachable from `JSON.parse` and from `json.loads` alike, so both engines produce this exact text.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": "\ud800", "right": "x" },
+      "expect": {
+        "failures": [
+          "left_equals_right: /left is not a value RFC 8785 can canonicalize, so the equality cannot be decided"
+        ]
+      }
+    },
+    {
+      "name": "4.2-an-integer-past-the-exact-double-range-is-where-the-parsers-still-differ",
+      "section": "4.2",
+      "divergence": "THE ONE PLACE THE TWO ENGINES STILL ANSWER DIFFERENTLY, pinned rather than hidden. The instance below is two DIFFERENT JSON integers. Python's `json.loads` yields them exactly and RFC 8785 refuses the first, so the equality is reported as undecidable; `JSON.parse` collapses BOTH to 9007199254740992 before the port's engine runs, so the port sees one value twice and the rule HOLDS. Neither engine is wrong and no engine change removes it -- the disagreement is in the parsers. It is recorded here because the previous state of this record had no vector anywhere in the region and was therefore blind to the only surviving split. Carry an integer of this magnitude as a released decimal STRING, which is what the canonicalizer's own refusal says.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "equal",
+            "name": "left_equals_right",
+            "left": "/left",
+            "right": "/right"
+          }
+        ]
+      },
+      "instance": { "left": 9007199254740993, "right": 9007199254740992 },
+      "expect": {
+        "failures": [
+          "left_equals_right: /left is not a value RFC 8785 can canonicalize, so the equality cannot be decided"
+        ],
+        "failures_port": [],
+        "port_divergence": "`JSON.parse` collapses 9007199254740993 to 9007199254740992 before `evaluateCrossFieldRules` is reached, so the port compares one value with itself and the rule holds. Python's `json.loads` preserves the exact integer, which RFC 8785 refuses because it is outside the exact IEEE-754 double range. A parser-level disagreement, not an engine one."
+      }
+    },
+    {
+      "name": "4.5-a-right-member-missing-its-key-is-a-named-failure",
+      "section": "4.5",
+      "divergence": "The defect exactly as EXTENSIONS.md section 4.5 recorded it: a right member of `{\"nope\": 1}` under `right_key: \"/p\"` produced NO failure, so `disjoint` was true by vacuity, one member at a time, while `unique_by` answered the identical question loudly.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "p": 7 }],
+        "right": [{ "nope": 1 }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: /right/0 does not carry the disjointness key /q"
+        ]
+      }
+    },
+    {
+      "name": "4.5-a-left-member-missing-its-key-is-a-named-failure",
+      "section": "4.5",
+      "divergence": "Section 4.5 named steps 2 AND 3. Closing only the right-hand walk would leave the left set silently short of a member, which is the same vacuity with the sides swapped.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "nope": 1 }],
+        "right": [{ "q": 7 }]
+      },
+      "expect": {
+        "failures": ["left_and_right_are_disjoint: /left/0 does not carry the disjointness key /p"]
+      }
+    },
+    {
+      "name": "4.5-both-sides-report-and-the-left-side-reports-first",
+      "section": "4.5",
+      "divergence": "Failure ORDER is part of the contract a consumer reads, and two engines that report the same two failures in different orders diverge on the joined message. Left walk first, then right, each in index order.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "nope": 1 }],
+        "right": [{ "nope": 1 }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: /left/0 does not carry the disjointness key /p",
+          "left_and_right_are_disjoint: /right/0 does not carry the disjointness key /q"
+        ]
+      }
+    },
+    {
+      "name": "4.5-a-well-formed-disjoint-pair-still-passes",
+      "section": "4.5",
+      "divergence": "The false-positive control section 4.5 needs most: an engine that reported every member as missing its key would satisfy every vector above. Both members carry their key and the two values differ, so the rule holds and the failure list is empty.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "p": 7 }],
+        "right": [{ "q": 8 }]
+      },
+      "expect": { "failures": [] }
+    },
+    {
+      "name": "4.5-an-overlap-is-still-reported",
+      "section": "4.5",
+      "divergence": "The operator's primary job, pinned beside the change so that reporting a missing key cannot be traded for missing the overlap. The shared value is the NUMBER 7 on purpose: Python `repr` and RFC 8785 canonical text both render it as `7`, so this one message is byte-identical across the engines despite the wider unclosed `repr` divergence.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "p": 7 }],
+        "right": [{ "q": 7 }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: 7 appears in both /left and /right/0; the two sets must be disjoint"
+        ]
+      }
+    },
+    {
+      "name": "4.5-a-member-missing-its-key-no-longer-hides-a-real-overlap",
+      "section": "4.5",
+      "divergence": "Why the silent skip mattered rather than being merely untidy: the same array carries a genuine overlap and a member the rule could not read, and only one of the two used to be reported. Both are now, in index order.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "p": 7 }],
+        "right": [{ "q": 7 }, { "nope": 1 }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: 7 appears in both /left and /right/0; the two sets must be disjoint",
+          "left_and_right_are_disjoint: /right/1 does not carry the disjointness key /q"
+        ]
+      }
+    },
+    {
+      "name": "4.5-a-side-with-no-declared-key-reports-nothing",
+      "section": "4.5",
+      "divergence": "A member cannot fail to carry a key that was never named, and an implementation that reported one would reject every committed hash manifest. This pins the LEFT half of the two released `canonical-hash-profile:1` rules only -- `a_pointer_is_either_included_or_excluded` and `an_opaque_subtree_is_not_also_excluded` are asymmetric, and their RIGHT side does declare `right_key: \"/pointer\"`, so it CAN report. That was claimed the other way round when this file was first committed and the claim was wrong; the vector below measures the half this one does not.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": ["a", "b"],
+        "right": [{ "q": "c" }]
+      },
+      "expect": { "failures": [] }
+    },
+    {
+      "name": "4.5-a-unique_by-member-with-no-canonical-bytes-is-a-named-failure",
+      "section": "4.5",
+      "divergence": "The section 4.2 uncomparable-operand rule extended to the operators that had the SAME defect. `unique_by` called the canonicalizer on a member key unguarded, so a member whose key has no RFC 8785 representation made `check_cross_field_rules` -- a public entry point documented to RETURN failures -- raise instead. Fixed alongside `disjoint` rather than after it: fixing one would have re-opened the very section 4.4 / section 4.5 asymmetry section 4.5 was closed to remove. A lone surrogate is used because it is the one uncomparable value both `json.loads` and `JSON.parse` produce identically, so this vector is shared rather than declared.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "unique_by",
+            "name": "members_are_unique",
+            "at": "/members",
+            "key": "/p"
+          }
+        ]
+      },
+      "instance": {
+        "members": [{ "p": "ok" }, { "p": "\ud800" }]
+      },
+      "expect": {
+        "failures": [
+          "members_are_unique: /members/1 is not a value RFC 8785 can canonicalize, so the uniqueness cannot be decided"
+        ]
+      }
+    },
+    {
+      "name": "4.5-a-disjoint-left-member-with-no-canonical-bytes-is-a-named-failure",
+      "section": "4.5",
+      "divergence": "The left half of the same extension. A member whose key cannot be canonicalized contributes no value to the left set -- it has none to contribute -- so it is named and skipped, exactly as a member missing its key is.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "p": "\ud800" }],
+        "right": [{ "q": 7 }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: /left/0 is not a value RFC 8785 can canonicalize, so the disjointness cannot be decided"
+        ]
+      }
+    },
+    {
+      "name": "4.5-a-disjoint-right-member-with-no-canonical-bytes-is-a-named-failure",
+      "section": "4.5",
+      "divergence": "The right half. Reported rather than skipped for the same reason the missing-key case is: a set-membership test that silently drops the members it cannot read is not a set-membership test.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "p": 7 }],
+        "right": [{ "q": "\ud800" }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: /right/0 is not a value RFC 8785 can canonicalize, so the disjointness cannot be decided"
+        ]
+      }
+    },
+    {
+      "name": "4.5-uncomparable-members-on-both-sides-report-left-before-right",
+      "section": "4.5",
+      "divergence": "Failure ORDER for the extended rule, pinned for the same reason the missing-key order is: two engines that report the same two failures in different orders diverge on the joined message. Left walk first, then right, each in index order -- and the two kinds interleave in one walk rather than being grouped by kind, which this vector also pins by carrying a missing key on the left and an uncomparable member on the right.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "left_and_right_are_disjoint",
+            "left": "/left",
+            "right": "/right",
+            "left_key": "/p",
+            "right_key": "/q"
+          }
+        ]
+      },
+      "instance": {
+        "left": [{ "nope": 1 }],
+        "right": [{ "q": "\ud800" }]
+      },
+      "expect": {
+        "failures": [
+          "left_and_right_are_disjoint: /left/0 does not carry the disjointness key /p",
+          "left_and_right_are_disjoint: /right/0 is not a value RFC 8785 can canonicalize, so the disjointness cannot be decided"
+        ]
+      }
+    },
+    {
+      "name": "4.5-unique_by-still-reports-a-member-missing-its-key",
+      "section": "4.5",
+      "divergence": "The half of section 4.5 that was already correct, pinned so that aligning `disjoint` onto it cannot be done by weakening it instead. The message text is byte-preserved from the released one. It is pinned HERE and nowhere else: an earlier version of this entry claimed committed fixtures assert it through `expected_error_contains`, and that was false -- 80 fixture files use `expected_error_contains` and NONE of them contains `does not carry the uniqueness key`. The text was unpinned by anything until this vector existed, which is a reason to keep the vector rather than a reason to have been relaxed about the edit.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "unique_by",
+            "name": "members_are_unique",
+            "at": "/members",
+            "key": "/p"
+          }
+        ]
+      },
+      "instance": {
+        "members": [{ "p": 7 }, { "nope": 1 }]
+      },
+      "expect": {
+        "failures": ["members_are_unique: /members/1 does not carry the uniqueness key /p"]
+      }
+    },
+    {
+      "name": "4.5-a-released-shaped-rule-reports-a-right-member-missing-its-key",
+      "section": "4.5",
+      "divergence": "The exact shape of both released `canonical-hash-profile:1` disjoint rules: a LEFT side of bare strings with no `left_key`, and a RIGHT side of objects keyed by `/pointer`. The branch that closed section 4.5 was first recorded as leaving those two rules untouched; that is true only of their left side. This is the failure they can now produce and did not before. The impact is bounded rather than absent -- `pointer` is `required` under `additionalProperties: false`, so a manifest reaching this state already fails the schema layer -- but `check_cross_field_rules` is a public, schema-independent entry point, which is the same reason D2c was closed, so the shape is measured rather than argued away.",
+      "probe_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:datacompany:cross-field-vector-probe:1",
+        "type": "object",
+        "x-datacompany-cross-field": [
+          {
+            "rule": "disjoint",
+            "name": "a_pointer_is_either_included_or_excluded",
+            "left": "/included_pointers",
+            "right": "/excluded_pointers",
+            "right_key": "/pointer"
+          }
+        ]
+      },
+      "instance": {
+        "included_pointers": ["/a"],
+        "excluded_pointers": [{ "nope": 1 }]
+      },
+      "expect": {
+        "failures": [
+          "a_pointer_is_either_included_or_excluded: /excluded_pointers/0 does not carry the disjointness key /pointer"
+        ]
+      }
+    }
+  ]
+}

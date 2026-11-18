@@ -1,0 +1,17 @@
+{
+  "fixture_id": "typed-ref-evidence-location",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/evidence_location_ref",
+  "rationale": "IMP-DEC-FND002-019, the half recorded as not_taken_here. evidence_location_ref deliberately does NOT compose pinned-version-ref:1#/$defs/singleton: document 16 section 3.3 says a registered adapter MAY expose an intrinsically immutable owner as a singleton, and the released fixture table-cell-locator-ref pins version_number 3. version_number 3 here is the executable form of that MAY -- a singleton composition would refuse this instance, so the decision cannot be quietly reversed.",
+  "instance": {
+    "owner_context": "evidence-registry",
+    "entity_type": "table_cell_location",
+    "entity_id": "cccccccc-1111-4111-8111-cccccccccccc",
+    "version_id": "dddddddd-1111-4111-8111-dddddddddddd",
+    "version_number": 3,
+    "resource_scope": "tenant",
+    "resource_tenant_id": "11111111-1111-4111-8111-111111111111",
+    "schema_ref": "urn:datacompany:evidence-location-version:1",
+    "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

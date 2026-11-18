@@ -1,0 +1,21 @@
+{
+  "fixture_id": "problem-success-status",
+  "schema_ref": "urn:datacompany:problem-details:1",
+  "rationale": "A problem body carrying 200. 'Unavailable status presented as success' is a named rollout-abort trigger, so the status range refuses it structurally.",
+  "expected_error_contains": [
+    "status"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/status",
+      "keyword": "minimum"
+    }
+  ],
+  "instance": {
+    "code": "capability_unavailable",
+    "status": 200,
+    "message": "ok",
+    "retryable": false,
+    "correlation_id": "66666666-6666-4666-8666-666666666666"
+  }
+}

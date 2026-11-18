@@ -1,0 +1,113 @@
+{
+  "profile_id": "urn:datacompany:canonical-hash-profile:1",
+  "profile_version": 2,
+  "schema_ref": "urn:datacompany:immutable-version:1",
+  "serialization": "rfc8785",
+  "encoding": "utf-8",
+  "byte_order_mark": false,
+  "digest_algorithm": "sha256",
+  "digest_prefix": "sha256:",
+  "absent_vs_null": "distinct",
+  "unicode_normalization": "none",
+  "timestamp_representation": "rfc3339_utc_z",
+  "decimal_representation": "decimal_string",
+  "binary_float_policy": "reject",
+  "included_pointers": [
+    "/created_at",
+    "/created_by",
+    "/decision_ref",
+    "/decision_ref/content_hash",
+    "/decision_ref/entity_id",
+    "/decision_ref/entity_type",
+    "/decision_ref/owner_context",
+    "/decision_ref/resource_scope",
+    "/decision_ref/resource_tenant_id",
+    "/decision_ref/schema_ref",
+    "/decision_ref/version_id",
+    "/decision_ref/version_number",
+    "/entity_id",
+    "/pack_refs",
+    "/pack_refs/-/content_hash",
+    "/pack_refs/-/entity_id",
+    "/pack_refs/-/entity_type",
+    "/pack_refs/-/owner_context",
+    "/pack_refs/-/resource_scope",
+    "/pack_refs/-/resource_tenant_id",
+    "/pack_refs/-/schema_ref",
+    "/pack_refs/-/version_id",
+    "/pack_refs/-/version_number",
+    "/profile_ref",
+    "/profile_ref/content_hash",
+    "/profile_ref/entity_id",
+    "/profile_ref/entity_type",
+    "/profile_ref/owner_context",
+    "/profile_ref/resource_scope",
+    "/profile_ref/resource_tenant_id",
+    "/profile_ref/schema_ref",
+    "/profile_ref/version_id",
+    "/profile_ref/version_number",
+    "/provenance_refs",
+    "/provenance_refs/-/content_hash",
+    "/provenance_refs/-/entity_id",
+    "/provenance_refs/-/entity_type",
+    "/provenance_refs/-/owner_context",
+    "/provenance_refs/-/resource_scope",
+    "/provenance_refs/-/resource_tenant_id",
+    "/provenance_refs/-/schema_ref",
+    "/provenance_refs/-/version_id",
+    "/provenance_refs/-/version_number",
+    "/schema_ref",
+    "/supersedes_version_id",
+    "/version_id",
+    "/version_number"
+  ],
+  "excluded_pointers": [
+    {
+      "pointer": "/content_hash",
+      "reason": "own_content_hash"
+    },
+    {
+      "pointer": "/content_hash_signatures",
+      "reason": "signature"
+    },
+    {
+      "pointer": "/decision_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/pack_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/profile_ref/resolved_at",
+      "reason": "resolution_observation"
+    },
+    {
+      "pointer": "/provenance_refs/-/resolved_at",
+      "reason": "resolution_observation"
+    }
+  ],
+  "opaque_pointers": [],
+  "arrays": [
+    {
+      "pointer": "/pack_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    },
+    {
+      "pointer": "/provenance_refs",
+      "kind": "set",
+      "order_key": [
+        "/owner_context",
+        "/entity_type",
+        "/entity_id",
+        "/version_id"
+      ]
+    }
+  ]
+}

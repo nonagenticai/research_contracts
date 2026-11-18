@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:stable-identity:1",
+  "title": "StableIdentityV1",
+  "description": "Canonical stable-identity envelope (document 16 section 3.2, shared foundation section 4.1). This file is also the single source of truth for the shared canonical primitives under $defs; every other canonical schema composes them by $ref and never restates a rule.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/identity_fields" },
+    { "$ref": "#/$defs/resource_scope_conditional" }
+  ],
+  "x-datacompany-composition-point": "#/$defs/domain_extension",
+  "$defs": {
+    "uuid": {
+      "$comment": "Opaque lower-case canonical UUID string on exchange.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "timestamp": {
+      "$comment": "RFC 3339 UTC instant. The canonical hash profile requires the trailing Z form.",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    },
+    "decimal_string": {
+      "$comment": "Exact decimal carried as a string; never an unstable binary float.",
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+    },
+    "canonical_type_token": {
+      "$comment": "Snake-case canonical type discriminator. The negative pattern is the pre-ADR regulatory guard: no generic type token may activate a regulatory canonical type before ADR-DATACOMPANY-REGULATORY-MODEL is accepted. The guard is written as family stems, never as the pinned token spellings: config/pre-adr-regulatory-denylist.json is the single source of truth for those, and a released schema that respelled them would itself be a repository-wide denylist activation. Stems are strictly broader than the pinned tokens, so this rejects every one of them and their unlisted relatives.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "not": {
+        "pattern": "regulatory|legal_|normative|consolidation"
+      }
+    },
+    "bounded_context": {
+      "$comment": "Registered owning bounded context. Carries the same pre-ADR negative guard, in the same stem form and for the same reason.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "not": {
+        "pattern": "regulatory|legal-|normative|consolidation"
+      }
+    },
+    "actor_subject": {
+      "$comment": "Verified actor or service subject from context, never a mutable domain payload field.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "resource_scope": {
+      "enum": ["global", "tenant"],
+      "readOnly": true
+    },
+    "resource_tenant_id": {
+      "$ref": "#/$defs/uuid",
+      "readOnly": true
+    },
+    "schema_ref": {
+      "$comment": "Stable schema ID plus schema version.",
+      "type": "string",
+      "pattern": "^urn:datacompany:[a-z][a-z0-9-]*:[1-9][0-9]*$"
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "payload_digest": {
+      "$comment": "Exact-byte digest. Never substituted for content_hash and never a public identity.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "version_number": {
+      "$comment": "Bounded by the largest integer an IEEE-754 double represents exactly. RFC 8785 serializes numbers with the ECMAScript Number::toString algorithm, so a larger value has no stable canonical form and could never be hashed; the boundary must not accept an object the canonical hash algorithm cannot process.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740992
+    },
+    "resource_scope_conditional": {
+      "$comment": "resource_tenant_id is required iff resource_scope is tenant and forbidden iff it is global. Identical at every nesting depth; no nullable tenant ID may replace it.",
+      "if": {
+        "required": ["resource_scope"],
+        "properties": { "resource_scope": { "const": "tenant" } }
+      },
+      "then": { "required": ["resource_tenant_id"] },
+      "else": { "not": { "required": ["resource_tenant_id"] } }
+    },
+    "identity_fields": {
+      "type": "object",
+      "required": [
+        "entity_id",
+        "entity_type",
+        "resource_scope",
+        "created_at",
+        "created_by",
+        "aggregate_version"
+      ],
+      "properties": {
+        "entity_id": { "$ref": "#/$defs/uuid", "readOnly": true },
+        "entity_type": { "$ref": "#/$defs/canonical_type_token", "readOnly": true },
+        "resource_scope": { "$ref": "#/$defs/resource_scope" },
+        "resource_tenant_id": { "$ref": "#/$defs/resource_tenant_id" },
+        "created_at": { "$ref": "#/$defs/timestamp", "readOnly": true },
+        "created_by": { "$ref": "#/$defs/actor_subject", "readOnly": true },
+        "aggregate_version": {
+          "$comment": "Optimistic-concurrency and event-order counter. Mutable, not content: excluded from every canonical hash view. Bounded by the exact IEEE-754 double range for the same reason version_number is, so the boundary never accepts a counter the canonical algorithm could not serialize if it were ever included.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740992,
+          "readOnly": true,
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "aggregate_version"
+        }
+      }
+    },
+    "domain_extension": {
+      "$comment": "Declared composition point. A domain schema adds its own fields here and seals the fully composed boundary with unevaluatedProperties:false.",
+      "type": "object"
+    },
+    "context_owned_extension": {
+      "$comment": "workspace_id and project_id exist only for a declared context-owned type. A type that does not compose this extension leaves them unevaluated, so the sealed domain boundary rejects them.",
+      "type": "object",
+      "properties": {
+        "workspace_id": { "$ref": "#/$defs/uuid", "readOnly": true },
+        "project_id": { "$ref": "#/$defs/uuid", "readOnly": true }
+      }
+    },
+    "sealed": {
+      "$comment": "Fully composed boundary for a StableIdentity used without domain extension.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    },
+    "sealed_context_owned": {
+      "allOf": [{ "$ref": "#" }, { "$ref": "#/$defs/context_owned_extension" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

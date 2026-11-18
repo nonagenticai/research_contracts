@@ -1,0 +1,119 @@
+[project]
+license = "Apache-2.0"
+name = "research-contracts"
+version = "0.10.0"
+description = "FND-001 language-neutral research contract schemas, the pre-ADR regulatory denylist, and the binding gates that enforce both"
+requires-python = ">=3.14"
+dependencies = [
+    # `format` is load-bearing: the canonical schemas assert date-time/uuid/uri
+    # formats, and without the extra jsonschema treats them as annotations.
+    "jsonschema[format]>=4.23,<5",
+    # Imported directly by canonical/registry.py to build the $id registry.
+    "referencing>=0.36",
+    "pyyaml>=6.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/research_contracts"]
+
+# The released JSON Schemas are data the package cannot run without: canonical/registry.py
+# resolves every $id from them and hash_profile.py reads the closed exclusion-reason set out
+# of one. Without this the wheel shipped zero schema files and `import
+# research_contracts.canonical` raised on a fresh install.
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "research_contracts/schemas"
+
+# ⛔ THE SDIST EXCLUDES CI/TEST CHURN, OR A TEST EDIT BECOMES A RELEASE EVENT.
+#
+# With no `[tool.hatch.build.targets.sdist]` section at all, hatchling sweeps in
+# every VCS-tracked file — `tests/`, `.github/`, `docs/`, `scripts/`. So the
+# tarball's hash moved whenever any of those did, and the publish guard then
+# correctly refused the upload:
+#
+#     research_contracts-0.3.1.tar.gz is already published with DIFFERENT content.
+#     Same-version-different-content republish silently corrupts every consumer
+#     lockfile fleet-wide. Bump the version -- semver is the contract.
+#
+# ⚠️ THAT GUARD IS RIGHT AND MUST STAY. The defect is not the guard; it is that
+# the guard was being tripped by changes that are not releases. #36 touched ONLY
+# `.github/workflows/ci-public.yml` and `tests/test_model_pin.py` — no source at
+# all — and still reddened main. Under the old config EVERY test-only or CI-only
+# PR does that, forever.
+#
+# EXCLUDE, not an allowlist, deliberately. An allowlist of just
+# `src` + `schemas` was measured first and dropped the sdist from 366 members to
+# 64 — taking `packages/`, `generated/`, `openapi/`, `event-catalog/`, `config/`
+# and `uv.lock` with it. None of those are needed to rebuild the wheel, but
+# removing them is a much larger behavioural change than this defect warrants,
+# and nothing here can prove no consumer reads them. So: name the four churn
+# sources and leave everything else exactly as it was.
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "tests",
+    ".github",
+    "docs",
+    "scripts",
+    # Same class again: security-tooling state, not package content. It moves
+    # whenever any scanned file moves, so leaving it in makes a baseline audit a
+    # release event for the same reason a test edit used to be.
+    ".detect-secrets-baseline.json",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "ruff>=0.15.0",
+    "ty>=0.0.23",
+    "bandit>=1.9.4",
+    "pip-audit>=2.10.0",
+    "detect-secrets>=1.5.0",
+    "pre-commit>=4.6.0",
+]
+
+[project.scripts]
+lint-contracts = "research_contracts.tooling.lint_contracts:main"
+check-draft-governance = "research_contracts.tooling.governance:main"
+record-model-conformance = "research_contracts.tooling.model_conformance:main"
+verify-canonical-fixtures = "research_contracts.tooling.canonical_fixtures:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+# The repository ships executable entry points under scripts/. They carry a .py
+# suffix precisely so ruff/ty/bandit and the `types: [python]` pre-commit hooks
+# are not structurally blind to them.
+extend-include = ["scripts/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "BLE", "S", "C4", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S603", "S607"]
+"scripts/*.py" = ["S603"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-q"
+
+[tool.ty.environment]
+python-version = "3.14"
+# `./generated/python` is a search root because `ty` is invoked on `generated` and
+# `unresolved-import` is silenced below: without it, an import in the generated binding that
+# resolved to nothing would be reported as nothing rather than as an error. The binding is
+# self-contained today and the generator emits a fixed `typing` import line, so this costs
+# nothing now and closes the silent case later.
+root = ["./src", "./scripts", "./tests", "./generated/python"]
+
+[tool.ty.rules]
+import-not-found = "ignore"
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests", ".worktrees"]

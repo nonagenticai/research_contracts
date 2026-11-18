@@ -1,0 +1,28 @@
+{
+  "fixture_id": "rejected-declaration-only-on-the-opaque-node-itself",
+  "description": "STRICTLY under, never AT. An opaque subtree root is an ordinary declared member of its parent, and allowing both annotations on one node would satisfy the placement guard trivially -- any author could walk past it by adding x-datacompany-hash-opaque beside the flag. The meta-schema forbids the pair on one node as well.",
+  "expect": "rejects",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-on-opaque-root-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "value": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "x-datacompany-hash-opaque": true,
+        "x-datacompany-hash-declaration-only": true,
+        "x-datacompany-array": {
+          "kind": "ordered"
+        }
+      }
+    }
+  },
+  "expected_error": "HashProfileError",
+  "expected_message_contains": "[\"/value\"] carries x-datacompany-hash-declaration-only AND x-datacompany-hash-opaque on one node"
+}

@@ -1,0 +1,17 @@
+{
+  "fixture_id": "global-pinned-ref",
+  "description": "Global-scope pin: resource_tenant_id is forbidden and absent.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "valid",
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "c12b5ae6-cd57-de29-ab7e-0246a7465aec",
+    "version_id": "0b970b07-2956-ff77-bcd8-81a070bd6c95",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:8001c27439650c5c5a6b4ed94163b5ddeb4476362c71380e613fa20dfffcef50",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

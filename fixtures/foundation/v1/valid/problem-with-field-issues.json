@@ -1,0 +1,24 @@
+{
+  "fixture_id": "problem-with-field-issues",
+  "schema_ref": "urn:datacompany:problem-details:1",
+  "rationale": "Field-level issues addressed by RFC 6901 pointer, the same location language the hash-view manifests and cross-field rules use.",
+  "instance": {
+    "code": "schema_incompatible",
+    "status": 422,
+    "message": "The submitted analysis specification did not validate.",
+    "retryable": false,
+    "correlation_id": "66666666-6666-4666-8666-666666666666",
+    "issues": [
+      {
+        "code": "missing_required_member",
+        "severity": "error",
+        "pointer": "/method/seed"
+      },
+      {
+        "code": "deprecated_member",
+        "severity": "warning",
+        "pointer": "/method/packages/0"
+      }
+    ]
+  }
+}

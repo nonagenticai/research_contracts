@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-conflict-opened:1",
+  "title": "ReviewConflictOpenedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.conflict.opened.v1': one screening conflict located by review, stage and round, named by its own identity, and carrying nothing else. It deliberately carries NO disposition from either reviewer. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the CONFLICT, not the review), the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "conflict_id",
+    "stage_id",
+    "round_number"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. This is the sibling of urn:datacompany:review-decision-recorded:1: the same gate, the same producer file, the OTHER half of the same story. evidence_review_service/src/application/services/events.py already writes exactly these four keys when it raises this event, and this schema matches that producer -- it is the source of truth, not document 09's prose. PROVENANCE, RECORDED PLAINLY. Document 09 has NO aggregate block for Conflict at all -- section 3.7 lists the event name and nothing else for it. The aggregate_type 'screening_conflict', the choice of conflict_id as aggregate_id, and every member below come from the implemented aggregate and the running producer, not from a specified model. This is the implemented aggregate; document 09 is silent. A future reader reconciling this document against document 09 will find nothing to reconcile against, and that absence is not an oversight in this schema. FOUR AUTHORING DECISIONS THAT ARE NOT STYLE. (1) NO disposition from either reviewer, and this is the reason the event exists at all. The producer's docstring states it directly: 'Names the conflict, never the dispositions that made it one. A conflict exists precisely because two reviewers disagreed; publishing the two dispositions beside it would unblind both at once.' This is the identical shape to urn:datacompany:review-decision-recorded:1's omission of disposition, and for the identical reason -- dual screening only means something if neither screener's verdict leaks through a channel that cannot take it back, and the outbox is exactly such a channel. A conflict is discovered precisely BECAUSE the two dispositions disagree, which makes this the single place in the estate where the temptation to carry them is strongest and the refusal matters most. (2) NO *_version_id, and this is not an inconsistency with the twenty-one events that carry one. screening_conflicts has NO identity/version triad -- it is a flat append-only row keyed (review_id, stage_id, round_number, review_record_id). There is no version counter on a conflict to carry, because a conflict is not amended in place; it is opened once and later closed by an adjudication (urn:datacompany:review-conflict-resolved:1). aggregate_version is therefore a literal 1 at the callsite, exactly as the envelope's own authoring decision (3) describes for append-only chain rows, and no member here should be read as a stand-in version counter. Do not invent one. (3) NO reviewer, screener or assignment identity, for the same reason document 16 lines 392-394 give for every event in this family: actor, tenant, reviewer and approver identity 'come from verified context and attestations, not from mutable domain payload fields'. round_number locates the conflict within dual screening without naming which two screeners disagreed. (4) All four members are required with no nullable escape. review_id, stage_id and round_number locate the row inside dual screening exactly as they do for review.decision.recorded.v1; conflict_id is the aggregate's own identity, equal to the envelope's aggregate_id, carried in the payload so a consumer reading only the payload of a mixed batch is not forced back into the envelope to learn which conflict a row is about -- see review-decision-recorded's decision (2) for the identical reasoning applied to decision_id. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-conflict-opened:2 as a new document that coexists with this one, because document 13 section 8.1 ships event versions additively -- 'review.conflict.opened.v1' and a future '.v2' are two registered types, not one type that changed. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this conflict belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the conflict, so this is the only place the review is named. See authoring decision (4).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "conflict_id": {
+      "$comment": "The conflict's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a batch of mixed events does not have to reach back into the envelope to learn which conflict each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "stage_id": {
+      "$comment": "The review stage the conflict was raised at. A conflict at title/abstract and a conflict at full text on the same underlying record are not the same conflict.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "round_number": {
+      "$comment": "Which screening round this conflict belongs to. Locates the conflict within dual screening without naming which two screeners disagreed -- see authoring decision (3). Required with no nullable escape, per authoring decision (4).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

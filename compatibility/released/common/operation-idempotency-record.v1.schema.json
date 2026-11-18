@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:operation-idempotency-record:1",
+  "title": "OperationIdempotencyRecordV1",
+  "description": "One idempotency record for a mutating operation (document 13 section 6.2). Carries the five-part scoped key, the canonical request hash that binds the key to one exact request, the record's state, and the response that must be replayed to a duplicate. A second request with the same key and a different hash is a conflict, not a replay.",
+  "$comment": "WHY THIS DOCUMENT EXISTS. `FND-003` task 1 owes 'operation-idempotency request/result records and request-hash semantics', and no released grammar existed for it. Two services already keep the table: `evidence_review_service` created it in migration 0001 and deliberately left it unmapped, and `research_output_service` implements the whole claim-before-work protocol against it. They do not agree, which is precisely what an unreleased contract permits. AUTHORING DECISION 1 - THE KEY IS ALL FIVE PARTS, AND THE TENANT PART IS NOT NULLABLE. Section 13.6.2 pins the unique scope as (`resource_scope`, tenant-or-global-marker, principal, `operation_id`, `idempotency_key`). This document composes the shared scope conditional, so a tenant-scoped record must carry `resource_tenant_id` and a global one must not -- section 13.6.2's rule that a global operation binds to the explicit global marker and 'never a null/empty tenant value'. A key missing any part is a key that collides across principals or across tenants. AUTHORING DECISION 2 - `state` IS AN EXPLICIT MEMBER, NOT A SENTINEL IN `response_status`. Section 13.6.2 lists state as part of the row, and its behaviour list opens with 'a first request claims `processing`'. Neither live service has such a column: both encode the in-flight claim as `response_status = 0`, a value that is not an HTTP status. That overloading is why this member exists here -- a reader cannot distinguish 'in flight' from 'a writer stored a zero' when both are the same field. `completed` is named by this document for the state section 13.6.2 item 3 describes but does not name; that is the one token here with no upstream spelling, and it is called out so the next reader does not mistake it for quoted spec. AUTHORING DECISION 3 - THE REQUEST HASH IS A CONTENT HASH AND ITS CANONICALISATION IS NOT NEGOTIABLE. Section 13.3.2 requires RFC 8785 for command, idempotency and input-snapshot hashes, and says in terms that 'services never invent a local JSON sorting recipe'. A grammar can pin the SHAPE of the hash but not the recipe that produced it, so this comment is the only place the requirement can be recorded next to the field. Section 13.6.2 also fixes what is hashed: validated body, path resource IDs, operative query fields, input revision, profile/policy refs and uploaded-part content hashes -- and NOT correlation IDs, trace IDs or expiring credentials. AUTHORING DECISION 4 - THE STORED RESPONSE IS OPTIONAL BECAUSE A CLAIM HAS NO RESPONSE YET. A `processing` record has a key and a hash and nothing else; requiring `response_status` would make the claim itself unrepresentable, which is the exact race the claim-before-work protocol exists to close. `response_headers` is optional for a narrower reason: one live service stores it and the other has no such column. AUTHORING DECISION 5 - NO RETENTION MEMBERS ARE INVENTED HERE. Section 13.6.2 requires records to outlive the largest retry and reconciliation window and requires a sweeper to record its retention decision, but names no field for either, and neither service has one. Rather than mint a vocabulary no producer writes, this document carries `created_at` -- which both services do write -- and leaves retention to the gate that specifies it. THIS DOCUMENT IS DELIBERATELY NOT the HTTP surface. It does not say which status codes may be replayed, what `409 idempotency_conflict` looks like on the wire, or how long a stale claim may be taken over. Those are section 13.6.2 behaviours and problem-details concerns; this is the stored row.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/record_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" },
+    {
+      "$comment": "A completed record can actually be replayed. Section 13.6.2 item 3 says the same scope/key/hash replays the original status, headers and body -- a `completed` row with no status is a record that promises a replay it cannot perform, and it would validate without this rule.",
+      "if": { "properties": { "state": { "const": "completed" } }, "required": ["state"] },
+      "then": { "required": ["response_status"] },
+      "else": { "not": { "required": ["response_status"] } }
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "record_fields": {
+      "type": "object",
+      "required": [
+        "schema_ref",
+        "resource_scope",
+        "principal_subject_id",
+        "operation_id",
+        "idempotency_key",
+        "request_hash",
+        "state",
+        "created_at"
+      ],
+      "properties": {
+        "schema_ref": {
+          "$comment": "A const, the envelope idiom. A reader holding a stored row has to know which grammar it is reading before it can check anything in it.",
+          "const": "urn:datacompany:operation-idempotency-record:1"
+        },
+        "resource_scope": {
+          "$comment": "First part of the key. See authoring decision 1 -- the scope decides whether a tenant id is required or forbidden.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope"
+        },
+        "resource_tenant_id": {
+          "$comment": "Second part of the key, present exactly for a tenant-scoped record. Governed by the shared scope conditional, not by a rule respelled here.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_tenant_id"
+        },
+        "principal_subject_id": {
+          "$comment": "Third part of the key: WHOSE key this is. Section 09 derives the principal from authentication and never accepts it as a body field, so two callers cannot collide on one key. A blank principal is refused by length, matching the live not-blank constraint.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject"
+        },
+        "operation_id": {
+          "$comment": "Fourth part of the key: which operation. Scoping by operation is what stops one caller's key for one endpoint replaying against another.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "idempotency_key": {
+          "$comment": "Fifth part of the key: the caller's own value, from the `Idempotency-Key` header.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "request_hash": {
+          "$comment": "Binds this key to one exact request. See authoring decision 3 for what is hashed and with which canonicalisation; a same-key different-hash arrival is a conflict and never a replay.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+        },
+        "state": {
+          "$comment": "Whether the original request is still in flight or has committed. See authoring decision 2 -- an explicit member, not a sentinel status.",
+          "enum": ["processing", "completed"]
+        },
+        "response_status": {
+          "$comment": "The HTTP status to replay. A real status, so the in-flight claim cannot borrow this field: the range starts at 100. Absent while `processing`.",
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "response_headers": {
+          "$comment": "The declared response headers to replay, where the service records them. Optional because one live service stores them and the other has no such column; see authoring decision 4.",
+          "type": "object"
+        },
+        "response_body": {
+          "$comment": "The original response body, replayed verbatim to a duplicate. Nullable: a committed operation may legitimately have answered with no body.",
+          "type": ["object", "array", "string", "number", "boolean", "null"]
+        },
+        "created_at": {
+          "$comment": "When the record was claimed. The only retention-relevant instant this document carries; see authoring decision 5.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        }
+      }
+    },
+    "sealed": {
+      "$comment": "The closed form, for a consumer that composes this document into a larger one and still wants unknown members refused.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

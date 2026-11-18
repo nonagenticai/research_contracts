@@ -1,0 +1,97 @@
+{
+  "fixture_id": "flagged-array-sorting-before-a-released-array",
+  "description": "C3, found by an independent refuter. The byte equality between the two routes was an ACCIDENT of sort order: derive_hash_profile SORTS `arrays` while merge_profile_extensions APPENDED, and they agreed on bitemporal-assertion:1 only because /value/tags happens to sort after /basis_refs. Here the flagged array sorts BEFORE the released one, so the appending merge produced the same manifest in a different byte sequence. merge_profile_extensions now sorts by pointer in both engines; this fixture is what makes that structural rather than incidental.",
+  "expect": "derives",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-array-sort-order-probe:1",
+    "type": "object",
+    "properties": {
+      "aaa": {
+        "type": "object",
+        "x-datacompany-hash-opaque": true,
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      },
+      "zzz": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "x-datacompany-array": {
+          "kind": "ordered"
+        }
+      }
+    },
+    "x-datacompany-composition-point": "#/$defs/domain_extension",
+    "$defs": {
+      "domain_extension": {
+        "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+        "type": "object"
+      }
+    }
+  },
+  "expected_manifest_canonical_json": "{\"absent_vs_null\":\"distinct\",\"arrays\":[{\"kind\":\"ordered\",\"pointer\":\"/aaa/tags\"},{\"kind\":\"ordered\",\"pointer\":\"/zzz\"}],\"binary_float_policy\":\"reject\",\"byte_order_mark\":false,\"decimal_representation\":\"decimal_string\",\"digest_algorithm\":\"sha256\",\"digest_prefix\":\"sha256:\",\"encoding\":\"utf-8\",\"excluded_pointers\":[],\"included_pointers\":[\"/aaa\",\"/zzz\"],\"opaque_pointers\":[\"/aaa\"],\"profile_id\":\"urn:datacompany:canonical-hash-profile:1\",\"profile_version\":2,\"schema_ref\":\"urn:datacompany:declaration-only-array-sort-order-probe:1\",\"serialization\":\"rfc8785\",\"timestamp_representation\":\"rfc3339_utc_z\",\"unicode_normalization\":\"none\"}",
+  "instance": {
+    "aaa": {
+      "tags": [
+        "b",
+        "a"
+      ],
+      "other": 1
+    },
+    "zzz": [
+      "z",
+      "y"
+    ]
+  },
+  "expected_hash_view_canonical_json": "{\"aaa\":{\"other\":1,\"tags\":[\"b\",\"a\"]},\"zzz\":[\"z\",\"y\"]}",
+  "expected_content_hash": "sha256:748ef418601c21e18fc52dbef3c8a2bff13915fda4b7ee0ac73948e9da77e207",
+  "equivalent_runtime_route": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-array-sort-order-probe:1",
+      "type": "object",
+      "properties": {
+        "aaa": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true
+        },
+        "zzz": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-datacompany-array": {
+            "kind": "ordered"
+          }
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension",
+      "$defs": {
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      }
+    },
+    "extensions": {
+      "arrays": [
+        {
+          "pointer": "/aaa/tags",
+          "kind": "ordered"
+        }
+      ]
+    }
+  }
+}

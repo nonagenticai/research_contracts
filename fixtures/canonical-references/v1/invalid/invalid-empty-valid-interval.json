@@ -1,0 +1,44 @@
+{
+  "fixture_id": "invalid-empty-valid-interval",
+  "description": "Both intervals are half-open AND non-empty; an inverted valid interval is rejected.",
+  "schema_ref": "urn:datacompany:bitemporal-assertion:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "valid"
+  ],
+  "instance": {
+    "assertion_id": "acceef8d-4d38-a5e9-dc70-a0613c52b2a8",
+    "assertion_version_id": "335eaa5c-ee2c-edd7-31b1-3ee3e16f9249",
+    "subject_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "2c790d5b-0f14-3460-cf4f-fc0b87cdd665",
+      "version_id": "7fc29982-cf30-8c48-6a6e-6f880a0b446c",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:aa066159f2910d9a82b15484a4b0b9d17c9ab9bf4d397c83a0e3059ec0c443ee",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "assertion_type": "recommendation_strength",
+    "value": {
+      "strength": "strong"
+    },
+    "valid_from": "2027-01-01T00:00:00Z",
+    "valid_to": "2026-01-01T00:00:00Z",
+    "basis_refs": [
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "d7511f97-1797-ed7a-4304-d120043b1959",
+        "version_id": "40038ba6-37fe-4f42-7878-387384671622",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:7b9ed1065aeea2f22686c77ba5556869b6d8ca9f0b335d3d9cea198bca7c5180",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ],
+    "recorded_at": "2026-07-30T09:30:00Z"
+  }
+}

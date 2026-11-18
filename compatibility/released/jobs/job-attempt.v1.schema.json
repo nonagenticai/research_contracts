@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:job-attempt:1",
+  "title": "JobAttemptV1",
+  "description": "One immutable execution attempt of a durable job (document 13 section 6.4). Records which worker ran it under which capability version, when it started and ended, how it ended, and a bounded resource summary. A retry is a new attempt under the same job, never a second job.",
+  "$comment": "WHY THIS DOCUMENT EXISTS. `FND-003` task 2 owes the attempt half of 'durable job states/attempts/leases/cancellation/terminal result'. Section 13.6.4 states 'a retry is a new `job_attempt` under the same job, not a second domain run' -- so the attempt row is what makes a job's history auditable, and it had no released grammar while a service already wrote it. AUTHORING DECISION 1 - `outcome` IS NOT THE JOB'S `state`, AND THE DIFFERENCE IS THE POINT. A job's terminal states are `succeeded`, `failed` and `cancelled`. An attempt has a fourth outcome, `lease_expired`, which is NOT a job state: the job returns to `queued` and is retried, or is failed by the reaper when its retry policy forbids re-execution. Reusing the job enum here would erase the single most diagnostic fact an attempt carries -- that nobody reported a result at all. AUTHORING DECISION 2 - `ended_at` AND `outcome` ARE BOTH-OR-NEITHER. An attempt in flight has neither; a closed attempt has both. The live table enforces exactly this equality, and it is what lets a reader distinguish a running attempt from one whose writer crashed between the two columns. AUTHORING DECISION 3 - THE ATTEMPT IS APPEND-ONLY AND SEALED ON CLOSE, WHICH THIS DOCUMENT CANNOT ENFORCE AND SO STATES. Immutability is a table trigger, not a shape. The grammar's contribution is that every field a sealed row carries is present and bounded, so a consumer can tell a complete attempt from a truncated one without reading the producer's triggers. AUTHORING DECISION 4 - `worker_id` IS REQUIRED HERE AND OPTIONAL ON THE JOB. On the job it is lease state and is cleared when the lease ends; on the attempt it is history and can never be cleared, because an attempt nobody ran is not an attempt. THIS DOCUMENT IS DELIBERATELY NOT a place for the attempt's output. Section 13.6.4 keeps large outputs in immutable artifact refs on the job; `resource_summary` is bounded operational facts -- durations, counts, resource ceilings -- and never a result payload, licensed text or an extracted value.",
+  "type": "object",
+  "required": [
+    "schema_ref",
+    "attempt_id",
+    "job_id",
+    "tenant_id",
+    "attempt_number",
+    "worker_id",
+    "started_at"
+  ],
+  "properties": {
+    "schema_ref": {
+      "$comment": "A const, the envelope idiom. A reader holding a stored row has to know which grammar it is reading before it can check anything in it.",
+      "const": "urn:datacompany:job-attempt:1"
+    },
+    "attempt_id": {
+      "$comment": "This attempt's own identity, distinct from the job's.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "job_id": {
+      "$comment": "The job this attempt belongs to. Many attempts, one job -- that is the whole retry model.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "tenant_id": {
+      "$comment": "The owning tenant, carried on the attempt as well as the job. Denormalised on purpose: an attempt must be scopable without a join to a row that may be restricted.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "attempt_number": {
+      "$comment": "Which attempt this is, from one. Unique per job, so the sequence has no gaps and no duplicates and an auditor can count retries without inferring them from timestamps.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "worker_id": {
+      "$comment": "The worker that ran this attempt. Required -- see authoring decision 4.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 127
+    },
+    "capability_version": {
+      "$comment": "The capability version in force for this attempt. Recorded at claim time so a result can be read back against the code that produced it, which is exactly what a later attempt under a new version makes necessary.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "started_at": {
+      "$comment": "When the worker claimed and began. Always present: an attempt exists because it started.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "ended_at": {
+      "$comment": "When the attempt closed. Both-or-neither with `outcome`; see authoring decision 2.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "outcome": {
+      "$comment": "How the attempt ended. `lease_expired` is an attempt outcome and not a job state -- see authoring decision 1.",
+      "enum": ["succeeded", "failed", "cancelled", "lease_expired"]
+    },
+    "error_code": {
+      "$comment": "The typed failure. Required exactly when `outcome` is `failed`, so a failed attempt is never untriageable.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "error_detail": {
+      "$comment": "A bounded diagnostic, capped at 512 characters to match the live constraint. An uncapped detail field is where licensed text leaks into an operational table.",
+      "type": "string",
+      "maxLength": 512
+    },
+    "resource_summary": {
+      "$comment": "Bounded operational facts about the run. Never a result payload; see the closing paragraph of the root comment.",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "dependentRequired": {
+    "ended_at": ["outcome"],
+    "outcome": ["ended_at"]
+  },
+  "allOf": [
+    {
+      "$comment": "A failed attempt names its failure, for the same reason the job does: without this rule `failed` with no code validates and nothing downstream can route it.",
+      "if": { "properties": { "outcome": { "const": "failed" } }, "required": ["outcome"] },
+      "then": { "required": ["error_code"] }
+    },
+    {
+      "$comment": "An error code only means something on a failure. A `succeeded` attempt carrying one is a writer bug, and admitting it would let a green attempt look red to an auditor.",
+      "if": { "properties": { "outcome": { "enum": ["succeeded", "cancelled", "lease_expired"] } }, "required": ["outcome"] },
+      "then": { "not": { "required": ["error_code"] } }
+    }
+  ],
+  "$defs": {
+    "sealed": {
+      "$comment": "The closed form, for a consumer that composes this document into a larger one and still wants unknown members refused.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

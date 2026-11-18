@@ -1,0 +1,19 @@
+{
+  "fixture_id": "invalid-first-version-with-supersession",
+  "description": "The first version of an identity has no predecessor.",
+  "schema_ref": "urn:datacompany:immutable-version:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "supersedes_version_id"
+  ],
+  "instance": {
+    "version_id": "3ed0cd13-97e8-d8b0-e3c1-6d05349cf287",
+    "entity_id": "09d34832-8bd2-4ffe-8688-2ba71e851c61",
+    "version_number": 1,
+    "supersedes_version_id": "ca2a04f8-a2d6-60d3-bdf4-195a2c90a9e7",
+    "schema_ref": "urn:datacompany:recommendation-version:1",
+    "content_hash": "sha256:a5fee8bd5203c2ce219966e4678b006a3e9844c29a1bc6e3448589d98de3b993",
+    "created_at": "2026-07-30T09:00:00Z",
+    "created_by": "service:kag-research"
+  }
+}

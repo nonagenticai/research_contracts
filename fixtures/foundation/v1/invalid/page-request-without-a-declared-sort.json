@@ -1,0 +1,17 @@
+{
+  "fixture_id": "page-request-without-a-declared-sort",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_request",
+  "rationale": "IMP-DEC-FND002-018. A cursor page with no declared order has no order for the cursor to be stable over. The released unique_by operator has no when-present variant, so an absent /sort is a loud cross-field failure as well as a missing required member.",
+  "expected_error_contains": [
+    "sort"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "required"
+    }
+  ],
+  "instance": {
+    "page_size": 25
+  }
+}

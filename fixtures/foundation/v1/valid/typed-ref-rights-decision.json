@@ -1,0 +1,17 @@
+{
+  "fixture_id": "typed-ref-rights-decision",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/rights_decision_ref",
+  "rationale": "IMP-DEC-FND002-019. Document 16 section 3.9: 'Domain records store a pinned RightsDecisionRef for the exact action, use basis, and decision time.' The action/use-basis specificity belongs to the resolution receipt that carries this ref beside requested_action and requested_use_basis, not to the ref, so the ref itself is the plain ten-member pin with its schema_ref fixed. A tenant-scoped instance, so the released scope conditional is exercised in its populated direction here and in its forbidding direction by typed-ref-rights-decision-global-with-a-resource-tenant.",
+  "instance": {
+    "owner_context": "rights-registry",
+    "entity_type": "rights_decision",
+    "entity_id": "eeeeeeee-1111-4111-8111-eeeeeeeeeeee",
+    "version_id": "ffffffff-1111-4111-8111-ffffffffffff",
+    "version_number": 1,
+    "resource_scope": "tenant",
+    "resource_tenant_id": "22222222-2222-4222-8222-222222222222",
+    "schema_ref": "urn:datacompany:rights-decision-version:1",
+    "content_hash": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

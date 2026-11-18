@@ -1,0 +1,71 @@
+lifecycle: candidate
+candidate_status: candidate
+accountable_owner: georgiedekker
+accountable_reviewer: georgiedekker
+schema_version_policy: >-
+  semver on the schema $id: adding a name or an optional member is minor and keeps
+  the $id; any change to what a released rule means mints a new $id major and bumps
+  DERIVATION_PROFILE_VERSION in the same commit as every manifest it invalidates.
+model_source_repository: nonagenticai/DataCompany
+model_source_revision_policy: >-
+  every package records the doc-16 section identifiers it implements and a
+  sha256:<64-lowercase-hex> digest of the exact UTF-8 model file reviewed for it; a
+  changed digest requires a conformance-impact review before contract, schema,
+  migration, API, event or projection freeze.
+blocking_decisions:
+  IMP-DEC-001: >-
+    Python half, ratified 2026-08-08. Distribution name `research-contracts`,
+    import package `research_contracts`. This repository is the published source
+    of that distribution. First consumer: the evidence-review service, which
+    seals its inclusion-set export with the FND-005 canonical hash.
+  IMP-DEC-001-NPM: >-
+    npm half, ratified 2026-09-04. Scope and package name `@nonagentic/research-contracts`,
+    published from packages/typescript. Chosen to match the Python distribution name
+    rather than a private placeholder scope: the two halves are one contract set and a
+    reader who finds one should be able to guess the other.
+    The package was `"private": true` at version 0.0.0 while this was deferred, so the
+    TypeScript half of a repository whose whole purpose is cross-language contracts had never
+    been consumable by a TypeScript service.
+  IMP-DEC-002: >-
+    Ratified 2026-09-04. Research context and attestation JWS parameters, per
+    15-new-services-integration-rollout-and-verification-plan.md section 13.1: RS256; JWKS by
+    kid with a forced refresh on an unknown kid; 3600s JWKS cache; 300s context TTL; 24h key
+    overlap on rotation; 30s clock leeway; revocation resolved through revocation_check_ref
+    against an FR status endpoint, failing closed. Every value is inherited from
+    evidence_review_service/src/auth/verifier.py as it already runs in production, so
+    ratification adds no new cryptographic decision to the estate. NOT settled by this entry:
+    the attestation ISSUER. FR mints only an HS256 token from a symmetric secret and otherwise
+    verifies Keycloak's RS256 as a client, and Keycloak cannot sign an attestation because
+    client-credentials carries static mapper claims while an attestation needs per-request
+    ones. FR needs its own keypair and its own JWKS endpoint, and custody of that keypair has
+    no appointed owner.
+deferred_decisions: {}
+notes:
+  - deferred_decisions is deliberately an empty mapping, not a deleted key. The validator in
+    tooling/governance.py requires a mapping and reports its absence as a defect, and an empty
+    mapping is a claim a reader can check where a missing key is indistinguishable from one
+    removed to make a gate pass.
+  - IMP-DEC-001-NPM was closed on 2026-09-04. The guard worked exactly as designed, which is
+    worth recording — no npm publish step could be added while the entry stood, OWNERS.yaml
+    alone could not promote it, and closing it required editing REQUIRED_DEFERRED_DECISIONS in
+    tooling/governance.py in the same reviewable commit.
+  - IMP-DEC-002's ratification names five parameters and explicitly does not name a signer.
+    A future session reading only the first half of that entry would conclude the attestation
+    tree is unblocked; it is not, and the second half says why.
+  - The npm package is now publishABLE and is not yet publishED, and the distinction is
+    deliberate. IMP-DEC-001-NPM blocked the NAME, and the name is decided, so package.json is
+    renamed, un-privated and versioned to match the Python half. No publish step was added,
+    because gitops-production has no ts-library archetype — only n8n-node.yml, whose own
+    docstring explains it is purpose-built for n8n custom nodes with a peer-dep pin and a
+    verify-install against a stub n8n, and ts-service.yml, which builds a container. The
+    python-library archetype this repository already calls does the one thing that must never
+    be hand-rolled — canonical repack, fail-closed index fetch, and refusing a
+    same-name-different-sha256 republish — and an npm publish needs the same guarantees. Per
+    the estate rule that CI changes go to the archetype first, a ts-library.yml belongs in
+    gitops-production and is a separate unit of work. Hand-rolling npm publish here would be
+    the tech debt that rule exists to prevent.
+  - Owner and reviewer are the same person. This is a self-review and is recorded as
+    such rather than dressed up as two-party review.
+  - The x-datacompany-* extension vocabulary's per-annotation owners in EXTENSIONS.md are a
+    separate question and remain UNASSIGNED; IMP-DEC-001 named packages, not vocabulary.
+  - No example fixture is a reviewed model-conformance record.

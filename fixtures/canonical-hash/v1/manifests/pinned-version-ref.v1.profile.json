@@ -1,0 +1,34 @@
+{
+  "profile_id": "urn:datacompany:canonical-hash-profile:1",
+  "profile_version": 2,
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "serialization": "rfc8785",
+  "encoding": "utf-8",
+  "byte_order_mark": false,
+  "digest_algorithm": "sha256",
+  "digest_prefix": "sha256:",
+  "absent_vs_null": "distinct",
+  "unicode_normalization": "none",
+  "timestamp_representation": "rfc3339_utc_z",
+  "decimal_representation": "decimal_string",
+  "binary_float_policy": "reject",
+  "included_pointers": [
+    "/content_hash",
+    "/entity_id",
+    "/entity_type",
+    "/owner_context",
+    "/resource_scope",
+    "/resource_tenant_id",
+    "/schema_ref",
+    "/version_id",
+    "/version_number"
+  ],
+  "excluded_pointers": [
+    {
+      "pointer": "/resolved_at",
+      "reason": "resolution_observation"
+    }
+  ],
+  "opaque_pointers": [],
+  "arrays": []
+}

@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:extension-vocabulary-meta:1",
+  "title": "DataCompanyExtensionVocabularyMetaV1",
+  "description": "Meta-schema for the x-datacompany-* annotation vocabulary declared in EXTENSIONS.md. Document 16 section 2.5 requires an extension to declare its schema; this file is that declaration as an executable artifact rather than prose. It is applied to EVERY object node of EVERY committed *.schema.json that carries at least one x-datacompany-* member, by tests/test_extension_vocabulary.py.",
+  "$comment": "This meta-schema is a GATE, not a description of what the Python engine tolerates. It USED to be the only thing standing between an author and three fail-open paths that produced a WEAKER canonical hash view with no error anywhere -- a misspelled annotation name, a non-object x-datacompany-array, and an x-datacompany-hash-exclusion-reason with no x-datacompany-hash-excluded beside it. As of 2026-08-03 both engines CONSULT these rules at derivation and refuse all three (EXTENSIONS.md sections 7.1-7.4), so this file is no longer the sole gate for them; it remains the authoring-time declaration those restatements are checked against, in both directions, by tests/test_extension_vocabulary.py. Every place this file is STILL stricter than the engine is listed in EXTENSIONS.md section 8, re-measured, with the engine behaviour it compensates for. Owner: UNASSIGNED (OWNERS.yaml). Vocabulary version: 1.2 (D3 added the `scope` member at 1.1; D9 added `x-datacompany-hash-declaration-only` at 1.2). The file name and $id stay at v1 for both, by the same rule each time: EXTENSIONS.md section 1.3 makes ADDING A NAME a minor change, and neither addition alters what any rule released before it means -- a schema that carries no `scope` and no declaration-only flag derives the byte-identical manifest it always did, measured across all 18 released schemas.",
+
+  "$ref": "#/$defs/annotated_node",
+
+  "$defs": {
+    "vocabulary": {
+      "$comment": "The closed set of released annotation names. A name outside it is a typo or an unregistered extension. This enum used to be the ONLY thing that caught it -- the engine ignored it silently, which is EXTENSIONS.md section 7.1 -- and since 2026-08-03 hash_profile._require_released_annotations re-states this set and refuses any x-datacompany-* member outside it while walking. The restatement is compared against this enum in both directions by test_the_engine_vocabulary_matches_the_meta_schema, so the two cannot drift. Note what is NOT implied: being accepted by that check gives a name no implementation of its own. x-datacompany-composition-point was the standing example of that until 2026-08-04, when it gained one -- see #/$defs/composition_point.",
+      "enum": [
+        "x-datacompany-array",
+        "x-datacompany-composition-point",
+        "x-datacompany-cross-field",
+        "x-datacompany-hash-declaration-only",
+        "x-datacompany-hash-excluded",
+        "x-datacompany-hash-exclusion-reason",
+        "x-datacompany-hash-opaque"
+      ]
+    },
+
+    "annotated_node": {
+      "$comment": "Applied to a single JSON Schema object node, at any depth, that carries at least one x-datacompany-* member. Non-x-datacompany members are deliberately unconstrained: this vocabulary is additive and must not restate JSON Schema.",
+      "type": "object",
+      "propertyNames": {
+        "$comment": "Any member whose name is in the x-datacompany- namespace must be a registered name. Members outside the namespace are untouched.",
+        "if": { "type": "string", "pattern": "^x-datacompany-" },
+        "then": { "$ref": "#/$defs/vocabulary" }
+      },
+      "properties": {
+        "x-datacompany-array": { "$ref": "#/$defs/array_annotation" },
+        "x-datacompany-composition-point": { "$ref": "#/$defs/composition_point" },
+        "x-datacompany-cross-field": { "$ref": "#/$defs/cross_field_rules" },
+        "x-datacompany-hash-declaration-only": { "$ref": "#/$defs/hash_declaration_only" },
+        "x-datacompany-hash-excluded": { "$ref": "#/$defs/hash_excluded" },
+        "x-datacompany-hash-exclusion-reason": {
+          "$comment": "Single source of truth: the released closed reason set lives in canonical-hash-profile.v1 and is read at runtime by hash_profile.exclusion_reasons(). It is referenced here, never restated.",
+          "$ref": "urn:datacompany:canonical-hash-profile:1#/$defs/exclusion_reason"
+        },
+        "x-datacompany-hash-opaque": { "$ref": "#/$defs/hash_opaque" }
+      },
+      "allOf": [
+        { "$ref": "#/$defs/exclusion_reason_pairing" },
+        { "$ref": "#/$defs/declaration_only_pairing" }
+      ]
+    },
+
+    "declaration_only_pairing": {
+      "$comment": "D9. Two annotations may not sit on a declaration-only node, and both exclusions are per-node facts this file can actually see. x-datacompany-hash-excluded: the two are contradictory acts on one pointer -- an exclusion REMOVES a path and records the removal with a released reason in excluded_pointers, while declaration-only asserts there is no path there to remove. x-datacompany-hash-opaque: hash_profile requires the flag to sit STRICTLY under an opaque pointer, so allowing both on one node would let that guard be satisfied by the node itself and turn it into a formality any author could walk past. NOT pinned here, deliberately: that the node reaches SOMETHING worth carrying. The intended shape is one flag at the OUTERMOST node of a properties chain -- the suppression cascades by prefix, so the x-datacompany-array further down needs no flag of its own -- which means the flag-bearing node routinely carries no annotation at all, only `properties`. A rule requiring x-datacompany-array beside the flag was written first and REJECTED that legal shape; the honest limit is recorded in EXTENSIONS.md section 8 rather than replaced by a rule that reads strict and is wrong. A declaration-only node that reaches no annotation is inert (its member still hashes through the enclosing opacity), and the shapes that are NOT inert are refused by the engine at derivation, which can see the composed walk this file cannot.",
+      "if": { "required": ["x-datacompany-hash-declaration-only"] },
+      "then": {
+        "not": {
+          "anyOf": [
+            { "required": ["x-datacompany-hash-excluded"] },
+            { "required": ["x-datacompany-hash-opaque"] }
+          ]
+        }
+      }
+    },
+
+    "exclusion_reason_pairing": {
+      "$comment": "The reason is meaningful only next to the flag. hash_profile._Walker reads x-datacompany-hash-exclusion-reason ONLY inside the `x-datacompany-hash-excluded is True` branch, so a lone reason is discarded in silence and the path stays in the hash view. Both directions are pinned, and both are now engine-enforced as well: flag without reason has always been rejected with UnknownExclusionError, and reason without flag -- EXTENSIONS.md section 7.2, discarded in silence until 2026-08-03 -- is refused by hash_profile._require_released_annotations.",
+      "if": { "required": ["x-datacompany-hash-excluded"] },
+      "then": { "required": ["x-datacompany-hash-exclusion-reason"] },
+      "else": { "not": { "required": ["x-datacompany-hash-exclusion-reason"] } }
+    },
+
+    "hash_excluded": {
+      "$comment": "hash_profile._Walker.walk tests `schema.get(\"x-datacompany-hash-excluded\") is True`, an identity comparison. false, 0, 1, \"true\" and null are therefore all no-ops that leave the path INSIDE the hash view. Only the literal true has an effect, so only the literal true may be written; a member that is not excluded omits the annotation.",
+      "const": true
+    },
+
+    "hash_opaque": {
+      "$comment": "hash_profile._Walker.walk tests `schema.get(\"x-datacompany-hash-opaque\") is True`, exactly as for hash_excluded. Same rule: literal true only.",
+      "const": true
+    },
+
+    "hash_declaration_only": {
+      "$comment": "D9 (vocabulary 1.2). hash_profile._Walker.walk tests `schema.get(\"x-datacompany-hash-declaration-only\") is True`, the third annotation with identity-comparison semantics, so the same rule holds: only the literal true may be written and every other value is a silent no-op. The node is still WALKED and its x-datacompany-array is still collected; what the flag removes is the node's own pointer, and every pointer beneath it, from included_pointers. That is what lets an array inside an x-datacompany-hash-opaque subtree carry the ordered/set-like declaration those two released $comments require -- bitemporal-assertion.v1 /value (\"Arrays inside it still require their own ordered/set-like declaration\") and canonical-hash-profile.v1 `arrays` (\"An array that is not declared here has undeclared collection semantics and is rejected, including inside an opaque subtree\") -- without the properties chain that reaches it turning /value into a declared prefix and revoking the opacity. UNLIKE the two flags above, this one is not legal everywhere: hash_profile._require_declaration_only_is_legally_placed RAISES HashProfileError unless the pointer is STRICTLY under an x-datacompany-hash-opaque pointer and does not itself carry x-datacompany-hash-opaque, because outside one it would be a second, reasonless spelling of x-datacompany-hash-excluded. That placement rule is not expressible here -- it is a fact about the composed walk, not about a single node -- so this is one of the rare places the ENGINE is stricter than the meta-schema rather than the other way round. EXTENSIONS.md section 8 records it in that direction.",
+      "const": true
+    },
+
+    "composition_point": {
+      "$comment": "IMPLEMENTED since 2026-08-04, in both engines (EXTENSIONS.md section 6.4). This was the one place the meta-schema constrained something the implementation did not constrain at all: no code read the annotation, so 42, null and 'not-a-pointer' all derived cleanly, and hash_profile.merge_profile_extensions implemented the composition-point CONCEPT while being driven by its `extensions` argument rather than by this member -- every released schema was extensible whether or not it said so. Two rules now read it. hash_profile._require_released_composition_point RESOLVES the value against the document at derivation, which is deliberately stronger than the pattern below and is what closes the typo hole the pattern cannot see: '#/$defs/domian_extension' satisfies this regex exactly and names nothing. hash_profile.merge_profile_extensions refuses an extension offered to an envelope that declares no composition point at all, so a schema without this member is NON-EXTENSIBLE. The pattern below is retained as the authoring-time shape gate and is unchanged; it was induced from the committed uses, of which there are SIX, not three, spelling FOUR distinct targets -- '#/$defs/domain_extension' on bitemporal-assertion:1, immutable-version:1 and stable-identity:1, plus '#/$defs/problem_extension', '#/$defs/context_extension' and '#/$defs/manifest_extension'. Thirteen released schemas declare none; each was checked and each is intentionally non-extensible (four are $defs-only bundles with no root object at all and derive no manifest, three seal with additionalProperties:false, six seal with unevaluatedProperties:false and carry no composition-point placeholder $defs entry).",
+      "type": "string",
+      "pattern": "^#/\\$defs/[A-Za-z_][A-Za-z0-9_]*$"
+    },
+
+    "array_annotation": {
+      "$comment": "The VALUE of x-datacompany-array, which `hash_profile._Walker.walk` splats into the derived manifest entry as `{\"pointer\": <derived>, **value}`. Two consequences are pinned here, and BOTH were fail-opens in the engine until 2026-08-03. (1) The value must be a JSON object: a non-object value used to fail an isinstance test and be dropped in silence, losing the collection declaration entirely (EXTENSIONS.md section 7.3). (2) `pointer` is FORBIDDEN, because the splat puts the annotation's own key LAST -- an annotation carrying `pointer` overrode the walker's derived location and re-targeted the declaration at an unrelated path, with no error (section 7.4). additionalProperties:false closes both here, and hash_profile._require_released_array_declaration now re-states exactly `required` and the `properties` NAMES below -- not what they may contain, which stays canonical-hash-profile.v1's array_declaration -- under test_the_engine_array_member_table_matches_the_meta_schema, which compares the two in both directions. The splat order is deliberately unchanged: it is unreachable now, and mirroring it keeps the two engines identical.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "$ref": "urn:datacompany:canonical-hash-profile:1#/$defs/array_declaration/properties/kind"
+        },
+        "order_key": {
+          "$ref": "urn:datacompany:canonical-hash-profile:1#/$defs/array_declaration/properties/order_key"
+        }
+      },
+      "allOf": [
+        {
+          "$comment": "Mirrors canonical-hash-profile.v1#/$defs/array_declaration: order_key is required for a set and forbidden for an ordered array. Enforced here as well as there so a bad annotation fails at the schema, not only after derivation.",
+          "if": {
+            "required": ["kind"],
+            "properties": { "kind": { "const": "set" } }
+          },
+          "then": { "required": ["order_key"] },
+          "else": { "not": { "required": ["order_key"] } }
+        }
+      ]
+    },
+
+    "instance_pointer": {
+      "$comment": "An RFC 6901 JSON Pointer resolved by structural._at against the base its rule's `scope` selects: the INSTANCE ROOT for `absolute` (the default), or the location the rule was reached at for `relative` (D3). The lexical form is identical either way and nothing in the operand text distinguishes them, which is why `scope` must be read first. Distinct from canonical-hash-profile's hash_view_pointer despite the identical lexical form: there is no `-` array token here (structural._at parses an array token with int(), so `-` never resolves and yields _MISSING), and a numeric token IS a real array index. The empty pointer is excluded by minLength, matching the fact that no released rule addresses the instance root itself.",
+      "type": "string",
+      "pattern": "^(/([^/~]|~[01])*)+$",
+      "minLength": 2
+    },
+
+    "cross_field_operator": {
+      "$comment": "The closed set of operators structural.check_cross_field_rules dispatches on. Its else-branch raises CrossFieldError, so an unregistered operator DOES fail closed -- but only when an instance is validated, never at collection time. This enum moves that failure to schema-authoring time.",
+      "enum": [
+        "disjoint",
+        "equal",
+        "equal_when_both_present",
+        "half_open_interval",
+        "unique_by"
+      ]
+    },
+
+    "cross_field_scope": {
+      "$comment": "D3, option B. Chooses the BASE that a rule's operand pointers resolve against. Absent means `absolute`, which is the meaning every rule released before D3 carries, so adding this member changed no released rule's meaning -- that is why D3 landed as an additive minor bump rather than a vocabulary version 2. `relative` resolves operands against the instance location the rule was REACHED at, which is what lets a rule-bearing schema be composed as a member of another schema instead of only at a document root. At a document root the two readings coincide. Note this is now the FOURTH lexically identical pointer language in the repository (EXTENSIONS.md section 1.4); the scope member is the only thing that distinguishes the two readings of an operand, so it is load-bearing and must be read before any operand pointer is interpreted.",
+      "enum": ["absolute", "relative"]
+    },
+
+    "cross_field_rules": {
+      "$comment": "structural._collect reads `schema.get(\"x-datacompany-cross-field\") or []`, so a non-array value is iterated as-is: a string is walked character by character and a null member reaches `.items()`, both raising a bare AttributeError rather than a CrossFieldError. An empty array is silently a no-op declaration, which is indistinguishable from a rule that was deleted by mistake, so minItems is 1.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cross_field_rule" }
+    },
+
+    "cross_field_rule": {
+      "$comment": "structural.check_cross_field_rules indexes each operator's operands directly (rule[\"from\"], rule[\"left\"], rule[\"at\"]), so a rule missing an operand raises a bare KeyError out of the failure-collection path instead of being reported. The per-operator required lists below are that contract written down. `name` is optional: the engine falls back to the operator token, which makes two unnamed rules of the same kind indistinguishable in the failure text.",
+      "type": "object",
+      "required": ["rule"],
+      "properties": {
+        "rule": { "$ref": "#/$defs/cross_field_operator" },
+        "name": { "type": "string", "minLength": 1 },
+        "scope": { "$ref": "#/$defs/cross_field_scope" },
+        "$comment": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["rule"],
+            "properties": { "rule": { "const": "half_open_interval" } }
+          },
+          "then": {
+            "$comment": "Both operands are REQUIRED members of the rule. 'an absent `to` means positive infinity' is a statement about the INSTANCE member the `to` pointer addresses, never about the `to` key itself: rule[\"to\"] is indexed unconditionally.",
+            "required": ["from", "to"],
+            "properties": {
+              "from": { "$ref": "#/$defs/instance_pointer" },
+              "to": { "$ref": "#/$defs/instance_pointer" }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["rule"],
+            "properties": {
+              "rule": { "enum": ["equal", "equal_when_both_present"] }
+            }
+          },
+          "then": {
+            "required": ["left", "right"],
+            "properties": {
+              "left": { "$ref": "#/$defs/instance_pointer" },
+              "right": { "$ref": "#/$defs/instance_pointer" }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["rule"],
+            "properties": { "rule": { "const": "unique_by" } }
+          },
+          "then": {
+            "$comment": "`key` is optional; omitting it makes the whole member the uniqueness value.",
+            "required": ["at"],
+            "properties": {
+              "at": { "$ref": "#/$defs/instance_pointer" },
+              "key": { "$ref": "#/$defs/instance_pointer" }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["rule"],
+            "properties": { "rule": { "const": "disjoint" } }
+          },
+          "then": {
+            "$comment": "left_key and right_key are independently optional; omitting one makes that side's whole member the compared value.",
+            "required": ["left", "right"],
+            "properties": {
+              "left": { "$ref": "#/$defs/instance_pointer" },
+              "right": { "$ref": "#/$defs/instance_pointer" },
+              "left_key": { "$ref": "#/$defs/instance_pointer" },
+              "right_key": { "$ref": "#/$defs/instance_pointer" }
+            }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

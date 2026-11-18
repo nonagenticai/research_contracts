@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-observation-superseded:1",
+  "title": "ReviewObservationSupersededPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.observation.superseded.v1': one correction to an observation, located by review and by the version it corrects, named by its own version identity, and carrying nothing else. It deliberately carries NO observed value -- native or normalized -- and NO unit. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the OBSERVATION, named by observation_id), the aggregate version (this version's own number) and the content hash.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "observation_id",
+    "observation_version_id",
+    "version_number"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. evidence_review_service/src/application/services/events.py already contains emit_observation_superseded and it writes exactly five keys to the outbox, under the database's own ck_domain_outbox_payload_is_minimal CHECK. This document is authored from that running producer, not from the specification alone, following the correction review-decision-recorded.v1 already recorded in this repository for the identical reason: a schema derived from a spec while a deliberate implementation of the same event sits unread is how the two diverge on the day both ship. FOUR AUTHORING DECISIONS THAT ARE NOT STYLE. (1) ONLY THE CORRECTION PATH -- NOT HOW AN OBSERVATION IS DISCOVERED. The producer's own docstring is exact: 'Only the correction path. A first write is not a supersession... an observation becomes a fact a consumer may use when it is ACCEPTED, and the acceptance event is where that is said.' So this event is never how a consumer learns an observation exists -- that is review.observation.accepted.v1, a separate registered document with its own schema. A version-1 write of an observation raises nothing here at all; emit_observation_superseded is only called for a version that corrects a predecessor. (2) NO OBSERVED VALUE AND NO UNIT, OF EITHER KIND. Document 13 section 8.2 bounds a payload to identifiers, versions, hashes and minimal facts, and an extracted clinical value -- native or normalized, with or without the unit that gives it meaning -- is the worst thing this event could carry into a channel that is append-only, replayable indefinitely, and has no blinding layer. It is exactly the extracted narrative content document 14 forbids, and unlike review.decision.recorded.v1's disposition it cannot even be defended as routing metadata: it is the research content itself. A consumer that needs the value fetches it from the producer under authorization, per document 13 section 8.2. (3) A PREDECESSOR IS A CORRECTION, NEVER A SPLIT OR A MERGE. supersedes_version_id may only name a version of the SAME observation identity and scope -- document 16 line 200 restricts a version predecessor to a correction or revision of the same identity and scope -- and document 16 lines 173-174 separately forbid approximating a split or a merge as a chain of pairwise supersessions. This document does not attempt to encode that restriction structurally (a $ref to a uuid cannot know which observation it names), so it is stated here as the rule a producer and a consumer must both honor: a value in this field that resolves to a version of a DIFFERENT observation is a violation of document 16, not a variant this schema permits. (4) THE DELIBERATE REPETITION OF THE VERSION NUMBER. Unlike review.decision.recorded.v1's decision, this aggregate has a REAL counter -- ObservationVersion.version_number -- so the envelope's aggregate_version carries that number rather than the literal 1 a written-once aggregate would use, and this payload repeats it as version_number. That repetition is deliberate, not redundant: the envelope's copy is the ordering key per (resource_scope, resource_tenant_id, aggregate_type, aggregate_id); the payload's copy is the same fact travelling WITH the record, so a consumer that keeps only payloads out of a mixed batch -- never reaching back into the envelope of each row -- can still read which version this is. NO CONTENT HASH IN THIS DOCUMENT. The producer sets the envelope's content_hash from version.content_hash for this event; the hash lives on the ENVELOPE, exactly as research-event-envelope.v1 describes, so this document declares no hash member. Adding one would create two places to carry the same fact with no rule for which wins when a bug makes them disagree. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is a minor change that keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-observation-superseded:2 as a new, coexisting document, because document 13 section 8.1 ships event versions additively -- 'review.observation.superseded.v1' and a future '.v2' are two registered types, not one type that changed. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this observation belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the observation, so this is the only place the review is named. Mirrors review-decision-recorded.v1 authoring decision (1).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "observation_id": {
+      "$comment": "The observation's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a mixed batch of events never has to reach back into the envelope to learn which observation each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "observation_version_id": {
+      "$comment": "This version row's own identity -- the corrected version being recorded now, NOT the one it replaces. Distinct from supersedes_version_id, which names the predecessor.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "version_number": {
+      "$comment": "This version's ordinal within the observation's correction chain, from the version row the producer just wrote. Required with no nullable escape, for the reason the envelope requires aggregate_version: an absent ordinal silently disables ordering for exactly the rows that omit it. Deliberately repeated from the envelope's aggregate_version -- see authoring decision (4).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    },
+    "supersedes_version_id": {
+      "$comment": "The version this one corrects, where the producer recorded one. A predecessor names a correction or revision of the SAME observation identity and scope (document 16 line 200) -- never a substitute for a split or a merge across separate observations, which document 16 lines 173-174 forbid approximating as a chain of pairwise supersessions. See authoring decision (3). Optional and nullable, matching the shape of this event's sibling supersession chains elsewhere in the twenty-one (review.duplicate_cluster.resolved.v1, review.conflict.resolved.v1, review.evidence_snapshot.created.v1).",
+      "oneOf": [
+        {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:approval-attestation:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

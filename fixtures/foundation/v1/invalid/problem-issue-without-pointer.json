@@ -1,0 +1,27 @@
+{
+  "fixture_id": "problem-issue-without-pointer",
+  "schema_ref": "urn:datacompany:problem-details:1",
+  "rationale": "A field-level issue that does not say which field. It is indistinguishable from a top-level failure and gives a caller nothing to act on.",
+  "expected_error_contains": [
+    "pointer"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/issues/0",
+      "keyword": "required"
+    }
+  ],
+  "instance": {
+    "code": "schema_incompatible",
+    "status": 422,
+    "message": "Invalid.",
+    "retryable": false,
+    "correlation_id": "66666666-6666-4666-8666-666666666666",
+    "issues": [
+      {
+        "code": "missing_required_member",
+        "severity": "error"
+      }
+    ]
+  }
+}

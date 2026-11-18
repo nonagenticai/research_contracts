@@ -1,0 +1,23 @@
+{
+  "fixture_id": "release-ref-profile-descriptor",
+  "schema_ref": "urn:datacompany:release-ref:1#/$defs/profile_release_descriptor",
+  "rationale": "Document 12 section 2's descriptor with every to-be-pinned placeholder resolved, which is the state the document says is required before a candidate may become verified.",
+  "instance": {
+    "id": "datacompany-hta",
+    "version": "1.0.0",
+    "status": "verified",
+    "kernel_compatibility": ">=3.2.0 <4.0.0",
+    "pack_refs": [
+      "evidence-appraisal@1.2.0",
+      "systematic-review@1.0.0"
+    ],
+    "default_locale": "pl-PL",
+    "supported_locales": [
+      "en",
+      "pl-PL"
+    ],
+    "workflow_bundle_ref": "datacompany-hta-workflows@1.0.0",
+    "policy_bundle_ref": "datacompany-hta-policy@1.0.0",
+    "qualification_suite_ref": "datacompany-hta-qualification@1.0.0"
+  }
+}

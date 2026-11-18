@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-own-content-hash-does-not-change-hash",
+  "base_fixture": "immutable-version-nested-pins",
+  "expect": "unchanged",
+  "mutations": [
+    {
+      "pointer": "/content_hash",
+      "value": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  ],
+  "rationale": "The subject's own content_hash is removed before hashing."
+}

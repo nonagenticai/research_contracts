@@ -1,0 +1,30 @@
+{
+  "fixture_id": "floating-navigation-ref",
+  "description": "A permitted floating identity ref: declared navigation semantics, an explicit resolver policy with INDEPENDENT valid_at and known_at, and the resulting persisted pin.",
+  "schema_ref": "urn:datacompany:identity-ref:1#/$defs/floating_navigation_ref",
+  "expect": "valid",
+  "instance": {
+    "identity_ref": {
+      "owner_context": "guideline-registry",
+      "entity_type": "guideline_work",
+      "entity_id": "871c2bf9-46db-6e53-a2ab-b521cedf800d",
+      "resource_scope": "global"
+    },
+    "resolution_policy": {
+      "resolver_policy_ref": "urn:datacompany:resolver-policy-current-at:1",
+      "valid_at": "2026-06-01T00:00:00Z",
+      "known_at": "2026-07-30T09:00:00Z"
+    },
+    "resolved_pin": {
+      "owner_context": "guideline-registry",
+      "entity_type": "guideline_work",
+      "entity_id": "4a8e43af-be82-426e-06fc-f4190b9f0e02",
+      "version_id": "47230914-9f54-3cc2-2457-4529b2ab697e",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:47f5b7a05b17d527d9ce9882219fc1e5f0515b288331221c1f9d6c0dfb50999e",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    }
+  }
+}

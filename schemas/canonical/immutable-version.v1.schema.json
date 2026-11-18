@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:immutable-version:1",
+  "title": "ImmutableVersionV1",
+  "description": "Canonical immutable-version envelope (document 16 section 3.2, shared foundation section 4.1). A correction creates a new version and never overwrites the predecessor.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/version_fields" },
+    { "$ref": "#/$defs/supersession_conditional" }
+  ],
+  "required": ["version_id", "content_hash"],
+  "x-datacompany-composition-point": "#/$defs/domain_extension",
+  "$defs": {
+    "version_fields": {
+      "type": "object",
+      "required": [
+        "entity_id",
+        "version_number",
+        "schema_ref",
+        "created_at",
+        "created_by"
+      ],
+      "properties": {
+        "version_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid", "readOnly": true },
+        "entity_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid", "readOnly": true },
+        "version_number": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number",
+          "readOnly": true
+        },
+        "supersedes_version_id": {
+          "$comment": "Exact direct predecessor of the same identity, type and scope. Absent for version_number 1 and required for every correction or revision.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid",
+          "readOnly": true
+        },
+        "schema_ref": { "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref" },
+        "content_hash": {
+          "$comment": "This object's own canonical hash. Removed from its own hash view (shared foundation section 4.3 step 3) and recomputed, never trusted.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash",
+          "readOnly": true,
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "own_content_hash"
+        },
+        "content_hash_signatures": {
+          "$comment": "Detached signatures over content_hash. Removed from the hash view with the hash they sign.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "readOnly": true,
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "signature"
+        },
+        "profile_ref": {
+          "$comment": "Required when a profile affects meaning or validation.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "pack_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "provenance_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "decision_ref": {
+          "$comment": "Attributable acceptance or approval. Required when policy requires a decision.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "created_at": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp", "readOnly": true },
+        "created_by": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject",
+          "readOnly": true
+        }
+      }
+    },
+    "supersession_conditional": {
+      "$comment": "Executable form of the section 4.1 rule: first version has no predecessor, every later version names its exact predecessor.",
+      "if": {
+        "required": ["version_number"],
+        "properties": { "version_number": { "const": 1 } }
+      },
+      "then": { "not": { "required": ["supersedes_version_id"] } },
+      "else": { "required": ["supersedes_version_id"] }
+    },
+    "domain_extension": {
+      "$comment": "Declared composition point for type-specific semantic content.",
+      "type": "object"
+    },
+    "sealed": {
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    },
+    "command": {
+      "$comment": "Command form. version_id, content_hash and its signatures are service-assigned and are rejected on input.",
+      "allOf": [
+        { "$ref": "#/$defs/version_fields" },
+        { "$ref": "#/$defs/supersession_conditional" },
+        {
+          "not": {
+            "anyOf": [
+              { "required": ["version_id"] },
+              { "required": ["content_hash"] },
+              { "required": ["content_hash_signatures"] }
+            ]
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

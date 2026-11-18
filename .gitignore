@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.ty_cache/
+*.py[cod]
+.ci-model-root/
+.worktrees/
+dist/
+
+# TypeScript package build and dependency output. `package-lock.json` IS
+# committed: `npm ci` requires it, and an uncommitted lockfile means CI resolves
+# a different tree than any developer ever ran.
+node_modules/
+packages/typescript/dist/
+packages/typescript/dist-tools/
+coverage/
+*.tsbuildinfo

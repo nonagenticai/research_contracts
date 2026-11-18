@@ -1,0 +1,19 @@
+{
+  "fixture_id": "page-request-continuation",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_request",
+  "rationale": "Continuation: the opaque cursor is echoed back untouched. The schema asserts nothing about its contents, because the contract says opaque. The cursor value is deliberately NOT base64: the contract says opaque, and a fixture that looked decodable would teach consumers to try. It also stopped detect-secrets reporting a high-entropy string, which is a fair thing for it to say about an unexplained blob in a repository.",
+  "instance": {
+    "page_size": 50,
+    "cursor": "opaque-cursor-token-0001",
+    "sort": [
+      {
+        "field": "published_at",
+        "direction": "descending"
+      },
+      {
+        "field": "entity_id",
+        "direction": "ascending"
+      }
+    ]
+  }
+}

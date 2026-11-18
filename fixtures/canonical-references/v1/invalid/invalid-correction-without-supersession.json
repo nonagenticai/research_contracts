@@ -1,0 +1,18 @@
+{
+  "fixture_id": "invalid-correction-without-supersession",
+  "description": "A correction or revision must name its exact direct predecessor.",
+  "schema_ref": "urn:datacompany:immutable-version:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "supersedes_version_id"
+  ],
+  "instance": {
+    "version_id": "c44a5d0b-5f74-9f42-e25e-269771465f20",
+    "entity_id": "8b278470-8eb5-c7be-7fcd-2bd9fdc742ea",
+    "version_number": 4,
+    "schema_ref": "urn:datacompany:recommendation-version:1",
+    "content_hash": "sha256:29cdee48e28d8104186513c96be32955f6203cffa61833e36a88a37ecbff7989",
+    "created_at": "2026-07-30T09:00:00Z",
+    "created_by": "service:kag-research"
+  }
+}

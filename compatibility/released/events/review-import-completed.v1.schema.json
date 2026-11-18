@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-import-completed:1",
+  "title": "ReviewImportCompletedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.import.completed.v1': the terminal outcome counts of one import batch, located by review and named by its own identity, with a digest of the raw input it was built from. aggregate_type is 'import_batch'. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate, the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "import_batch_id",
+    "accepted_count",
+    "rejected_count",
+    "quarantined_count",
+    "raw_payload_digest"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. evidence_review_service/src/application/services/events.py contains emit_import_completed and it writes exactly six keys -- review_id, import_batch_id, accepted_count, rejected_count, quarantined_count, raw_payload_digest -- to a DomainOutbox row with aggregate_type 'import_batch' and aggregate_id batch.import_batch_id, aggregate_version 1. This schema matches that producer. THREE AUTHORING DECISIONS THAT ARE NOT STYLE. (1) review_id IS carried, for the identical reason urn:datacompany:review-decision-recorded:1 carries it: aggregate_type here is 'import_batch', not 'review', so the payload's review_id is the ONLY place the review this batch belongs to is named. Removing it would make the event unattributable to its review without a fetch back to the producer. (2) NO per-row rejection reason. Document 13 section 8.2 sends a consumer to the producer for exactly this kind of detail: a rejection reason is unbounded (free text or a structured cause) and per-record, and one import batch can hold thousands of rows, so a reasons array here would be the abstract-smuggled-in-an-array failure the envelope's recursive minimal_fact bound exists to catch, multiplied by the row count. accepted_count, rejected_count and quarantined_count tell a consumer how much detail there is to decide whether fetching it is worth doing; a consumer that needs the reasons asks this service for the batch under its own authorization. (3) raw_payload_digest is bound to the released content_hash primitive rather than left as a general minimal_fact string, and it is a PAYLOAD member rather than a use of the envelope's own optional content_hash field. Those are two different hashes of two different things: the envelope's content_hash names the canonical hash of the AGGREGATE's content, and emit_import_completed never passes one to the outbox writer -- an import batch's canonical form is not what this event announces. raw_payload_digest instead hashes the caller's RAW input file, before parsing, so a consumer can verify it is reasoning about the exact bytes the producer ingested, independent of whatever the batch aggregate later became. Composing the released content_hash primitive rather than respelling a string bound keeps that hash grammar pinned to one definition across the estate. Counts are plain non-negative integers rather than a bespoke primitive: minimal_fact already permits a bare number, and a count has no format constraint beyond 'not negative', so a dedicated primitive would define the same fact twice for no consumer benefit. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member (a coarse rejection-reason histogram, for instance) is minor and keeps this $id; a change to what any released member means mints urn:datacompany:review-import-completed:2 rather than editing this one, per document 13 section 8.1's additive versioning. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this import batch belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the import batch, so this is the only place the review is named. See authoring decision (1).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "import_batch_id": {
+      "$comment": "The import batch's own identity, equal to the envelope's aggregate_id for this event.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "accepted_count": {
+      "$comment": "Rows accepted into the review's corpus by this batch. Plain non-negative integer, not a primitive -- see authoring decision (3).",
+      "type": "integer",
+      "minimum": 0
+    },
+    "rejected_count": {
+      "$comment": "Rows rejected outright by this batch. See authoring decision (2) for why no per-row reason accompanies it.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "quarantined_count": {
+      "$comment": "Rows held for manual triage by this batch -- neither accepted nor rejected outright.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "raw_payload_digest": {
+      "$comment": "Hash of the caller's raw input file, before parsing. NOT the envelope's own optional content_hash field, which would name the aggregate's canonical content instead. See authoring decision (3).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

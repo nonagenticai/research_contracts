@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-duplicate-cluster-proposed:1",
+  "title": "ReviewDuplicateClusterProposedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.duplicate_cluster.proposed.v1': one deduplication run announcing that it proposed clusters, located by review and by its own identity, sized by how many clusters and candidate pairs it produced, and anchored to the exact input it saw. It deliberately carries NO cluster membership and NO per-pair scores. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the RUN, not any one cluster), the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "dedup_run_id",
+    "corpus_version_id",
+    "cluster_count",
+    "pair_count",
+    "input_digest"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. This is the opening half of the deduplication story that urn:datacompany:review-duplicate-cluster-resolved:1 closes: a run proposes clusters without enumerating them, and a resolution is where one cluster's fate is actually decided. evidence_review_service/src/application/services/events.py already contains emit_duplicate_cluster_proposed and writes exactly these six keys, unconditionally, every time it raises review.duplicate_cluster.proposed.v1; this schema matches that producer -- it is the source of truth, not any derived reading of a specification. FIVE AUTHORING DECISIONS THAT ARE NOT STYLE. (1) THE AGGREGATE IS THE RUN, NOT A CLUSTER, AND THIS EVENT DOES NOT ENUMERATE CLUSTER MEMBERSHIP OR PER-PAIR SCORES. The producer's own docstring states the reason directly: 'One event per RUN, not per cluster... a run that proposes 400 clusters would then commit 400 rows in one transaction to say one thing. The run is the decision a consumer reacts to; cluster_count tells it how much there is to fetch, and it fetches under the producer's authorization.' aggregate_type is 'deduplication_run' and aggregate_id is run.dedup_run_id -- the run's own identity, not any one cluster's. Cluster membership grows with the square of the cluster (an N-record cluster implies up to N*(N-1)/2 candidate pairs), which makes it content rather than a minimal fact; document 13 section 8.2 sends a consumer who needs it to the producer, authorized, rather than to this envelope. (2) cluster_count and pair_count ARE CARRIED, as counts only, because a consumer's first question on seeing this event is whether there is anything worth fetching at all -- zero clusters proposed is itself informative and is not the same fact as the event never having fired. Both are bounded below at zero rather than at one: a completed run that found no duplicate candidates in its corpus is a valid, ordinary outcome, not an error condition to special-case. (3) input_digest LETS A CONSUMER TELL WHETHER TWO RUNS SAW THE SAME INPUT WITHOUT FETCHING EITHER. Two runs against what looks like the same corpus_version_id can still have scanned different underlying record sets if records were added, withdrawn or quarantined between them; input_digest is a content hash of the exact input the run screened, so a consumer deciding whether a second run is redundant with a first compares this field against a value it already holds, with no round trip to the producer. It is carried in the payload rather than the envelope's own top-level content_hash: that field describes a hash of the aggregate's own committed content, and the producer does not set it here -- input_digest names a hash of what the run CONSUMED as input, a different fact, so it belongs in the payload as a domain member rather than being forced into a slot that means something else. (4) review_id IS CARRIED for the same reason review-decision-recorded's authoring decision (1) and review-conflict-opened's authoring decision (4) carry it: the aggregate this event names is the run, not the review, so review_id in the payload is the only place the owning review is named. dedup_run_id duplicates the envelope's aggregate_id in the payload for the same reason decision_id and conflict_id do in their sibling schemas -- a consumer reading only the payload of a mixed batch should not have to reach back into the envelope to learn which run a row is about. corpus_version_id anchors the run to the corpus snapshot it was proposing clusters against, and is a distinct fact from input_digest: corpus_version_id says WHICH corpus, input_digest proves WHICH records within it were actually seen. (5) All six members are required with no nullable escape. The producer sets every one of them unconditionally at every call to emit_duplicate_cluster_proposed -- there is no code path that omits or nulls any of them, so a schema permitting one to be absent or null would license a shape the producer never actually writes. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-duplicate-cluster-proposed:2 as a new document that coexists with this one, because document 13 section 8.1 ships event versions additively -- 'review.duplicate_cluster.proposed.v1' and a future '.v2' are two registered types, not one type that changed. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this deduplication run belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the run, so this is the only place the review is named. See authoring decision (4).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "dedup_run_id": {
+      "$comment": "The run's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a batch of mixed events does not have to reach back into the envelope to learn which run each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "corpus_version_id": {
+      "$comment": "The corpus snapshot this run proposed clusters against. Distinct from input_digest -- this says WHICH corpus, input_digest proves WHICH records within it the run actually saw. See authoring decision (4).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "cluster_count": {
+      "$comment": "How many clusters this run proposed. Zero is a valid, ordinary value -- a run that found no duplicate candidates. See authoring decision (2). Bounded below at zero, not one.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "pair_count": {
+      "$comment": "How many candidate pairs this run proposed across all its clusters. Zero is a valid, ordinary value. See authoring decision (2). Bounded below at zero, not one.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_digest": {
+      "$comment": "A content hash of the exact input set this run screened, letting a consumer tell whether two runs saw the same input without fetching either. See authoring decision (3). Composed from the released content_hash primitive, never respelled.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

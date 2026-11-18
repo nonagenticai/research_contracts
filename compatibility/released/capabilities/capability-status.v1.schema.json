@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:capability-status:1",
+  "title": "CapabilityStatusV1",
+  "description": "FND-002 task 3: the explicit unavailable-capability record served by GET /capabilities (document 13 section 12.3, shared foundation FND-010 task 6). Its whole reason to exist is that an absent capability must be VISIBLE: document 08 section 9 requires a typed capability_unavailable and states it 'must never trigger a silent fallback to a different method', and document 09 section 2.1 forbids returning 'a different method or an empty success result'.",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "allOf": [
+    { "$ref": "#/$defs/status_fields" },
+    { "$ref": "#/$defs/available_requires_the_full_chain" },
+    { "$ref": "#/$defs/unavailable_requires_a_reason" }
+  ],
+  "$defs": {
+    "unavailable_reason": {
+      "$comment": "IMP-DEC-FND002-010: the UNION of five overlapping prose lists the specification never reconciles. KAG gateway section 4 gives seven ('not installed, disabled, unentitled, unhealthy, optional provider absent, unqualified and temporarily unavailable'); document 12 section 5 adds 'degraded'; terminology broker section 14 adds 'stale projection' and 'rights-unavailable'. The union is taken rather than any one list because the failure direction matters: a reason set that is too WIDE can only ever make a state more precisely reported, while a set that is too narrow forces a real state to be reported as a neighbouring one — which is the 'unavailable presented as success' class this record exists to prevent.",
+      "enum": [
+        "degraded",
+        "disabled",
+        "not_installed",
+        "optional_provider_absent",
+        "rights_unavailable",
+        "stale_projection",
+        "temporarily_unavailable",
+        "unentitled",
+        "unhealthy",
+        "unqualified"
+      ]
+    },
+    "use_mode": {
+      "$comment": "Document 10 section 6.2: 'use_mode: exploratory|publication'.",
+      "enum": ["exploratory", "publication"]
+    },
+    "available_requires_the_full_chain": {
+      "$comment": "A capability cannot report itself currently available while any prerequisite in the installed -> enabled -> qualified chain is false. Without this, 'available: true, qualified: false' is a well-formed record, and that is exactly the shape a silent substitution takes: an unqualified method answering in place of a qualified one. Document 20 section 8 ('Emergency disable stops new execution ... it does not silently switch methods') and scientific processor section 9 ('disabling provider yields stable capability_unavailable and never substitutes a different method') are the rules this makes structural.",
+      "if": {
+        "required": ["available"],
+        "properties": { "available": { "const": true } }
+      },
+      "then": {
+        "required": ["installed", "enabled", "qualified"],
+        "properties": {
+          "installed": { "const": true },
+          "enabled": { "const": true },
+          "qualified": { "const": true }
+        }
+      }
+    },
+    "unavailable_requires_a_reason": {
+      "$comment": "Required iff unavailable, forbidden iff available. Shared foundation FND-010 task 6 requires /capabilities to expose 'reason-code states'; document 13 section 12.3 requires 'reason codes'; document 15 section 9 requires the catalogue to report 'its disabled/unavailable reason'. An unavailable capability with no reason is the empty measurement again: it reports the absence without reporting anything actionable, and a consumer cannot distinguish 'not entitled' from 'provider down'.",
+      "if": {
+        "required": ["available"],
+        "properties": { "available": { "const": false } }
+      },
+      "then": { "required": ["unavailable_reason"] },
+      "else": { "not": { "required": ["unavailable_reason"] } }
+    },
+    "status_fields": {
+      "type": "object",
+      "required": [
+        "capability_id",
+        "installed",
+        "enabled",
+        "qualified",
+        "available",
+        "required_for_publication"
+      ],
+      "properties": {
+        "capability_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" },
+        "method_id": {
+          "$comment": "The specific method inside the capability, when the record is method-scoped.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "installed": {
+          "$comment": "Present in the deployed image's signed contribution catalogue (document 13 section 12.1).",
+          "type": "boolean"
+        },
+        "enabled": { "type": "boolean" },
+        "qualified": {
+          "$comment": "Has a current qualification report. An unqualified method is unavailable, never silently downgraded.",
+          "type": "boolean"
+        },
+        "available": {
+          "$comment": "Currently answerable. This is the member a caller acts on, and it is deliberately separate from readiness: document 09 section 3.4 and document 13 section 12.4 both state that optional-provider failure appears HERE and 'does not make the base service unready'. A consumer that maps this onto a health probe reintroduces the accidental 404/502 that KAG gateway section 4 forbids.",
+          "type": "boolean"
+        },
+        "unavailable_reason": { "$ref": "#/$defs/unavailable_reason" },
+        "required_for_publication": {
+          "$comment": "IMP-DEC-FND002-011: the specification requires the BEHAVIOUR in four places (document 09 section 8, document 12 section 9, research output section 10, document 14 section 6.4: 'a required unavailable capability blocks approval-ready state') and never names a member for it. Without a member the blocking rule has nothing to read, so it is released here and required: 'optional by default' would make every capability silently non-blocking, which is the failure direction the rule exists to prevent.",
+          "type": "boolean"
+        },
+        "use_modes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/use_mode" },
+          "x-datacompany-array": { "kind": "set", "order_key": [""] }
+        },
+        "data_classes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" },
+          "x-datacompany-array": { "kind": "set", "order_key": [""] }
+        },
+        "provider_health": {
+          "$comment": "Optional-provider health, reported without leaking upstream topology (KAG gateway section 3: 'typed timeout/unavailable distinctions without leaking upstream topology'). No host, endpoint or error text.",
+          "enum": ["healthy", "degraded", "unhealthy", "absent"]
+        },
+        "qualification_report_ref": {
+          "$comment": "The exact qualification report. A PinnedVersionRef, never a floating IdentityRef: document 16 section 3.3 requires an exact immutable reference wherever reproducibility depends on it.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        }
+      }
+    }
+  }
+}

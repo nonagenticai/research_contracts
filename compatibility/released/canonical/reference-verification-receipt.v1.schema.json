@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:reference-verification-receipt:1",
+  "title": "ReferenceVerificationReceiptV1",
+  "description": "Immutable local evidence that a PinnedVersionRef was resolved against its registered owner and compared field by field (document 16 section 3.3, shared foundation section 4.2). A receipt neither replaces the owning service nor grants current content rights, entitlement or authorization.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/receipt_fields" },
+    { "$ref": "#/$defs/failure_code_conditional" },
+    { "$ref": "#/$defs/no_tenant_target_in_global_subject" }
+  ],
+  "unevaluatedProperties": false,
+  "x-datacompany-cross-field": [
+    {
+      "rule": "equal",
+      "name": "subject_local_ref_is_owned_by_consumer",
+      "scope": "relative",
+      "left": "/consumer_context",
+      "right": "/subject_local_ref/owner_context"
+    },
+    {
+      "rule": "equal_when_both_present",
+      "name": "no_cross_tenant_receipt",
+      "scope": "relative",
+      "left": "/subject_local_ref/resource_tenant_id",
+      "right": "/pinned_version_ref/resource_tenant_id"
+    }
+  ],
+  "$defs": {
+    "receipt_fields": {
+      "type": "object",
+      "required": [
+        "reference_verification_receipt_id",
+        "consumer_context",
+        "subject_local_ref",
+        "pinned_version_ref",
+        "verification_profile_ref",
+        "verified_owner_context",
+        "verified_schema_ref",
+        "verified_content_hash",
+        "verified_at",
+        "result"
+      ],
+      "properties": {
+        "reference_verification_receipt_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid",
+          "readOnly": true
+        },
+        "consumer_context": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/bounded_context",
+          "readOnly": true
+        },
+        "subject_local_ref": {
+          "$comment": "A released IdentityRef or PinnedVersionRef whose owner_context equals consumer_context. The consuming domain schema declares which form it permits.",
+          "oneOf": [
+            { "$ref": "urn:datacompany:pinned-version-ref:1" },
+            { "$ref": "urn:datacompany:identity-ref:1" }
+          ]
+        },
+        "pinned_version_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "verification_profile_ref": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref"
+        },
+        "verified_owner_context": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/bounded_context"
+        },
+        "verified_schema_ref": { "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref" },
+        "verified_content_hash": { "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash" },
+        "verified_at": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp", "readOnly": true },
+        "result": { "enum": ["verified", "rejected"], "readOnly": true },
+        "failure_code": {
+          "$comment": "Non-disclosing class only. It distinguishes a missing target, denied resolution and each comparison mismatch class without revealing another tenant's data.",
+          "enum": [
+            "target_not_found",
+            "resolution_denied",
+            "owner_context_mismatch",
+            "entity_type_mismatch",
+            "entity_id_mismatch",
+            "version_id_mismatch",
+            "version_number_mismatch",
+            "schema_ref_mismatch",
+            "resource_scope_mismatch",
+            "resource_tenant_mismatch",
+            "content_hash_mismatch"
+          ]
+        }
+      }
+    },
+    "failure_code_conditional": {
+      "$comment": "failure_code is permitted only when result is rejected and is absent when result is verified.",
+      "if": {
+        "required": ["result"],
+        "properties": { "result": { "const": "verified" } }
+      },
+      "then": { "not": { "required": ["failure_code"] } }
+    },
+    "no_tenant_target_in_global_subject": {
+      "$comment": "A global subject may not carry a tenant-scoped target (document 16 section 3.3).",
+      "if": {
+        "required": ["subject_local_ref"],
+        "properties": {
+          "subject_local_ref": {
+            "type": "object",
+            "required": ["resource_scope"],
+            "properties": { "resource_scope": { "const": "global" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "pinned_version_ref": {
+            "properties": { "resource_scope": { "const": "global" } }
+          }
+        }
+      }
+    }
+  }
+}

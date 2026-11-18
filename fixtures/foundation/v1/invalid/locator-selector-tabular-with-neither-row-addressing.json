@@ -1,0 +1,19 @@
+{
+  "fixture_id": "locator-selector-tabular-with-neither-row-addressing",
+  "schema_ref": "urn:datacompany:locator-selector:1#/$defs/tabular_selector",
+  "rationale": "The other direction of the same exclusive choice: a tabular selector that names a sheet and a cell range but no row at all does not address a cell. An 'at most one' reading would accept this.",
+  "expected_error_contains": [
+    "is not valid under any of the given schemas"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "oneOf"
+    }
+  ],
+  "instance": {
+    "sheet_or_table_id": "primary-outcomes",
+    "cell_range": "C4:C4",
+    "value_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+  }
+}

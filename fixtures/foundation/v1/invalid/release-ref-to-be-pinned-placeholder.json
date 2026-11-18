@@ -1,0 +1,15 @@
+{
+  "fixture_id": "release-ref-to-be-pinned-placeholder",
+  "schema_ref": "urn:datacompany:release-ref:1#/$defs/release_ref",
+  "rationale": "Document 12 section 2: 'to-be-pinned is a blocked field, not a wildcard accepted by production validation.' It must fail on the grammar, not on a special case.",
+  "expected_error_contains": [
+    "does not match"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "pattern"
+    }
+  ],
+  "instance": "systematic-review@to-be-pinned"
+}

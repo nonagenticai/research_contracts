@@ -1,0 +1,22 @@
+{
+  "fixture_id": "capability-unavailable-without-a-reason",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "An unavailable capability with no reason reports the absence and nothing actionable: a consumer cannot tell 'not entitled' from 'provider down'.",
+  "expected_error_contains": [
+    "unavailable_reason"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "required"
+    }
+  ],
+  "instance": {
+    "capability_id": "survival_extrapolation",
+    "installed": true,
+    "enabled": false,
+    "qualified": true,
+    "available": false,
+    "required_for_publication": false
+  }
+}

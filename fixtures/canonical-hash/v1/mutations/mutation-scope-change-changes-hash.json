@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-scope-change-changes-hash",
+  "base_fixture": "stable-identity-excluded-aggregate-version",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/resource_tenant_id",
+      "value": "7c765be2-8b68-ccfa-7c4e-43cf5a2d67a1"
+    }
+  ],
+  "rationale": "Immutable ownership/scope data is part of the hash input."
+}

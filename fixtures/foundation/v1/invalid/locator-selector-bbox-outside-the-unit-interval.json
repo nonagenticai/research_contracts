@@ -1,0 +1,37 @@
+{
+  "fixture_id": "locator-selector-bbox-outside-the-unit-interval",
+  "schema_ref": "urn:datacompany:locator-selector:1#/$defs/document_selector",
+  "rationale": "IMP-DEC-FND002-026. Every value in document 10 line 207's bbox is below 1, which is what makes normalised fractions a derivation rather than an invention — and a derivation is only worth taking if the boundary is enforced. A pixel coordinate here would silently mean a different region of a different rendering.",
+  "expected_error_contains": [
+    "bbox"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/bbox/2",
+      "keyword": "pattern"
+    }
+  ],
+  "instance": {
+    "page": 12,
+    "section_path": [
+      "Results",
+      "Primary outcome"
+    ],
+    "block_id": "stable-block-id",
+    "character_span": {
+      "start": 821,
+      "end": 914
+    },
+    "table": {
+      "table_id": "t2",
+      "row": 4,
+      "column": 3
+    },
+    "bbox": [
+      "0.10",
+      "0.22",
+      "612",
+      "0.31"
+    ]
+  }
+}

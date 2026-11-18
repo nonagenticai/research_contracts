@@ -1,0 +1,8 @@
+{
+  "review_id": "b3d3c6a2-4f7a-4e1e-9d3b-8a2c7e1f5b91",
+  "dedup_run_id": "2d8f4a6c-1b9e-4f3a-8c2d-6e4b9a1f3c70",
+  "corpus_version_id": "5a1c9e3b-7d2f-4a6c-9e1b-3f7a5c9e2d40",
+  "cluster_count": 42,
+  "pair_count": 118,
+  "input_digest": "sha256:3f9a2b7c4e8d1f6a9c3b7e2d5f8a1c4b7e0d3f6a9c2b5e8d1f4a7c0b3e6d9f2a"
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:research-access-context:1",
+  "title": "ResearchAccessContextV1",
+  "description": "FND-002 task 2: the verified internal research access context (document 10 section 2.4, document 08 section 11). Minted by the KAG gateway or an authorized control-plane service, carried on the wire as X-Research-Context: Bearer <JWS>, and verified by every consuming service. It is a short-lived credential, never persisted as long-wait state.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/context_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" },
+    { "$ref": "#/$defs/global_scope_forbids_context_ownership" }
+  ],
+  "unevaluatedProperties": false,
+  "x-datacompany-composition-point": "#/$defs/context_extension",
+  "x-datacompany-cross-field": [
+    {
+      "rule": "half_open_interval",
+      "name": "context_validity_is_non_empty",
+      "scope": "relative",
+      "from": "/requested_at",
+      "to": "/expires_at",
+      "$comment": "Document 13 section 9.3: 'Missing, expired or conflicting context fails closed.' A context whose expiry is at or before its request instant is already expired at issue, so the interval must be non-empty. Declared at the ROOT and scoped `relative` (D3, option B), so the interval is checked wherever this context is composed, not only when it is validated as its own schema_ref."
+    }
+  ],
+  "$comment": "SPEC CONFLICT, resolved and recorded as IMP-DEC-FND002-001 in config/foundation-decisions.json. The illustrative JSON at document 10 section 2.4 spells the scope-dependent members 'uuid-or-null'. Document 16 section 3.1 states 'A nullable tenant ID must not be used to distinguish them', and shared foundation section 4.1 states the conditional as required-iff-tenant / forbidden-iff-global. The general prohibition wins: this schema composes the SAME released resource_scope_conditional every canonical reference composes, so the discrimination is byte-identical at every nesting depth and no nullable tenant ID exists anywhere in the contract.",
+  "$defs": {
+    "purpose": {
+      "$comment": "Document 10 section 2.4: 'research|review|publication|administration'.",
+      "enum": ["research", "review", "publication", "administration"]
+    },
+    "role_token": {
+      "$comment": "Authorization role granted to the actor. Reuses the released canonical type token so the pre-ADR regulatory denylist guard applies here too: a role may not activate a regulatory type before ADR-DATACOMPANY-REGULATORY-MODEL is accepted.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "entitlement_token": {
+      "$comment": "Entitlement granted to the actor tenant. Same released token, same regulatory guard.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "data_class_token": {
+      "$comment": "Data classification the request is authorized to touch. Same released token, same regulatory guard.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "idempotency_key": {
+      "$comment": "Opaque client-supplied request key. Opaque means opaque: no structure is asserted and none may be inferred.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "global_scope_forbids_context_ownership": {
+      "$comment": "Document 10 section 2.4: 'For resource_scope: global, resource tenant, workspace and project are null and writes require platform-curator authority.' Read together with the no-nullable-discriminator rule, a global context carries no workspace or project at all. resource_tenant_id is already handled by the released resource_scope_conditional and is deliberately not restated here.",
+      "if": {
+        "required": ["resource_scope"],
+        "properties": { "resource_scope": { "const": "global" } }
+      },
+      "then": {
+        "allOf": [
+          { "not": { "required": ["workspace_id"] } },
+          { "not": { "required": ["project_id"] } }
+        ]
+      }
+    },
+    "context_extension": {
+      "$comment": "Declared composition point. A profile or pack extension adds namespaced members here and re-seals with unevaluatedProperties:false. Document 16 section 2.5: an extension MUST NOT weaken tenant, rights, provenance, approval or history constraints.",
+      "type": "object"
+    },
+    "context_fields": {
+      "type": "object",
+      "required": [
+        "actor_id",
+        "actor_tenant_id",
+        "resource_scope",
+        "roles",
+        "entitlements",
+        "purpose",
+        "data_classes",
+        "policy_version",
+        "correlation_id",
+        "causation_id",
+        "requested_at",
+        "expires_at"
+      ],
+      "$comment": "REQUIRED SET is a local decision, IMP-DEC-FND002-002. Document 08 section 11 says only 'the applicable subset of', and document 13 section 9.3 pushes per-operation requiredness onto each service ('Each service validates the applicable subset for its operation; a missing required protocol, pack, role, purpose or request-binding field fails closed'). The twelve required here are the members that have no operation-independent reading: an actor, its tenant, the resource scope, the authorization vectors, the purpose, the policy revision, the request-binding trio and the validity window. protocol_version_id, workspace_id, project_id, profile_ref, pack_refs, initiated_by, delegation_id and idempotency_key are operation-dependent and are therefore optional HERE and required by the consuming operation's own schema.",
+      "properties": {
+        "actor_id": {
+          "$comment": "Verified authenticated subject. Never a body or header override (document 13 section 9.3).",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject"
+        },
+        "actor_tenant_id": {
+          "$comment": "The actor's HOME tenant, which is not necessarily the resource tenant: an external collaborator retains their home identity and receives an explicit workspace grant into the resource-owner tenant (document 10 section 2.4).",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "resource_scope": { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope" },
+        "resource_tenant_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_tenant_id"
+        },
+        "workspace_id": {
+          "$comment": "The collaboration boundary. Present only for a tenant-scoped context.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "project_id": {
+          "$comment": "The research boundary inside a workspace. Present only for a tenant-scoped context.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "protocol_version_id": {
+          "$comment": "Exact protocol version this request runs under. Document 16 section 5.4: every lock, decision, job, analysis, model run and publication MUST pin the exact ProtocolVersion.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "roles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/role_token" }
+        },
+        "entitlements": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/entitlement_token" }
+        },
+        "purpose": { "$ref": "#/$defs/purpose" },
+        "data_classes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/data_class_token" }
+        },
+        "profile_ref": {
+          "$comment": "The active solution-profile release. Required when a profile affects meaning or validation (document 16 section 3.2), which is an operation-level condition, so it is optional in the envelope.",
+          "$ref": "urn:datacompany:release-ref:1#/$defs/release_ref"
+        },
+        "pack_refs": {
+          "$comment": "The exact capability-pack releases in force. Document 13 section 9.3 requires a verifier to check 'exact pack_refs'.",
+          "$ref": "urn:datacompany:release-ref:1#/$defs/release_ref_list"
+        },
+        "policy_version": {
+          "$comment": "The authorization-policy revision this context was evaluated against. Document 13 section 9.3: a continuation reauthorizes against CURRENT policy, so a stale policy_version cannot be replayed.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "initiated_by": {
+          "$comment": "The human who initiated the work, retained separately from the acting subject so a service-principal continuation cannot erase the initiating actor (document 08 section 11).",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject"
+        },
+        "delegation_id": {
+          "$comment": "The delegation chain entry that authorizes acting on another subject's behalf.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "correlation_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+        "causation_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+        "idempotency_key": { "$ref": "#/$defs/idempotency_key" },
+        "requested_at": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" },
+        "expires_at": {
+          "$comment": "Short-lived by construction. The non-empty interval is enforced by the root cross-field rule, which JSON Schema cannot express.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        }
+      }
+    }
+  }
+}

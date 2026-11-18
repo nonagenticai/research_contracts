@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-duplicate-cluster-resolved:1",
+  "title": "ReviewDuplicateClusterResolvedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.duplicate_cluster.resolved.v1': one resolution that decides a single duplicate cluster's fate, named by its own identity, locating the review and the cluster it resolves, and carrying the kind of resolution reached. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the RESOLUTION, not the review and not the cluster), the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "resolution_id",
+    "cluster_id",
+    "resolution_type"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. This is the closing half of the deduplication story that urn:datacompany:review-duplicate-cluster-proposed:1 opens: a run proposes clusters without enumerating them, and a resolution is where one cluster's fate is actually decided. evidence_review_service/src/application/services/events.py already contains emit_duplicate_cluster_resolved and writes exactly these six keys, unconditionally, every time it raises review.duplicate_cluster.resolved.v1; this schema matches that producer -- it is the source of truth, not any derived reading of a specification. FIVE AUTHORING DECISIONS THAT ARE NOT STYLE. (1) SUPERSESSION IS A NEW AGGREGATE CHAINED BY A PAYLOAD FIELD, NOT BY aggregate_version, AND THE COST OF THAT IS RECORDED HERE RATHER THAN HIDDEN. aggregate_version is a literal 1 for every resolution: the module docstring states why plainly -- 'Rows written exactly once -- an import batch, a deduplication run, a resolution, a decision, a conflict, an adjudication, an acceptance -- are their own aggregate instance at version 1. Superseding one of them does not rewrite it; it writes a NEW row with a NEW id, which is a new aggregate and gets its own event. The chain is expressed by the supersedes_* reference in the payload, not by the envelope's version.' The same docstring names the cost directly rather than papering over it: 'a consumer wanting the order of a supersession chain reads the payload's supersedes_* ref and cannot get it from aggregate_version. Buying that back means a counter column on the aggregate, which belongs to the aggregate's own migration and not to the envelope.' A future reader must not treat aggregate_version as a stand-in ordinal for this aggregate; it is not one. (2) supersedes_resolution_id NAMES A CORRECTION OF THE RESOLUTION ITSELF, AND MUST NEVER BE READ AS A MERGE OR SPLIT LINEAGE. Document 16 lines 173-174 forbid approximating a split or a merge by a chain of pairwise supersessions: a split or a merge is a distinct relation between records -- an IdentityRelation -- not a correction of a prior decision about the same cluster. This field covers exactly one thing: re-deciding the SAME cluster's resolution because an earlier resolution_type or survivor_record_id was wrong. A consumer walking a chain of supersedes_resolution_id links learns the history of corrections to one cluster's resolution and must not construct a merge or split genealogy from it -- that genealogy, where it exists, is carried by an IdentityRelation the producer exposes separately, not by this event. (3) NO SURVIVORSHIP FIELD MAP AND NO RATIONALE. A survivorship map -- which fields of which duplicate record won, field by field -- is content, exactly the shape document 13 section 8.2 and the envelope's minimal_fact bound exist to keep off this channel; a rationale is prose for the same reason review-conflict-resolved withholds one. An authorized consumer fetches either from the producer. (4) survivor_record_id is optional and nullable, present with a value only when resolution_type designates a surviving record from the cluster (for example a straightforward duplicate merge), and null when the resolution reached an outcome with no single survivor (for example a cluster found to be distinct on inspection). It is never omitted by the producer -- emit_duplicate_cluster_resolved always writes the key, using null in place of a value -- so a payload that carries the key with either a uuid or a literal null is the shape this event actually produces; the schema also permits the key's outright absence for a context that composes this payload alongside others. (5) NO reviewer, adjudicator or actor identity, for the same reason document 16 lines 392-394 give throughout this family: actor and tenant identity 'come from verified context and attestations, not from mutable domain payload fields'. review_id and cluster_id are carried for the same reason review_id and conflict_id are carried on urn:datacompany:review-conflict-resolved:1 -- the aggregate this event names is the resolution, not the review and not the cluster, so both must be named in the payload for a consumer to locate what was resolved. resolution_type is a canonical_type_token, matching the vocabulary the rest of the estate uses for enumerated outcomes, exactly as disposition does on review-conflict-resolved. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-duplicate-cluster-resolved:2 as a new document that coexists with this one, because document 13 section 8.1 ships event versions additively -- 'review.duplicate_cluster.resolved.v1' and a future '.v2' are two registered types, not one type that changed. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this resolution belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the resolution, so this is one of two places (with cluster_id) that name what the resolution is about. See authoring decision (5).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "resolution_id": {
+      "$comment": "The resolution's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well so a consumer reading only the payload of a batch of mixed events does not have to reach back into the envelope to learn which resolution each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "cluster_id": {
+      "$comment": "The cluster this resolution decides, from among the clusters a review.duplicate_cluster.proposed.v1 event announced. The join key back to the proposal that produced it.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "resolution_type": {
+      "$comment": "The kind of resolution reached for this cluster (for example: the cluster is a duplicate and was merged, or the cluster was found distinct on inspection). Carried as an enumerated outcome, not free text -- see authoring decision (5). NO survivorship map and NO rationale ride alongside it -- see authoring decision (3).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "survivor_record_id": {
+      "$comment": "Optional and nullable. The record that survives the resolution, present only when resolution_type designates a single surviving record; null when the resolution reached an outcome with no survivor. See authoring decision (4).",
+      "oneOf": [
+        {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "supersedes_resolution_id": {
+      "$comment": "Optional and nullable. The resolution_id of the earlier resolution this one corrects for the same cluster, when this resolution is a correction rather than the first. Absent (not merely null) when this is the first resolution of its cluster. Chains by payload reference, not by aggregate_version -- see authoring decision (1) -- and covers only a correction of the resolution itself, never an approximation of a merge or split -- see authoring decision (2).",
+      "oneOf": [
+        {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:review-decision-recorded:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,269 @@
+# CI for a PUBLIC repository — self-contained, GitHub-hosted runners.
+#
+# Why this file replaces the private archetype caller: a public repo cannot read a
+# private reusable workflow (the run dies at startup with zero jobs) and cannot use the
+# ARC self-hosted pools (`allows_public_repositories:false` must stay false: a fork PR can
+# edit `runs-on`). GitHub-hosted runners are free and unlimited on public repos.
+#
+# Every job is gated on `!github.event.repository.private` so this file can land while the
+# repository is still private: the jobs report "skipped" instead of failing unstarted, and
+# activate with zero edits at the flip. The consequence is load-bearing — CI cannot be
+# verified before the flip, so the first real run is the one immediately after it.
+#
+# ⛔ The `checks` job is a port of the gates this repository already enforces, not the
+# repository-agnostic template: tests/test_precommit_ci_parity.py asserts every pre-commit
+# hook has an executable CI counterpart, and tests/test_secret_scanning.py asserts the
+# detect-secrets exclusion is one regex across this file, the hook and .detect-secrets-baseline.json.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: install betterleaks 1.10.1 (pinned, sha256-verified)
+        run: |
+          set -euo pipefail
+          version=1.10.1
+          sha=c174b42d7aa60caf58c0c3e555c0e4bed01fe6b0d99a412bce777b5af4ce913e
+          curl -fsSL -o "$RUNNER_TEMP/betterleaks.tgz" \
+            "https://github.com/betterleaks/betterleaks/releases/download/v${version}/betterleaks_${version}_linux_x64.tar.gz"
+          echo "${sha}  $RUNNER_TEMP/betterleaks.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/betterleaks.tgz" -C "$RUNNER_TEMP" betterleaks
+      - name: scan the tree
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/betterleaks" dir --redact --exit-code 1 --no-banner \
+            --config=.betterleaks.toml \
+            --gitleaks-ignore-path .betterleaksignore .
+
+  no-private-refs:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: scan tracked files
+        run: bash scripts/ci/no-private-refs.sh
+
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+          enable-cache: true
+
+      - name: Sync locked dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: ruff check
+        run: uv run ruff check --no-cache src scripts tests generated
+
+      - name: ruff format --check
+        run: uv run ruff format --no-cache --check src scripts tests generated
+
+      - name: ty check
+        run: uv run ty check src scripts tests generated
+
+      - name: bandit
+        run: uv run bandit -q -r src scripts -ll
+
+      # The exclusion regex MUST be byte-identical to the pre-commit hook's
+      # `--exclude-files` argument and to the pattern persisted in .detect-secrets-baseline.json.
+      # tests/test_secret_scanning.py asserts all three agree and that none of them
+      # excludes .github/workflows/.
+      - name: detect-secrets baseline is current
+        env:
+          EXCLUDE_FILES: '\.detect-secrets-baseline\.json$|^uv\.lock$'
+        run: |
+          set -euo pipefail
+          uv run detect-secrets scan --baseline .detect-secrets-baseline.json \
+            --force-use-all-plugins \
+            --exclude-files "$EXCLUDE_FILES"
+          DROP_LINE='.results | map_values(map(del(.line_number)))'
+          new_results=$(jq -S "$DROP_LINE" .detect-secrets-baseline.json)
+          git checkout -- .detect-secrets-baseline.json
+          old_results=$(jq -S "$DROP_LINE" .detect-secrets-baseline.json)
+          if [ "$new_results" != "$old_results" ]; then
+            echo "::error::detect-secrets found new secrets" >&2
+            diff <(echo "$old_results") <(echo "$new_results") >&2 || true
+            exit 1
+          fi
+
+      - name: pip-audit
+        run: bash scripts/pip-audit.sh
+
+      - name: scripts/check_file_hygiene.py — whitespace, final newlines
+        run: uv run python scripts/check_file_hygiene.py
+
+      # The seven upstream hooks that used to execute nowhere: not on commit (the fleet
+      # hook owns .git/hooks/pre-commit) and not in CI. Each is run by name so
+      # tests/test_precommit_ci_parity.py can assert the parity in both directions.
+      - name: pre-commit hooks with no other CI counterpart
+        run: |
+          set -uo pipefail
+          failed=""
+          for hook in check-yaml check-json check-added-large-files \
+                      check-merge-conflict check-executables-have-shebangs \
+                      check-shebang-scripts-are-executable detect-private-key; do
+            echo "::group::$hook"
+            uv run pre-commit run --all-files --hook-stage pre-commit "$hook" || failed="$failed $hook"
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "FAILED hooks:$failed" >&2
+            exit 1
+          fi
+
+      - name: scripts/lint_contracts.py — schemas and the pre-ADR denylist
+        run: uv run python scripts/lint_contracts.py
+
+      - name: scripts/check_draft_governance.py — draft blockers remain explicit
+        run: uv run python scripts/check_draft_governance.py
+
+      - name: scripts/verify_canonical_fixtures.py — every canonical fixture replays
+        run: uv run python scripts/verify_canonical_fixtures.py
+
+      - name: scripts/verify_foundation_fixtures.py — every foundation fixture replays
+        run: uv run python scripts/verify_foundation_fixtures.py
+
+      - name: scripts/generate_types.py --check — the committed bindings match the schemas
+        run: uv run python scripts/generate_types.py --check
+
+      - name: scripts/check_schema_compatibility.py — candidates vs the committed baseline
+        run: uv run python scripts/check_schema_compatibility.py --baseline-dir compatibility/released
+
+      - name: scripts/check_schema_compatibility.py — a breaking change MUST be red
+        run: |
+          set -euo pipefail
+          mutant="$RUNNER_TEMP/compat-mutant"
+          rm -rf "$mutant"
+          cp -R schemas "$mutant"
+          uv run python - "$mutant" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+          target = sorted(root.rglob("*.schema.json"))[0]
+          document = json.loads(target.read_text(encoding="utf-8"))
+          document["required"] = sorted({*document.get("required", []), "__ci_mutant__"})
+          target.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+          print(f"mutated {target.relative_to(root)}: '__ci_mutant__' is now required")
+          PY
+          status=0
+          uv run python scripts/check_schema_compatibility.py \
+            --baseline-dir compatibility/released --candidate-dir "$mutant" || status=$?
+          rm -rf "$mutant"
+          if [ "$status" -ne 1 ]; then
+            echo "::error::the compatibility gate exited $status on a schema that gained a" \
+                 "required member while keeping its \$id. Expected 1. The gate is not" \
+                 "binding — a green run of the step above proves nothing." >&2
+            exit 1
+          fi
+          echo "the compatibility gate is red on a breaking change, as it must be"
+
+      - name: The built wheel must install and work outside the source tree
+        run: |
+          set -euo pipefail
+          uv build --wheel --out-dir "$RUNNER_TEMP/dist"
+          uv venv "$RUNNER_TEMP/wheel-venv"
+          uv pip install --python "$RUNNER_TEMP/wheel-venv/bin/python" \
+            "$RUNNER_TEMP"/dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/wheel-venv/bin/python" - "$GITHUB_WORKSPACE/fixtures" <<'PY'
+          import sys
+          from pathlib import Path
+          import research_contracts
+          from research_contracts.canonical.registry import canonical_schemas
+          located = Path(research_contracts.__file__).resolve().parent
+          assert "site-packages" in str(located), located
+          count = len(canonical_schemas())
+          print(f"installed at {located} with {count} released schemas")
+          assert count > 0
+          from research_contracts.tooling.canonical_fixtures import main
+          sys.exit(main(["--fixtures-root", sys.argv[1]]))
+          PY
+
+      - name: Blocked client generators must refuse to run
+        run: |
+          set -euo pipefail
+          for script in scripts/generate_fr_callback_client.py \
+                        scripts/generate_kag_context_client.py \
+                        scripts/generate_kag_fr_control_client.py; do
+            status=0
+            uv run python "$script" || status=$?
+            test "$status" -ne 0
+          done
+
+      - name: pytest
+        run: uv run pytest
+
+  fuzz:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+          enable-cache: true
+      - name: Sync locked dependencies
+        run: uv sync --frozen --all-groups
+      - name: npm ci
+        working-directory: packages/typescript
+        run: npm ci
+      - name: Build the TypeScript fuzz runner
+        working-directory: packages/typescript
+        run: npm run fuzz:build
+      - name: scripts/differential_fuzz.py — pinned seed
+        run: uv run python scripts/differential_fuzz.py --count 2048
+      - name: scripts/differential_fuzz.py — a seed no previous run has used
+        run: uv run python scripts/differential_fuzz.py --seed "$GITHUB_RUN_ID" --count 2048
+      - name: scripts/differential_fuzz.py — a run that would measure nothing must be red
+        run: |
+          set -euo pipefail
+          status=0
+          uv run python scripts/differential_fuzz.py --count 0 || status=$?
+          test "$status" -eq 2
+
+  typescript:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: packages/typescript
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: packages/typescript/package-lock.json
+      - run: npm ci
+      - name: ci:verify — eslint, tsc --noEmit and jest
+        run: npm run ci:verify

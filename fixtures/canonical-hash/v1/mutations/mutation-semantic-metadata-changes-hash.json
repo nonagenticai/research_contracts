@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-semantic-metadata-changes-hash",
+  "base_fixture": "immutable-version-nested-pins",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/created_by",
+      "value": "service:someone-else"
+    }
+  ],
+  "rationale": "Semantic metadata is hashed (DM-AT-28)."
+}

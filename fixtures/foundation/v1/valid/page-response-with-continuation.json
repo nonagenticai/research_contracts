@@ -1,0 +1,22 @@
+{
+  "fixture_id": "page-response-with-continuation",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_response",
+  "rationale": "More pages follow, so next_cursor is present. The cursor value is deliberately NOT base64: the contract says opaque, and a fixture that looked decodable would teach consumers to try. It also stopped detect-secrets reporting a high-entropy string, which is a fair thing for it to say about an unexplained blob in a repository.",
+  "instance": {
+    "items": [
+      {
+        "entity_id": "aaaaaaaa-0000-4000-8000-000000000001"
+      },
+      {
+        "entity_id": "aaaaaaaa-0000-4000-8000-000000000002"
+      }
+    ],
+    "next_cursor": "opaque-cursor-token-0002",
+    "sort": [
+      {
+        "field": "published_at",
+        "direction": "descending"
+      }
+    ]
+  }
+}

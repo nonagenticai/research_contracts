@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:run-manifest:1",
+  "title": "RunManifestV1",
+  "description": "FND-002 task 6: the run manifest (document 08 section 12, document 13 section 11.4). Every material analysis or generated publication records one. It is built by a shared builder that refuses to finalize when a capability declares a required field and it is absent, and it is stored as an immutable artifact indexed by its own ID and hash.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "urn:datacompany:stable-identity:1" },
+    { "$ref": "#/$defs/manifest_fields" }
+  ],
+  "unevaluatedProperties": false,
+  "x-datacompany-composition-point": "#/$defs/manifest_extension",
+  "x-datacompany-cross-field": [
+    {
+      "rule": "disjoint",
+      "name": "a_run_output_is_not_also_its_own_input",
+      "scope": "relative",
+      "left": "/inputs/input_refs",
+      "left_key": "/entity_id",
+      "right": "/outputs/artifact_refs",
+      "right_key": "/artifact_ref/entity_id",
+      "$comment": "Document 16 section 14.6 rule 7: 'The content-hash dependency graph is acyclic.' A manifest naming one of its own outputs as an input makes the run's content hash depend on itself. JSON Schema cannot compare two instance locations, so this is the rule vocabulary's job. Declared at the ROOT and scoped `relative` (D3, option B), so the acyclicity check follows the manifest wherever it is composed."
+    }
+  ],
+  "$comment": "The NINE content bullets of document 08 section 12 are grouped into the nine members of manifest_fields below, one bullet per member, so the mapping is checkable rather than asserted. Requiredness is IMP-DEC-FND002-017: document 13 section 11.4 makes it capability-declared ('The builder refuses to finalize when a capability declares a required field and it is absent'), so this schema requires only what every run has regardless of method — inputs, versions, method, environment and outputs — and leaves the four conditional groups optional for a capability to require.",
+  "$defs": {
+    "manifest_extension": {
+      "$comment": "Declared composition point for a pack's method-specific manifest fields. A contributor may add included pointers and array declarations to the hash profile and nothing else: an exclusion is a property of the released envelope, never of a consumer.",
+      "type": "object"
+    },
+    "bounded_integer": {
+      "$comment": "Bounded by the largest integer an IEEE-754 double represents exactly, for the reason version_number is: RFC 8785 serializes numbers with the ECMAScript Number::toString algorithm, so a larger value has no stable canonical form and the boundary must never accept an object the canonical hash algorithm cannot process.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740992
+    },
+    "free_text": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "inputs": {
+      "$comment": "Document 08 section 12 bullet 1: 'immutable input and parameter hashes'. Every input is a PinnedVersionRef and never an IdentityRef: document 16 section 3.3 requires an exact immutable reference for 'decisions, approvals, evidence, mappings, runs, publications, exports, and reproducible projections', and section 3.4 forbids resolving a floating ref to latest inside a historical run. set_of_pins is $ref-composed rather than restated, so the pin shape and its released set order key are byte-identical to every other pinned collection.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["input_refs", "input_hash", "parameters"],
+      "properties": {
+        "input_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "input_hash": { "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash" },
+        "parameters": {
+          "$comment": "Parameters are an explicit declared collection, NOT an opaque free-form payload. Marking a parameter bag x-datacompany-hash-opaque would be the obvious move and it is refused deliberately: opacity does not waive the array declaration, and a run's parameters routinely contain arrays. UPDATED 2026-08-03 (D9 CLOSED): this paragraph used to say that no schema annotation could supply that declaration inside an opaque subtree — attaching x-datacompany-array required a properties chain, the walker put every properties name into included_pointers, and that made the subtree a declared prefix and revoked the opacity, leaving a runtime profile extension as the only route. That is no longer true. x-datacompany-hash-declaration-only (vocabulary 1.2, EXTENSIONS.md section 3.6) carries the annotation without contributing the pointer, so the schema route now derives a manifest byte-identical to the merged one and an opaque parameter bag containing arrays IS expressible. The shape below is nevertheless UNCHANGED, and deliberately: converting parameters to an opaque bag would change which paths reach included_pointers and is therefore canonical-hash-affecting, so it is a separate decision with its own evidence, not a consequence of the annotation existing. Declaring each parameter as a named scalar keeps the subtree hashable and keeps every value in the hash view, and it remains the better shape here because a run's parameters are a KNOWN vocabulary rather than an open domain payload. Values are carried as decimal STRINGS or text, never as binary floats, because binary_float_policy is 'reject' and a float parameter would make the run hash unreproducible across languages.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/parameter" },
+          "x-datacompany-array": { "kind": "set", "order_key": ["/name"] }
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" },
+        "value_decimal": { "$ref": "urn:datacompany:stable-identity:1#/$defs/decimal_string" },
+        "value_text": { "$ref": "#/$defs/free_text" },
+        "value_integer": { "$ref": "#/$defs/bounded_integer" },
+        "value_boolean": { "type": "boolean" }
+      }
+    },
+    "source": {
+      "$comment": "Document 08 section 12 bullet 2: 'source retrieval URL and timestamp, edition, ETag or Last-Modified where available, and document hash'. The document hash is present unconditionally: document 13 section 3.2 requires a canonical hash input to declare 'referenced artifact hashes rather than expiring URLs', so a source recorded by URL alone would be unreproducible the moment the URL rots.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["source_url", "retrieved_at", "document_hash"],
+      "properties": {
+        "source_url": { "type": "string", "format": "uri", "maxLength": 2048 },
+        "retrieved_at": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" },
+        "edition": { "$ref": "#/$defs/free_text" },
+        "etag": { "$ref": "#/$defs/free_text" },
+        "last_modified": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" },
+        "document_hash": { "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest" }
+      }
+    },
+    "versions": {
+      "$comment": "Document 08 section 12 bullet 3: 'protocol, profile, schema, terminology, mapping, and template versions'. The protocol, terminology, mapping and template versions are pins; the profile and pack versions are release refs, because that is the form the specification uses for them everywhere (document 10 section 2.4, document 12 section 2).",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["protocol_version_ref", "schema_refs"],
+      "properties": {
+        "protocol_version_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "profile_ref": { "$ref": "urn:datacompany:release-ref:1#/$defs/release_ref" },
+        "pack_refs": { "$ref": "urn:datacompany:release-ref:1#/$defs/release_ref_list" },
+        "schema_refs": {
+          "$comment": "Ordered rather than set-like for the D8 reason: these are scalars and the released manifest vocabulary cannot give a scalar set an order key. uniqueItems still rejects duplicates, so the residual gap is member ORDER only.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref" },
+          "x-datacompany-array": { "kind": "set", "order_key": [""] }
+        },
+        "terminology_release_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "mapping_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "template_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" }
+      }
+    },
+    "extraction": {
+      "$comment": "Document 08 section 12 bullet 4: 'parser, extraction model, prompt, and proposal version where applicable'. Wholly optional at the envelope, because 'where applicable' is the specification's own wording and a numerical model run has no extraction stage at all.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "parser_version": { "$ref": "#/$defs/free_text" },
+        "extraction_model_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "prompt_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "proposal_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" }
+      }
+    },
+    "method": {
+      "$comment": "Document 08 section 12 bullet 5: 'method, engine/provider, engine version, packages, seed, convergence and tolerance policy'. The tolerance is a decimal string and never a binary float — document 13 section 3.2: 'Floating-point scientific input schemas use canonical string/decimal rules where a binary float would make a command hash ambiguous.'",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["method_id", "engine_provider", "engine_version", "packages"],
+      "properties": {
+        "method_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" },
+        "engine_provider": { "$ref": "urn:datacompany:stable-identity:1#/$defs/bounded_context" },
+        "engine_version": { "$ref": "#/$defs/free_text" },
+        "packages": {
+          "$comment": "Ordered for the D8 reason; uniqueItems rejects duplicates.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/free_text" },
+          "x-datacompany-array": { "kind": "set", "order_key": [""] }
+        },
+        "seed": { "$ref": "#/$defs/bounded_integer" },
+        "convergence_policy": { "$ref": "#/$defs/free_text" },
+        "tolerance_policy": { "$ref": "urn:datacompany:stable-identity:1#/$defs/decimal_string" }
+      }
+    },
+    "environment": {
+      "$comment": "Document 08 section 12 bullet 6: 'application commit and image digest, operating system, numerical-library/BLAS versions, relevant hardware class, and validation-suite version'. Document 08 section 12 also bounds what recording this buys: 'declared reproducibility and traceability within method-specific tolerances, not universal bit-for-bit reproduction across hardware'. The environment is therefore evidence, not a guarantee.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["application_commit", "image_digest", "validation_suite_version"],
+      "properties": {
+        "application_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "image_digest": { "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest" },
+        "operating_system": { "$ref": "#/$defs/free_text" },
+        "numerical_library_versions": {
+          "$comment": "Ordered for the D8 reason; uniqueItems rejects duplicates.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/free_text" },
+          "x-datacompany-array": { "kind": "set", "order_key": [""] }
+        },
+        "hardware_class": { "$ref": "#/$defs/free_text" },
+        "validation_suite_version": { "$ref": "#/$defs/free_text" }
+      }
+    },
+    "rights": {
+      "$comment": "Document 08 section 12 bullet 7: 'rights and translation status'. Statuses only. No source text, no quoted extract and no licensed content ever enters a manifest, because a manifest is stored and indexed platform-wide and document 16 section 3.5 requires the hash of licensed or sensitive content to retain the source's scope.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["rights_status"],
+      "properties": {
+        "rights_status": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" },
+        "translation_status": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        }
+      }
+    },
+    "approvals": {
+      "$comment": "Document 08 section 12 bullet 8: 'actor approvals and supersession links'.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["approval_refs"],
+      "properties": {
+        "approval_refs": { "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins" },
+        "supersedes_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" }
+      }
+    },
+    "artifact_output": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["artifact_ref", "payload_digest"],
+      "properties": {
+        "artifact_ref": { "$ref": "urn:datacompany:pinned-version-ref:1" },
+        "payload_digest": {
+          "$comment": "The exact-byte digest of the produced artifact, carried BESIDE the pin's canonical content_hash. Document 16 section 3.5: an ArtifactVersion 'normally carries both ... The two values MUST NOT be substituted for one another', and neither may derive a public identity.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest"
+        }
+      }
+    },
+    "outputs": {
+      "$comment": "Document 08 section 12 bullet 9: 'generated artifact hashes'.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": ["artifact_refs"],
+      "properties": {
+        "artifact_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/artifact_output" },
+          "x-datacompany-array": { "kind": "set", "order_key": ["/payload_digest"] }
+        }
+      }
+    },
+    "manifest_fields": {
+      "type": "object",
+      "required": [
+        "run_manifest_id",
+        "schema_ref",
+        "content_hash",
+        "run_ref",
+        "inputs",
+        "versions",
+        "method",
+        "environment",
+        "outputs"
+      ],
+      "properties": {
+        "run_manifest_id": {
+          "$comment": "The manifest's own identifier. Document 13 section 11.4: services 'index its ID/hash with the owning run/version'. It is NOT derived from either digest — document 16 section 3.5: 'A public or domain identity MUST NOT be derived from either digest.'",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "schema_ref": {
+          "$comment": "Document 13 section 3.2: 'A canonical hash input always declares: schema ID and schema version'. This is the member that discharges that clause on an instance.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref"
+        },
+        "content_hash": {
+          "$comment": "The manifest's OWN canonical content hash, and therefore excluded from its own hash view. Shared foundation section 4.3 step 3 excludes 'the subject object's own content_hash and its signatures'; nested target hashes inside pinned refs stay included.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash",
+          "x-datacompany-hash-excluded": true,
+          "x-datacompany-hash-exclusion-reason": "own_content_hash"
+        },
+        "run_ref": {
+          "$comment": "The run or version this manifest belongs to, pinned.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "inputs": { "$ref": "#/$defs/inputs" },
+        "sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/source" },
+          "x-datacompany-array": { "kind": "set", "order_key": ["/source_url", "/document_hash"] }
+        },
+        "versions": { "$ref": "#/$defs/versions" },
+        "extraction": { "$ref": "#/$defs/extraction" },
+        "method": { "$ref": "#/$defs/method" },
+        "environment": { "$ref": "#/$defs/environment" },
+        "rights": { "$ref": "#/$defs/rights" },
+        "approvals": { "$ref": "#/$defs/approvals" },
+        "outputs": { "$ref": "#/$defs/outputs" }
+      }
+    }
+  }
+}

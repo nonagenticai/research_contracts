@@ -1,0 +1,16 @@
+{
+  "fixture_id": "typed-ref-document-version",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/document_version_ref",
+  "rationale": "IMP-DEC-FND002-019. DocumentVersionRef is a prose-only name in the contract-freeze list, and under this design it needs no member list: the ten members and the global/tenant conditional arrive by $ref from pinned-version-ref:1 and only schema_ref is pinned. This is the first instance of it anywhere, so the composition is now exercised rather than merely declared. document 16 section 7.2 makes it one of the two alternatives an EvidenceLocation addresses.",
+  "instance": {
+    "owner_context": "ingestion-documents",
+    "entity_type": "document_version",
+    "entity_id": "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+    "version_id": "bbbbbbbb-1111-4111-8111-bbbbbbbbbbbb",
+    "version_number": 2,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:document-version:1",
+    "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

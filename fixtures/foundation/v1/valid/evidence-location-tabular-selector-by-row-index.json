@@ -1,0 +1,37 @@
+{
+  "fixture_id": "evidence-location-tabular-selector-by-row-index",
+  "schema_ref": "urn:datacompany:evidence-location-version:1",
+  "rationale": "The OTHER half of the document 16 line 859 exclusive alternative: artifact_ref rather than document_version_ref, and a global-scoped record so the released scope conditional is exercised in its forbidden-tenant direction at the root as well as at depth. The selector takes the row_index arm of the document 10 line 216 'stable row ID or row index' choice; coordinate_manifest_ref and quoted_text_digest are both absent, which is what makes their optionality (IMP-DEC-FND002-038) a fact of this corpus rather than a claim in a comment.",
+  "instance": {
+    "owner_context": "ingestion-documents",
+    "entity_type": "evidence_location",
+    "entity_id": "e71d3333-3333-4333-8333-333333333333",
+    "resource_scope": "global",
+    "version_id": "e71d4444-4444-4444-8444-444444444444",
+    "version_number": 3,
+    "schema_ref": "urn:datacompany:evidence-location-version:1",
+    "content_hash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "evidence_location_id": "e71d3333-3333-4333-8333-333333333333",
+    "artifact_ref": {
+      "owner_context": "artifact-storage",
+      "entity_type": "artifact_version",
+      "entity_id": "a47f1111-1111-4111-8111-111111111111",
+      "resource_scope": "global",
+      "version_id": "a47f2222-2222-4222-8222-222222222222",
+      "version_number": 2,
+      "schema_ref": "urn:datacompany:artifact-version:1",
+      "content_hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "selector_type": "tabular",
+    "selector": {
+      "sheet_or_table_id": "primary-outcomes",
+      "row_index": 4,
+      "cell_range": "C4:C4",
+      "value_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "selector_schema_ref": "urn:datacompany:locator-selector:1",
+    "language": "pl-PL"
+  }
+}

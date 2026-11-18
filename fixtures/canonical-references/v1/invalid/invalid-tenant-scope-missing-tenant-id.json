@@ -1,0 +1,20 @@
+{
+  "fixture_id": "invalid-tenant-scope-missing-tenant-id",
+  "description": "Tenant scope without a tenant ID.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "resource_tenant_id"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "8ea28b54-d05f-973c-225a-6828139c985c",
+    "version_id": "c63634ed-7359-a3d1-2a34-4528d6ce34f9",
+    "version_number": 3,
+    "resource_scope": "tenant",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:f2d23b8bfcefc181f26b570b3b9244ae800157b612a9d7c785ab5f039eb17032",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

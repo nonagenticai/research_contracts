@@ -1,0 +1,25 @@
+{
+  "fixture_id": "invalid-decision-with-floating-ref",
+  "description": "A decision must reference an exact immutable version. A floating IdentityRef in decision_ref has no version_id, schema_ref, content_hash or resolved_at.",
+  "schema_ref": "urn:datacompany:immutable-version:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "version_id",
+    "content_hash"
+  ],
+  "instance": {
+    "version_id": "d097c061-012e-f498-1c8b-df223a05f378",
+    "entity_id": "02ac70e7-224e-fc66-ca17-3254f6272663",
+    "version_number": 1,
+    "schema_ref": "urn:datacompany:recommendation-version:1",
+    "content_hash": "sha256:e7502c799b8f76fbed077ff2cd55c906ab144d5b88ef09a71abc70b5fad601f1",
+    "decision_ref": {
+      "owner_context": "approval-registry",
+      "entity_type": "decision",
+      "entity_id": "74072e2b-9a83-0779-df67-a5c226243c9f",
+      "resource_scope": "global"
+    },
+    "created_at": "2026-07-30T09:00:00Z",
+    "created_by": "service:kag-research"
+  }
+}

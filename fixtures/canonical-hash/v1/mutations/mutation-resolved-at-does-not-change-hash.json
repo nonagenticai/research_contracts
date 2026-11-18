@@ -1,0 +1,16 @@
+{
+  "fixture_id": "mutation-resolved-at-does-not-change-hash",
+  "base_fixture": "immutable-version-nested-pins",
+  "expect": "unchanged",
+  "mutations": [
+    {
+      "pointer": "/profile_ref/resolved_at",
+      "value": "2099-12-31T23:59:59Z"
+    },
+    {
+      "pointer": "/pack_refs/0/resolved_at",
+      "value": "2099-12-31T23:59:59Z"
+    }
+  ],
+  "rationale": "resolved_at is a consumer observation excluded from every enclosing hash."
+}

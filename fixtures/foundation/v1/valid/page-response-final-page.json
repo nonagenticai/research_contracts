@@ -1,0 +1,18 @@
+{
+  "fixture_id": "page-response-final-page",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_response",
+  "rationale": "End of collection: next_cursor is ABSENT, not null. Absence is the released encoding.",
+  "instance": {
+    "items": [
+      {
+        "entity_id": "aaaaaaaa-0000-4000-8000-000000000001"
+      }
+    ],
+    "sort": [
+      {
+        "field": "published_at",
+        "direction": "descending"
+      }
+    ]
+  }
+}

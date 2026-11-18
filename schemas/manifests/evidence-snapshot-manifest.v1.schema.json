@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:evidence-snapshot-manifest:1",
+  "title": "EvidenceSnapshotManifestV1",
+  "description": "Immutable, content-hashed manifest of the exact evidence versions one analysis or publication run is entitled to read (document 16 EvidenceSnapshot, document 14 ER-007). Names every member by pinned version reference, carries the member digest a consumer verifies for itself, and supersedes rather than mutates.",
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 14 ER-007 requires that '8808', '8813' and '8811' can retrieve a snapshot's metadata and authorized artifact refs, that they 'pin the snapshot ID/hash and never dereference latest', and that the snapshot 'reconstructs byte-identical canonical JSON under the same serializer version'. None of that is checkable without one released grammar for the manifest: a producer and a consumer that each invent a shape agree only until the first disagreement, and the disagreement surfaces as a reproducibility failure in a scientific run rather than as a validation error. AUTHORING DECISION 1 - composed on 'urn:datacompany:immutable-version:1' rather than respelled. A snapshot IS an immutable version: it has an entity identity, a version number, a creator, a creation time and its own content hash. Crucially 'supersedes_version_id' from that document is ALREADY the 'impact link' document 14 asks for ('changed evidence creates a new snapshot with an impact link'), so this document adds no second spelling of the same edge. A separate 'impact_link' field would have made two ways to say one thing, and the supersession conditional in 'immutable-version' would then no longer be the whole rule. AUTHORING DECISION 2 - ONE 'members' array, not six typed arrays. Document 14 lists six member kinds: object, observation, assertion, appraisal, source and terminology versions. 'urn:datacompany:pinned-version-ref:1' already carries 'owner_context' and 'entity_type', which discriminate them, so six arrays would add nothing a consumer cannot already read off a member - and would cost six sort orders, six digests, and a schema change on the day a seventh kind appears. AUTHORING DECISION 3 - members use '#/$defs/set_of_pins' from that same document, which brings 'uniqueItems' and the declared order key. Document 16 section 3.5 is explicit that RFC 8785 preserves array order and does not canonicalize a set, so a set-like collection has to be sorted by a schema-declared key BEFORE hashing or two producers holding identical evidence compute different digests. Reusing the released order key is what makes 'member_manifest_hash' mean the same thing in every context. AUTHORING DECISION 4 - 'member_count' and 'member_manifest_hash' are carried explicitly, mirroring CorpusVersion in document 16. They are redundant against 'members' by construction and that is the point: a consumer recomputes both and compares, so a truncated or reordered transfer is caught by the consumer rather than trusted from the producer. A manifest that could only be checked by asking its author is not a manifest. It is deliberately NOT expressed as an 'x-datacompany-cross-field' rule: the released operator set is 'disjoint, equal, equal_when_both_present, half_open_interval, unique_by' and none of them states a cardinality, and 'tests/test_canonical_schemas.py' records that no released document nests such a rule today. Inventing a 'count_equals' operator to carry one manifest would extend the foundation cross-field vocabulary as a side effect of an evidence release, which is the wrong order. The consumer recomputes both the count and the digest, which is a stronger check than a declarative equality anyway - it catches a member whose CONTENT changed, not merely one that went missing. AUTHORING DECISION 5 - 'schema_ref' is narrowed to a const of this document's own $id, the envelope idiom. A snapshot manifest wraps a fixed shape, unlike the inclusion-set-export documents which wrap a varying payload and therefore leave 'schema_ref' open. AUTHORING DECISION 6 - artifacts carry 'payload_digest' and never 'content_hash'. Document 16 section 3.5 states the two MUST NOT be substituted for one another: 'content_hash' is over the canonical envelope, 'payload_digest' is over raw bytes, and a portable tabular artifact is bytes. THIS DOCUMENT IS DELIBERATELY NOT A CONTAINER FOR EVIDENCE. It holds identities, versions, digests and refs. It never holds an abstract, an extracted value, a full text or any licensed content, because document 16 section 3.5 also warns that the hash of licensed content is itself scope-controlled; a manifest is the thing most likely to be copied into a cache, a catalogue or a report, and it must stay safe to copy. WHAT NO PRODUCER FILLS YET. Evidence Review 8810 has no appraisal table and no terminology table today, so a v1 manifest it produces carries members of three kinds only. That is a producer gap recorded against ER-007 and later packages, NOT a gap in this grammar: 'members' already admits those kinds the day the tables exist, and nothing here has to change.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "urn:datacompany:immutable-version:1" },
+    { "$ref": "#/$defs/snapshot_fields" }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "snapshot_fields": {
+      "type": "object",
+      "required": [
+        "review_id",
+        "intended_use",
+        "members",
+        "member_count",
+        "member_manifest_hash"
+      ],
+      "properties": {
+        "schema_ref": {
+          "$comment": "Narrowed to this document. See authoring decision 5.",
+          "const": "urn:datacompany:evidence-snapshot-manifest:1"
+        },
+        "review_id": {
+          "$comment": "The review this snapshot was taken of. Present as a plain identity rather than a pin because a review is the SCOPE of the snapshot and not one of its members; pinning it would imply the snapshot reproduces a review version, which it does not.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "intended_use": {
+          "$comment": "What this snapshot was built for, declared at creation. Required, because document 14 says the operation 'never infers mutable latest inputs' - and a downstream run that must not 'bind an unresolved or non-publication snapshot' has to be able to check the declared use rather than guess it from the caller.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "members": {
+          "$comment": "Every pinned evidence version this snapshot admits, of any kind. Set semantics and the declared order key come from the referenced document - see authoring decisions 2 and 3.",
+          "$ref": "urn:datacompany:pinned-version-ref:1#/$defs/set_of_pins"
+        },
+        "member_count": {
+          "$comment": "The length of 'members'. Redundant on purpose - see authoring decision 4.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "member_manifest_hash": {
+          "$comment": "Canonical hash over 'members' AFTER sorting by the declared order key. A consumer recomputes this; it is never trusted as received.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+        },
+        "protocol_pin": {
+          "$comment": "The committed protocol version the members were accepted under. Absent only where the producing context has no protocol concept; document 14 requires snapshot creation to reject an uncommitted protocol, so a producer that HAS one and omits this is announcing that it skipped that gate.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "corpus_pin": {
+          "$comment": "The sealed source set the members were drawn from. Optional because a snapshot may contain no record-derived member at all; when present it is what makes 'which sources was this run entitled to read' answerable without walking every member.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "artifacts": {
+          "$comment": "Portable renderings of this exact manifest - the 'portable canonical dataset artifact' of document 14. Bytes live in an artifact store; only the reference and the digest live here.",
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/snapshot_artifact" },
+          "x-datacompany-array": {
+            "kind": "set",
+            "order_key": ["/artifact_kind", "/media_type", "/payload_digest"]
+          }
+        }
+      }
+    },
+    "snapshot_artifact": {
+      "$comment": "One rendering. 'payload_digest' is over raw bytes and is NOT interchangeable with a content hash - see authoring decision 6. 'artifact_ref' is opaque here on purpose: a manifest that embedded a storage key would tie every consumer to one store's addressing.",
+      "type": "object",
+      "required": ["artifact_kind", "media_type", "payload_digest", "byte_size"],
+      "additionalProperties": false,
+      "properties": {
+        "artifact_kind": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 255,
+          "pattern": "^[a-z]+/[a-zA-Z0-9.+_-]+$"
+        },
+        "payload_digest": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/payload_digest"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776
+        },
+        "artifact_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "serializer_version": {
+          "$comment": "Which serializer produced these bytes. Document 14's completion evidence is byte-identical reconstruction 'under the same serializer version', which is uncheckable unless the artifact says which one that was.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "sealed": {
+      "$comment": "The closed form, for a context that wants to refuse any property this document does not name.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

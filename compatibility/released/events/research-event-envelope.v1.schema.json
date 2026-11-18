@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:research-event-envelope:1",
+  "title": "ResearchEventEnvelopeV1",
+  "description": "One research domain event as its PRODUCER commits it: the event identity, the registered event type, the envelope grammar it conforms to, the producing bounded context, the resource scope and tenant it was raised under, the aggregate and aggregate version it describes, when it occurred, and a payload restricted to identifiers, versions, hashes and minimal facts. This is document 13 section 8.1 step 1 -- the row a service writes to its own local outbox in the SAME transaction as the domain state it describes. It is not a delivery, not a receipt and not proof that any consumer saw it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "schema_ref",
+    "producer",
+    "resource_scope",
+    "resource_tenant_id",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "occurred_at",
+    "payload"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 states the gate plainly: 'No service emits a listed document 09 event until its schema, example, consumer matrix and compatibility test are merged.' Two services in this estate already keep a local outbox and neither had a released envelope to conform to. research_output_service stamps every outbox row with schema_ref 'https://contracts.nonagentic.ai/events/research-output/<event_type>.schema.json' -- a URL naming a document that does not exist -- which is the identical defect this repository just repaired for the review flow ledger, where a producer advertised a schema_ref for a document the registry did not have. evidence_review_service has no outbox at all and has therefore committed none of the twenty-one events document 09 section 3.7 specifies for it. This file is authored FIRST so that the producer can point at something real, in the order the flow-ledger repair established: the schema gets authored first and the producer's constant follows it, never the other way round. FOUR AUTHORING DECISIONS THAT ARE NOT STYLE. (1) schema_ref is a const of this document's own $id, which the two evidence-tier export documents deliberately avoided. The reason they avoided it does not apply and the reason to use it does: those documents describe a PAYLOAD whose schema varies, so a const would have been a false narrowing, whereas this document describes the ENVELOPE, and an envelope that cannot say which envelope grammar it is has no version pin at all. A consumer parsing a mixed stream reads this field and nothing else to decide how to parse the row. It also moves the equality pinned by tests/test_schema_ref_resolution.py, deliberately and by exactly one released value. (2) payload is constrained by shape rather than left open. Document 13 section 8.2 requires that payloads 'contain IDs, versions, hashes and minimal facts' and that 'consumers fetch authorized detail from the producer'; document 14 adds that an event must never carry abstracts, full text, extracted sensitive values or blinded decisions. A comment saying so enforces nothing. $defs/minimal_fact bounds every string in the payload, at any depth, to 512 characters, which is short enough that an abstract, a full text block or an extracted narrative value cannot fit and long enough that no identifier, URN, hash or reason code is refused. It is a floor against the accident, not a substitute for the producer's own redaction rules. (3) aggregate_version is required and has no nullable escape. Document 13 section 8.2 guarantees ordering per (resource_scope, resource_tenant, aggregate_type, aggregate_id) USING this number, and a consumer defers a future version when an earlier one is missing -- an absent version silently disables that whole mechanism for the rows that omit it. Producers whose append-only chain rows carry no counter state a literal 1 and record why at the callsite; that is a visible, greppable claim, whereas a null is not. (4) event_type carries the regulatory denylist that canonical_type_token carries, and is NOT that primitive. The primitive's pattern ^[a-z][a-z0-9_]*$ refuses every real event name in document 09 section 3.7 because those names are dotted and version-suffixed. Respelling the pattern without carrying the 'not' clause forward would have opened a hole in the estate's regulatory guard at exactly the point where a name becomes a permanent, replayable record. THIS DOCUMENT IS DELIBERATELY NOT A DELIVERY RECORD. It has no consumer, no delivery state, no acknowledgement and no consumed_at. Document 13 section 8.1 is explicit that a single global consumed flag is insufficient because several projections and services consume the same event, so delivery state belongs to per-consumer delivery and inbox records that FND-007 owns. An envelope that carried a delivery field would invite exactly the design that section forbids.",
+  "properties": {
+    "event_id": {
+      "$comment": "The event's own identity, minted by the producer and stable across replay. Document 13 section 8.1 step 6: 'replay recreates deliveries without changing event_id.' Composed from the released uuid primitive rather than respelled.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "event_type": {
+      "$ref": "#/$defs/event_type"
+    },
+    "schema_ref": {
+      "$comment": "The envelope grammar this row conforms to. A const of this document's own $id -- see authoring decision (1). A future :2 envelope is a new document with its own const, so a consumer never has to guess which grammar it is holding.",
+      "const": "urn:datacompany:research-event-envelope:1"
+    },
+    "producer": {
+      "$comment": "The bounded context that raised the event and owns its meaning. Document 13 section 8.3 requires the catalog to name a producer and owner; recording it on the row means a consumer reading a mixed stream never has to infer it from the event name.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/bounded_context"
+    },
+    "resource_scope": {
+      "$comment": "Whether the aggregate is global canon or tenant-owned. Half of the ordering key in document 13 section 8.2, and the reason 8814/8815 keep separate global and overlay tables rather than treating a nullable tenant id as authorization.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope"
+    },
+    "resource_tenant_id": {
+      "$comment": "The tenant that owns the aggregate, NOT the tenant of whoever triggered the change. A relay claims operational rows across tenants and must derive the recorded tenant from the row before it may start a tenant-bound domain transaction (document 13 section 5.1), so this field is what that derivation reads.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_tenant_id"
+    },
+    "aggregate_type": {
+      "$comment": "The kind of aggregate this event describes, e.g. 'review'. Part of the ordering key. The released canonical_type_token applies unchanged here -- unlike event_type it is a single undotted token -- so it is composed rather than respelled, and it carries the regulatory denylist with it.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+    },
+    "aggregate_id": {
+      "$comment": "The aggregate instance. Part of the ordering key.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "aggregate_version": {
+      "$comment": "The aggregate version this event describes. Ordering is guaranteed per (resource_scope, resource_tenant_id, aggregate_type, aggregate_id) using this number -- see authoring decision (3) for why it has no nullable escape.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    },
+    "occurred_at": {
+      "$comment": "When the producer committed the change, in the released UTC timestamp grammar. It is a diagnostic and a retention boundary, NOT the ordering key: two events can share a timestamp and clocks are not the guarantee. aggregate_version is the ordering key.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+    },
+    "payload": {
+      "$comment": "Identifiers, versions, hashes and minimal facts only. Bounded by $defs/minimal_fact at every depth -- see authoring decision (2). An empty object is permitted and is the correct payload for an event whose whole content is the aggregate reference already carried above.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/minimal_fact"
+      },
+      "maxProperties": 64
+    },
+    "correlation_id": {
+      "$comment": "Optional. The correlation the producing command carried, so a consumer can join an event back to the request that caused it. Optional because a change raised by a reaper or a migration has no request to correlate to, and inventing one would make the field a lie in exactly the cases where it matters.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "causation_id": {
+      "$comment": "Optional. The event_id of the event that caused this one, where one did. Absent for an event raised directly by a human command.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "content_hash": {
+      "$comment": "Optional canonical hash of the domain content this event describes, in the released sha256 grammar. Optional because not every aggregate the estate raises events for is content-hashed today; where the producer has one it belongs here, so a consumer can compare what it fetched against what was committed.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+    }
+  },
+  "$defs": {
+    "event_type": {
+      "$comment": "A registered, dotted, version-suffixed event name as document 09 section 3.7 spells them, e.g. 'review.decision.recorded.v1'. NOT the released canonical_type_token: that primitive's pattern refuses a dotted name outright, so it is respelled here -- but its regulatory 'not' clause is carried forward deliberately, because an event name is a permanent replayable record and is the last place the estate wants a gap in that guard. The trailing version is part of the NAME: document 13 section 8.1 ships the research path additively beside the legacy one, so 'review.decision.recorded.v1' and a future '.v2' are two distinct registered types that coexist rather than one type that changed.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 192,
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+\\.v[1-9][0-9]*$",
+      "not": {
+        "pattern": "regulatory|legal_|normative|consolidation"
+      }
+    },
+    "minimal_fact": {
+      "$comment": "What a payload value may be. A string bounded to 512 characters, a number, a boolean, null, or an array or object built from the same -- recursively, so the bound cannot be escaped by nesting. 512 is chosen against the two failure modes: it is far too short for an abstract, a full text block or an extracted narrative value, and comfortably long enough for a UUID, a URN, a sha256 digest, a reason code or a stage name. A producer that finds this bound in its way is carrying detail an event should not carry; document 13 section 8.2 says the consumer fetches that from the producer.",
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 512
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/minimal_fact"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/minimal_fact"
+          }
+        }
+      ]
+    }
+  }
+}

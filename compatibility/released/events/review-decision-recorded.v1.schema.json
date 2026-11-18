@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:review-decision-recorded:1",
+  "title": "ReviewDecisionRecordedPayloadV1",
+  "description": "The payload member of urn:datacompany:research-event-envelope:1 when event_type is 'review.decision.recorded.v1': one screening decision located by review, stage and round, named by its own identity, and carrying nothing else. It deliberately carries NO disposition and NO reviewer. This document describes the payload ONLY -- the envelope carries the event identity, the aggregate (which for this event is the DECISION, not the review), the ordering key and the time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_id",
+    "decision_id",
+    "stage_id",
+    "round_number"
+  ],
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 8.3 forbids a service emitting a listed document 09 event until that event's schema, example, consumer-matrix row and compatibility test are merged. Measured 2026-09-04, all twenty-one document 09 section 3.7 events stood at zero of those four, so evidence_review_service had shipped an outbox, a durable log, a delivery table and an inbox across four merged pull requests and every one of those tables held zero rows, permanently. The envelope urn:datacompany:research-event-envelope:1 bounds a payload by SHAPE -- strings under 512 characters at any depth -- which is a floor against carrying an abstract by accident, not a contract about what a particular event means. This document is that contract, and it is the first of the twenty-one, authored as the exemplar the other twenty match. WHERE THESE FIELDS COME FROM, AND A CORRECTION. The first draft of this document derived its members from document 09 lines 297-305 and was WRONG in two ways that the running producer settles, so the correction is recorded here rather than quietly fixed. evidence_review_service/src/application/services/events.py already contains emit_decision_recorded and it writes exactly four keys. This schema matches that producer. Deriving a contract from a specification while a deliberate implementation of the same thing sits unread is how a schema and its only producer diverge on the day they are both released. FIVE AUTHORING DECISIONS THAT ARE NOT STYLE. (1) review_id IS carried, and the first draft removed it on the reasoning that the envelope's aggregate_id already holds it. That reasoning was false. The producer sets aggregate_type to 'screening_decision' and aggregate_id to decision.decision_id -- the aggregate of this event is the DECISION, not the review -- so the payload's review_id is the ONLY place the review is named, and removing it would have made every event in the twenty-one unattributable to the review it belongs to. Only review.created.v1 and its lifecycle siblings set aggregate_id to the review itself. (2) NO disposition, and this is the decision that matters most. Document 09 line 300 specifies a disposition on the ScreeningDecision aggregate and the producer refuses to emit it, for a reason its own docstring states plainly: 'This is the one event where the payload rule and the blinding rule point at the same field, and the blinding rule wins: the outbox has no blinding layer and is append-only, so a disposition written here is a peer's verdict disclosed permanently over a channel that cannot take it back.' Dual screening is the feature; blinding is what makes it worth anything. A schema that permitted this member would license the disclosure the producer declines to make, and a permissive schema plus a careful producer is one refactor away from a leak. The disposition is fetched from the producer under authorization, per document 13 section 8.2. (3) NO reviewer, screener, assignment or actor member, for the same reason and one more: document 16 lines 392-394 states that actor, tenant, reviewer and approver identity 'come from verified context and attestations, not from mutable domain payload fields'. assignment_id at document 09 line 299 is omitted too -- with two assignments per record per stage it is a near-identifier for the screener, so carrying it re-identifies through the back door what decision (2) closed at the front. round_number is carried instead: it locates the decision in the dual-screening structure without naming which screener held which arm. (4) NO reason_code and NO inspected artifact reference, though document 09 lines 301-302 specify both. An exclusion reason code is a strong hint at the disposition it justifies, so it falls to decision (2); the inspected-artifact pair is genuine audit material that belongs on the decision record the producer keeps, and a consumer with authorization fetches it. Both may be added later as optional members, which OWNERS.yaml's schema_version_policy makes a MINOR change that keeps this $id -- whereas removing a member once released would not be. (5) round_number is required with no nullable escape, for the reason the envelope requires aggregate_version: an absent ordinal silently disables ordering for exactly the rows that omit it. The producer passes it explicitly at the callsite. COMPATIBILITY RULE. Per research_contracts/OWNERS.yaml schema_version_policy: adding an optional member is minor and keeps this $id; any change to what a released member MEANS mints urn:datacompany:review-decision-recorded:2 as a new document that coexists with this one, because document 13 section 8.1 ships event versions additively -- 'review.decision.recorded.v1' and a future '.v2' are two registered types, not one type that changed. COMPATIBLE WITH THE ENVELOPE BY CONSTRUCTION. Every property name matches the envelope's payload propertyNames pattern and every string member is bounded below its 512-character minimal_fact ceiling, so a payload valid against this document is valid against the envelope. The tests assert that jointly rather than by inspection.",
+  "properties": {
+    "review_id": {
+      "$comment": "The review this decision belongs to. NOT a duplicate of the envelope's aggregate_id: for this event the aggregate is the screening decision, so this is the only place the review is named. See authoring decision (1).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "decision_id": {
+      "$comment": "The screening decision's own identity, equal to the envelope's aggregate_id for this event. Carried in the payload as well because a consumer reading only the payload of a batch of mixed events should not have to reach back into the envelope to learn which decision each row is about.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "stage_id": {
+      "$comment": "The review stage the decision belongs to. Document 09 lines 222 and 299. A decision is meaningless without its stage: the same record is screened at title/abstract and again at full text, and those two decisions are not corrections of each other.",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+    },
+    "round_number": {
+      "$comment": "Which screening round this decision belongs to, from the producer's callsite. Carried instead of assignment_id -- see authoring decision (3): it locates the decision within dual screening without functioning as a near-identifier for the screener. Required with no nullable escape, per authoring decision (5).",
+      "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+    }
+  },
+  "$defs": {
+    "sealed": {
+      "$comment": "The composition form. A context embedding this payload references $defs/sealed so unevaluatedProperties closes over the whole composition rather than this document alone, matching urn:datacompany:approval-attestation:1.",
+      "allOf": [
+        {
+          "$ref": "#"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

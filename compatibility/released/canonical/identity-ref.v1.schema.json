@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:identity-ref:1",
+  "title": "IdentityRefV1",
+  "description": "Floating reference to a stable identity (document 16 section 3.3, shared foundation section 4.2). Exactly five fields. It carries no version_id, no hash, and no implied-current behavior. It is permitted only where the owning domain schema marks navigation, discovery, or whole-lineage semantics.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/identity_ref_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" }
+  ],
+  "unevaluatedProperties": false,
+  "$comment": "unevaluatedProperties:false rather than additionalProperties:false: additionalProperties cannot see $ref-composed properties, and section 4.1 forbids restating the composed rules locally. The effect is identical - exactly the five declared properties are accepted.",
+  "$defs": {
+    "identity_ref_fields": {
+      "type": "object",
+      "required": ["owner_context", "entity_type", "entity_id", "resource_scope"],
+      "properties": {
+        "owner_context": { "$ref": "urn:datacompany:stable-identity:1#/$defs/bounded_context" },
+        "entity_type": { "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token" },
+        "entity_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid" },
+        "resource_scope": { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope" },
+        "resource_tenant_id": { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_tenant_id" }
+      }
+    },
+    "floating_resolution_policy": {
+      "$comment": "A command that resolves a floating identity declares independent valid_at and known_at plus the registered resolver policy. One undifferentiated timestamp is invalid (document 16 section 3.3).",
+      "type": "object",
+      "required": ["resolver_policy_ref", "valid_at", "known_at"],
+      "properties": {
+        "resolver_policy_ref": { "$ref": "urn:datacompany:stable-identity:1#/$defs/schema_ref" },
+        "valid_at": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" },
+        "known_at": { "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp" }
+      },
+      "unevaluatedProperties": false
+    },
+    "floating_navigation_ref": {
+      "$comment": "The only released shape that may carry an IdentityRef into a command: the floating ref plus its explicit resolution policy and the resulting persisted pin.",
+      "type": "object",
+      "required": ["identity_ref", "resolution_policy", "resolved_pin"],
+      "properties": {
+        "identity_ref": { "$ref": "#" },
+        "resolution_policy": { "$ref": "#/$defs/floating_resolution_policy" },
+        "resolved_pin": { "$ref": "urn:datacompany:pinned-version-ref:1" }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

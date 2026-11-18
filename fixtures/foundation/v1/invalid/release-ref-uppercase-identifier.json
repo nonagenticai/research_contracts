@@ -1,0 +1,15 @@
+{
+  "fixture_id": "release-ref-uppercase-identifier",
+  "schema_ref": "urn:datacompany:release-ref:1#/$defs/release_ref",
+  "rationale": "Identifiers are lower-case kebab, matching bounded_context.",
+  "expected_error_contains": [
+    "does not match"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "pattern"
+    }
+  ],
+  "instance": "Systematic-Review@1.0.0"
+}

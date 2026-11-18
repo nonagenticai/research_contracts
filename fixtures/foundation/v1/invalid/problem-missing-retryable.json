@@ -1,0 +1,20 @@
+{
+  "fixture_id": "problem-missing-retryable",
+  "schema_ref": "urn:datacompany:problem-details:1",
+  "rationale": "All five named members are required. Without retryable a client must guess retry safety, and KAG gateway section 3 forbids retrying an unsafe mutation on a guess.",
+  "expected_error_contains": [
+    "retryable"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "required"
+    }
+  ],
+  "instance": {
+    "code": "invalid_state",
+    "status": 409,
+    "message": "Conflicting state.",
+    "correlation_id": "66666666-6666-4666-8666-666666666666"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "fixture_id": "set-like-array-of-objects-inside-an-opaque-subtree",
+  "description": "The suppression cascades by PREFIX, not by exact match. An array OF OBJECTS also yields /value/tags/- and /value/tags/-/id and /value/tags/-/label from the items walk. An exact-match filter would suppress only /value/tags and leave those three in included_pointers, which makes /value a declared prefix again and revokes precisely the opacity the annotation exists to preserve. included_pointers here is ['/id', '/value'] and nothing else. The set order key also proves the declaration really reached the manifest: the instance is supplied out of order and the hash view is sorted.",
+  "expect": "derives",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-object-array-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "value": {
+        "type": "object",
+        "x-datacompany-hash-opaque": true,
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            },
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "set",
+              "order_key": [
+                "/id"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "x-datacompany-composition-point": "#/$defs/domain_extension",
+    "$defs": {
+      "domain_extension": {
+        "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+        "type": "object"
+      }
+    }
+  },
+  "expected_manifest_canonical_json": "{\"absent_vs_null\":\"distinct\",\"arrays\":[{\"kind\":\"set\",\"order_key\":[\"/id\"],\"pointer\":\"/value/tags\"}],\"binary_float_policy\":\"reject\",\"byte_order_mark\":false,\"decimal_representation\":\"decimal_string\",\"digest_algorithm\":\"sha256\",\"digest_prefix\":\"sha256:\",\"encoding\":\"utf-8\",\"excluded_pointers\":[],\"included_pointers\":[\"/id\",\"/value\"],\"opaque_pointers\":[\"/value\"],\"profile_id\":\"urn:datacompany:canonical-hash-profile:1\",\"profile_version\":2,\"schema_ref\":\"urn:datacompany:declaration-only-object-array-probe:1\",\"serialization\":\"rfc8785\",\"timestamp_representation\":\"rfc3339_utc_z\",\"unicode_normalization\":\"none\"}",
+  "instance": {
+    "id": "x",
+    "value": {
+      "tags": [
+        {
+          "id": "b",
+          "label": "B"
+        },
+        {
+          "id": "a",
+          "label": "A"
+        }
+      ],
+      "undeclared_sibling": "survives"
+    }
+  },
+  "expected_hash_view_canonical_json": "{\"id\":\"x\",\"value\":{\"tags\":[{\"id\":\"a\",\"label\":\"A\"},{\"id\":\"b\",\"label\":\"B\"}],\"undeclared_sibling\":\"survives\"}}",
+  "expected_content_hash": "sha256:b7c06ab9130c5425119de03e9b277d9c0d9fc2c4470543de3d371196d6a1f281",
+  "equivalent_runtime_route": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-object-array-probe:1",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension",
+      "$defs": {
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      }
+    },
+    "extensions": {
+      "arrays": [
+        {
+          "pointer": "/value/tags",
+          "kind": "set",
+          "order_key": [
+            "/id"
+          ]
+        }
+      ]
+    }
+  }
+}

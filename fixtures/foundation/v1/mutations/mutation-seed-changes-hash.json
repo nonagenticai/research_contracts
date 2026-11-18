@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-seed-changes-hash",
+  "base_fixture": "run-manifest-all-nine-groups",
+  "expect": "changed",
+  "mutations": [
+    {
+      "pointer": "/method/seed",
+      "value": 20260731
+    }
+  ],
+  "rationale": "The seed is semantic content: two runs with different seeds are different runs."
+}

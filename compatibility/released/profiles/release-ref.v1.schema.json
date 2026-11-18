@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:release-ref:1",
+  "title": "ReleaseRefV1",
+  "description": "FND-002 task 2: the profile and capability-pack release reference, and the profile-release descriptor that names one (document 08 sections 4.2-4.3, document 12 section 2, document 10 section 2.2). A release ref is the id@semver form every normative example uses; it is NOT a canonical PinnedVersionRef and may not be substituted for one where an exact immutable cross-context reference is required.",
+  "$comment": "The string form is induced from every normative example (document 10 section 2.4 'datacompany-hta@1.0.0' and 'systematic-review@1.0.0'; document 12 section 2's pack_refs, workflow_bundle_ref, policy_bundle_ref and qualification_suite_ref). No document states a grammar, a pattern, or even that it is a string rather than an object. Pinning it as a string with an exact grammar is IMP-DEC-FND002-003; the alternative reading, that these become structured objects, is recorded there as the rejected option and the reason.",
+  "$defs": {
+    "release_id": {
+      "$comment": "The pack or profile identifier half. Carries the released pre-ADR regulatory guard for the same reason bounded_context does: a release id that spelled a regulatory family stem would activate a regulatory capability before ADR-DATACOMPANY-REGULATORY-MODEL is accepted.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "not": { "pattern": "regulatory|legal-|normative|consolidation" }
+    },
+    "semver": {
+      "$comment": "The published SemVer 2.0.0 grammar, anchored. Anchors are evaluated with ECMA-262 semantics by the released validator, where $ asserts end of input; a Python re that treats $ as 'also before a trailing newline' is the non-conformant side and is corrected in registry.CanonicalValidator.",
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "release_ref": {
+      "$comment": "id@semver. The pattern is the composition of release_id and semver written once as a whole string, because JSON Schema cannot concatenate two $defs into one pattern; the two component $defs above remain the readable statement of each half and are exercised by their own fixtures. 'to-be-pinned' is rejected by construction: document 12 section 2 states it 'is a blocked field, not a wildcard accepted by production validation', and it does not match the SemVer half.",
+      "type": "string",
+      "maxLength": 384,
+      "pattern": "^[a-z][a-z0-9-]*@(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "not": { "pattern": "regulatory|legal-|normative|consolidation" }
+    },
+    "release_ref_list": {
+      "$comment": "A collection of release refs, declared ORDERED under protest (IMP-DEC-FND002-004). Document 16 section 3.5 requires every array to declare itself ordered or set-like, and no document declares it for pack_refs. Semantically this is a SET: a pack activation has no meaningful order, and two services holding the same activation in two orders must compute the same canonical hash. It cannot be declared as one. See defect D8 in config/foundation-decisions.json and tests/test_foundation_schemas.py: canonical-hash-profile.v1's hash_view_pointer has minLength 2 and requires a leading '/', so neither '/' nor RFC 6901's whole-document '' is a legal order_key entry, and hash_view._pointer_at resolves an order key only inside a dict member. A set-like array of SCALARS is therefore inexpressible in vocabulary version 1. Duplicates are still rejected by uniqueItems, which for a SCALAR array is exactly what a set-like declaration would have given, so the residual gap is exactly the member ORDER, and it is recorded rather than papered over.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/release_ref" },
+      "x-datacompany-array": { "kind": "set", "order_key": [""] }
+    },
+    "profile_release_status": {
+      "$comment": "Document 10 section 2.2: 'ProfileRelease: candidate -> verified -> published -> deprecated|withdrawn'.",
+      "enum": ["candidate", "verified", "published", "deprecated", "withdrawn"]
+    },
+    "pack_release_status": {
+      "$comment": "Document 10 section 2.2: 'PackRelease: discovered -> verified -> installed -> deprecated|withdrawn'. Deliberately a DIFFERENT enum from profile_release_status: the two lifecycles differ in their first and third states, and collapsing them into one 'status' would make 'installed' a legal profile state and 'published' a legal pack state.",
+      "enum": ["discovered", "verified", "installed", "deprecated", "withdrawn"]
+    },
+    "bcp47_locale": {
+      "$comment": "Locale tag as used by document 12 section 2 ('pl-PL', 'en'). The pattern is a deliberately narrow BCP 47 subset: language, optional script, optional region. A wider grammar would admit tags the terminology contracts have no rule for.",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$"
+    },
+    "profile_release_descriptor": {
+      "$comment": "Document 12 section 2's descriptor, field for field. status is the ProfileRelease lifecycle; a descriptor may not reach 'verified' while any dependency is unpinned, which is a control-plane transition rule and not expressible here.",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "id",
+        "version",
+        "status",
+        "kernel_compatibility",
+        "pack_refs",
+        "default_locale",
+        "supported_locales"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/release_id" },
+        "version": { "$ref": "#/$defs/semver" },
+        "status": { "$ref": "#/$defs/profile_release_status" },
+        "kernel_compatibility": {
+          "$comment": "The kernel version range this profile release is verified against.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "pack_refs": { "$ref": "#/$defs/release_ref_list" },
+        "default_locale": { "$ref": "#/$defs/bcp47_locale" },
+        "supported_locales": {
+          "$comment": "Ordered for the same D8 reason as release_ref_list: a set of scalars cannot declare an order key.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/bcp47_locale" },
+          "x-datacompany-array": { "kind": "set", "order_key": [""] }
+        },
+        "workflow_bundle_ref": { "$ref": "#/$defs/release_ref" },
+        "policy_bundle_ref": { "$ref": "#/$defs/release_ref" },
+        "qualification_suite_ref": { "$ref": "#/$defs/release_ref" }
+      }
+    }
+  }
+}

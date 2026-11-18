@@ -1,0 +1,22 @@
+{
+  "fixture_id": "capability-available-but-not-installed",
+  "schema_ref": "urn:datacompany:capability-status:1",
+  "rationale": "The same guard one link earlier in the chain: nothing that is not installed can be currently available.",
+  "expected_error_contains": [
+    "installed"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/installed",
+      "keyword": "const"
+    }
+  ],
+  "instance": {
+    "capability_id": "network_meta_analysis",
+    "installed": false,
+    "enabled": true,
+    "qualified": true,
+    "available": true,
+    "required_for_publication": false
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "fixture_id": "page-request-first-page",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_request",
+  "rationale": "First page: no cursor. A multi-key sort with a distinct tie-breaker, which is what 'stable tie-break order' requires.",
+  "instance": {
+    "page_size": 50,
+    "sort": [
+      {
+        "field": "published_at",
+        "direction": "descending"
+      },
+      {
+        "field": "entity_id",
+        "direction": "ascending"
+      }
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "fixture_id": "invalid-command-carrying-system-time",
+  "description": "recorded_at is assigned by the authoritative service transaction clock and is never accepted from a domain request body.",
+  "schema_ref": "urn:datacompany:bitemporal-assertion:1#/$defs/command",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "recorded_at"
+  ],
+  "instance": {
+    "assertion_id": "934fbdb1-d599-b523-5289-4d039d1f929c",
+    "assertion_version_id": "679ccb16-effd-d6a8-1c82-1298862c74d8",
+    "subject_ref": {
+      "owner_context": "terminology-broker",
+      "entity_type": "approved_mapping",
+      "entity_id": "4dc44e30-523d-0809-6c40-4c967ab700d2",
+      "version_id": "e00e78c6-0178-c45c-a9ce-f70531d98392",
+      "version_number": 3,
+      "resource_scope": "global",
+      "schema_ref": "urn:datacompany:approved-mapping-version:1",
+      "content_hash": "sha256:78fcbb3ae690c5c3275a4934484af27f935f04edea0f217e637d023f74d154ff",
+      "resolved_at": "2026-07-30T10:00:00Z"
+    },
+    "assertion_type": "recommendation_strength",
+    "value": {
+      "strength": "strong"
+    },
+    "valid_from": "2026-01-01T00:00:00Z",
+    "basis_refs": [
+      {
+        "owner_context": "terminology-broker",
+        "entity_type": "approved_mapping",
+        "entity_id": "3deabbac-d79d-5909-38b5-240f9b5a1ef8",
+        "version_id": "4b3dd6aa-c0a1-1cf4-5452-a2641a0e9780",
+        "version_number": 3,
+        "resource_scope": "global",
+        "schema_ref": "urn:datacompany:approved-mapping-version:1",
+        "content_hash": "sha256:fdae7165858e54c3cf859ce4167bfb90d19d7a1a98132b402358195932c9f869",
+        "resolved_at": "2026-07-30T10:00:00Z"
+      }
+    ],
+    "recorded_at": "2026-07-30T09:30:00Z"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "fixture_id": "invalid-non-utc-timestamp",
+  "description": "Timestamps are RFC 3339 UTC values in the released Z form.",
+  "schema_ref": "urn:datacompany:pinned-version-ref:1",
+  "expect": "invalid",
+  "expected_error_contains": [
+    "resolved_at"
+  ],
+  "instance": {
+    "owner_context": "terminology-broker",
+    "entity_type": "approved_mapping",
+    "entity_id": "5de5f4fe-bd25-d25c-23e6-3b35d8020bb1",
+    "version_id": "ff78a17f-15be-eefa-ead0-8a0da35db43b",
+    "version_number": 3,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:approved-mapping-version:1",
+    "content_hash": "sha256:11aebd1febd43cd16fb56167002733aabcee6fa93977aaedf3848274061e0ab4",
+    "resolved_at": "2026-07-30T12:00:00+02:00"
+  }
+}

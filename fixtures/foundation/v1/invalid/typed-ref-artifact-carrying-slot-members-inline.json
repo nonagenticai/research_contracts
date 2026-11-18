@@ -1,0 +1,30 @@
+{
+  "fixture_id": "typed-ref-artifact-carrying-slot-members-inline",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/artifact_ref",
+  "rationale": "The NEGATIVE half of the artifact_ref $comment, made executable. Document 16 section 14.5 says an ArtifactRef 'carries its semantic role, classification, and rights snapshot', which reads two ways: inline members of the ref, or sibling members of the object that holds it. Only the second validates -- pinned-version-ref:1 sets unevaluatedProperties:false, so the inline reading is refused here while typed-ref-artifact-slot-carries-its-siblings-beside-the-ref accepts the nested one. The $comment used to leave that ambiguous, so a consumer could implement the reading the released schema rejects and find out at integration.",
+  "expected_error_contains": [
+    "semantic_role",
+    "classification",
+    "rights_snapshot_ref"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/",
+      "keyword": "unevaluatedProperties"
+    }
+  ],
+  "instance": {
+    "owner_context": "artifact-storage",
+    "entity_type": "artifact_version",
+    "entity_id": "44444444-4444-4444-8444-444444444444",
+    "version_id": "55555555-5555-4555-8555-555555555555",
+    "version_number": 7,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:artifact-version:1",
+    "content_hash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "resolved_at": "2026-07-30T10:00:00Z",
+    "semantic_role": "primary_output",
+    "classification": "restricted",
+    "rights_snapshot_ref": "urn:datacompany:rights-decision-version:1"
+  }
+}

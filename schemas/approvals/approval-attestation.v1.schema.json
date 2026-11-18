@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:datacompany:approval-attestation:1",
+  "title": "ApprovalAttestationV1",
+  "description": "The claim set a Foundation Review approval carries into a target service (document 13 section 10.1). Binds one approved command to one exact aggregate revision, names every approver and their recorded decision, and states when it expires. A target service verifies this and produces a typed result; it never applies the command from the attestation alone.",
+  "$comment": "WHY THIS DOCUMENT EXISTS. Document 13 section 10.1 lists nine things a shared verifier must check on an FR ApprovalAttestation, and section 10.3 lists eighteen negative tests that must fail. Neither is writable while the object has no released grammar: `schemas/approvals/` held only a `.gitkeep`, so `FND-008` — the verifier and application-receipt library — had nothing to verify AGAINST. This is that grammar, and it is deliberately the claim set only. AUTHORING DECISION 1 - THIS IS NOT THE SIGNED ENVELOPE. An attestation travels as a JWS, and `iss`, `aud`, `exp`, `iat`, `kid` and the signature live in that envelope where a verifier reads them BEFORE it trusts anything here. Restating them as ordinary properties would create two places for the same fact, and the one a lazy verifier reads is the one an attacker controls. So this document describes the payload a verified envelope carries, and the envelope-level checks in section 10.1 - issuer, audience, signature, key validity and rotation, expiry - are the verifier's, not this schema's. `issued_at` and `expires_at` appear anyway because a receipt has to record them after verification and a stored receipt is not a JWS. AUTHORING DECISION 2 - the command is bound by HASH, not by value. `command_hash` is the RFC 8785 canonical hash of the exact command that was approved. Carrying the command itself would let an approval be replayed against a command that merely looks similar, and would put arbitrary domain payload inside an object that is copied into audit records. Section 10.3 requires a wrong-command-hash negative test, which is only possible because the binding is a hash. AUTHORING DECISION 3 - the target is pinned to an exact aggregate VERSION and input revision. Section 10.2 step 3 verifies the current revision before applying, and section 10.3 requires a test for an aggregate that changed between approval and application. An attestation naming only an aggregate id would authorise a command against a state nobody approved. AUTHORING DECISION 4 - approvers are a SET with a declared minimum, and self-approval is refusable. Section 10.1 requires each approver subject, role and recorded decision, plus required count and separation of duty. So `approvers` is a set keyed on subject, `required_approvals` states the count the policy demanded, and every approver carries the role they acted in - a verifier cannot check separation of duty against a bare list of names. AUTHORING DECISION 5 - `approval_round` is required, not optional. Section 10.1 names it and section 10.3 requires a wrong-round negative test. A re-opened approval that produced a second round must not be satisfiable by the first round's attestation, and without a round on the object that is unprovable. AUTHORING DECISION 6 - `revocation` is a REFERENCE, never a status. Section 10.1 says 'optional revocation state', and a boolean baked into a signed object is a fact frozen at signing time about something that changes afterwards. `revocation_check_ref` points at where the current state is asked; a verifier that cannot reach it reports that, rather than assuming not-revoked. THIS DOCUMENT IS DELIBERATELY NOT AN AUTHORISATION DECISION. It records that an approval happened, what it was for, and who made it. Whether the command may be applied NOW is section 10.2's question and depends on current policy, current rights and the aggregate's current revision - none of which a document signed in the past can answer.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "#/$defs/attestation_fields" },
+    { "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope_conditional" }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "attestation_fields": {
+      "type": "object",
+      "required": [
+        "schema_ref",
+        "attestation_id",
+        "approval_id",
+        "approval_round",
+        "resource_scope",
+        "target",
+        "command_operation",
+        "command_hash",
+        "approvers",
+        "required_approvals",
+        "issued_at",
+        "expires_at"
+      ],
+      "properties": {
+        "schema_ref": {
+          "$comment": "A const, the envelope idiom. A verifier holding a stored receipt has to know which grammar it is reading before it can check anything in it.",
+          "const": "urn:datacompany:approval-attestation:1"
+        },
+        "attestation_id": {
+          "$comment": "This attestation's own identity. Section 10.2 step 1 dedupes on it, which is what makes application replay-safe.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "approval_id": {
+          "$comment": "The FR approval this attests. Distinct from `attestation_id`: one approval may be attested more than once, for example after a key rotation.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "task_ref": {
+          "$comment": "The FR task the approval was raised from, where there was one. Optional because an approval may be raised directly.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "approval_round": {
+          "$comment": "See authoring decision 5. A first-round attestation must not satisfy a second round.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "resource_scope": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_scope"
+        },
+        "resource_tenant_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/resource_tenant_id"
+        },
+        "target": {
+          "$comment": "What was approved, pinned exactly. See authoring decision 3.",
+          "$ref": "#/$defs/attestation_target"
+        },
+        "command_operation": {
+          "$comment": "The operation name, so a verifier can refuse an attestation aimed at a different one before it computes any hash.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "command_hash": {
+          "$comment": "RFC 8785 canonical hash of the exact approved command. See authoring decision 2.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+        },
+        "profile_ref": {
+          "$comment": "The profile in force when the approval was given. Section 10.1 requires profile and policy refs; both are optional here because a context without a profile concept has none to name, and a verifier checks presence against its own policy rather than against this document.",
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "policy_ref": {
+          "$ref": "urn:datacompany:pinned-version-ref:1"
+        },
+        "approvers": {
+          "$comment": "See authoring decision 4.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/approver" },
+          "x-datacompany-array": {
+            "kind": "set",
+            "order_key": ["/subject", "/role"]
+          }
+        },
+        "required_approvals": {
+          "$comment": "What the policy demanded, not what arrived. A verifier compares this against `approvers` and against its own policy; carrying only the count of approvers present would make an under-approved attestation self-consistent.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "separation_of_duty": {
+          "$comment": "The rule the approval was taken under, where the policy declared one. `disjoint_from_proposer` is the common case: whoever proposed the command may not approve it. Absent means the policy stated no rule, which a verifier may still refuse on its own terms.",
+          "type": "string",
+          "enum": ["none", "disjoint_from_proposer", "disjoint_from_prior_round"]
+        },
+        "issued_at": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$comment": "Required, and there is no unbounded form. An approval that never expires is a standing authorisation nobody reviews, and section 10.3 requires an expiry negative test that would be unwritable against an optional field.",
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        },
+        "revocation_check_ref": {
+          "$comment": "Where the CURRENT revocation state is asked. See authoring decision 6 - never a boolean.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "attestation_target": {
+      "$comment": "The exact thing approved. `input_revision` is separate from `aggregate_version` because a command may be approved against inputs that are versioned independently of the aggregate it mutates - document 13 section 10.2 step 3 verifies both.",
+      "type": "object",
+      "required": ["service", "aggregate_type", "aggregate_id", "aggregate_version"],
+      "additionalProperties": false,
+      "properties": {
+        "service": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/bounded_context"
+        },
+        "aggregate_type": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "aggregate_id": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/uuid"
+        },
+        "aggregate_version": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/version_number"
+        },
+        "input_revision": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/content_hash"
+        }
+      }
+    },
+    "approver": {
+      "$comment": "One person and the decision they recorded. `decision` admits `reject` so an attestation can carry a dissent - a required count of three with one rejection is not three approvals, and a verifier that only ever saw approvals could not tell the difference.",
+      "type": "object",
+      "required": ["subject", "role", "decision", "decided_at"],
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/actor_subject"
+        },
+        "role": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/canonical_type_token"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["approve", "reject"]
+        },
+        "decided_at": {
+          "$ref": "urn:datacompany:stable-identity:1#/$defs/timestamp"
+        },
+        "rationale_ref": {
+          "$comment": "A REFERENCE to the recorded rationale, never the text. An attestation is copied into audit records and alerts; free-text reasoning about a scientific decision does not belong in something that widely replicated.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "sealed": {
+      "$comment": "The closed form, for a context that wants to refuse any property this document does not name.",
+      "allOf": [{ "$ref": "#" }],
+      "unevaluatedProperties": false
+    }
+  }
+}

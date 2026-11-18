@@ -1,0 +1,12 @@
+{
+  "fixture_id": "mutation-aggregate-version-does-not-change-hash",
+  "base_fixture": "run-manifest-all-nine-groups",
+  "expect": "unchanged",
+  "mutations": [
+    {
+      "pointer": "/aggregate_version",
+      "value": 99
+    }
+  ],
+  "rationale": "aggregate_version is a mutable optimistic-concurrency counter, excluded by the released stable-identity annotation. Section 4.3 step 3."
+}

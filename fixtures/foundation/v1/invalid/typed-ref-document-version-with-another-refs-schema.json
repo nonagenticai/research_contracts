@@ -1,0 +1,25 @@
+{
+  "fixture_id": "typed-ref-document-version-with-another-refs-schema",
+  "schema_ref": "urn:datacompany:typed-refs:1#/$defs/document_version_ref",
+  "rationale": "The const is the ONLY thing that distinguishes the four typed refs from each other and from a bare pinned-version-ref:1, which accepts any schema_ref matching the URN pattern. This instance is a well-formed EvidenceLocationRef offered where a DocumentVersionRef is required: without the const it validates, so this fixture is what makes the four refs four types rather than four names for one.",
+  "expected_error_contains": [
+    "urn:datacompany:document-version:1"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/schema_ref",
+      "keyword": "const"
+    }
+  ],
+  "instance": {
+    "owner_context": "evidence-registry",
+    "entity_type": "table_cell_location",
+    "entity_id": "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+    "version_id": "bbbbbbbb-1111-4111-8111-bbbbbbbbbbbb",
+    "version_number": 2,
+    "resource_scope": "global",
+    "schema_ref": "urn:datacompany:evidence-location-version:1",
+    "content_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "resolved_at": "2026-07-30T10:00:00Z"
+  }
+}

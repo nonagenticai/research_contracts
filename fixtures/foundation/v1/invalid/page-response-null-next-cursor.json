@@ -1,0 +1,24 @@
+{
+  "fixture_id": "page-response-null-next-cursor",
+  "schema_ref": "urn:datacompany:page:1#/$defs/page_response",
+  "rationale": "IMP-DEC-FND002-015. Absence is the released encoding for end-of-collection; null would be a second spelling of one fact, which is exactly what the absent-versus-null rule forbids.",
+  "expected_error_contains": [
+    "next_cursor"
+  ],
+  "expected_schema_failures": [
+    {
+      "pointer": "/next_cursor",
+      "keyword": "type"
+    }
+  ],
+  "instance": {
+    "items": [],
+    "next_cursor": null,
+    "sort": [
+      {
+        "field": "entity_id",
+        "direction": "ascending"
+      }
+    ]
+  }
+}

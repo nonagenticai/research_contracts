@@ -1,0 +1,95 @@
+{
+  "fixture_id": "signed-opaque-payload-with-an-excluded-member",
+  "description": "B1, found by an independent refuter. This is the shape x-datacompany-hash-opaque and x-datacompany-hash-excluded exist for TOGETHER -- the signed open payload of tests/test_hash_view_opaque_exclusion.py -- plus the one array D9 is about. The declare-none-or-declare-all guard read the RAW walk, where an excluded member is still a properties name, so it counted /value/sig as a declaration that revokes opacity and REFUSED the whole shape. hash_view states the opposite rule in as many words: 'Opacity is revoked by a DECLARED MEMBER and by nothing else. An EXCLUSION is the opposite act.' Until this derived, the runtime escape hatch was still the only route for the motivating case and D9 was not closed for it. The instance carries the signature, the array AND an undeclared sibling, so all three rules are exercised at once.",
+  "expect": "derives",
+  "probe_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "urn:datacompany:declaration-only-signed-opaque-payload-probe:1",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "value": {
+        "type": "object",
+        "x-datacompany-hash-opaque": true,
+        "properties": {
+          "sig": {
+            "type": "string",
+            "x-datacompany-hash-excluded": true,
+            "x-datacompany-hash-exclusion-reason": "signature"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-datacompany-hash-declaration-only": true,
+            "x-datacompany-array": {
+              "kind": "ordered"
+            }
+          }
+        }
+      }
+    },
+    "x-datacompany-composition-point": "#/$defs/domain_extension",
+    "$defs": {
+      "domain_extension": {
+        "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+        "type": "object"
+      }
+    }
+  },
+  "expected_manifest_canonical_json": "{\"absent_vs_null\":\"distinct\",\"arrays\":[{\"kind\":\"ordered\",\"pointer\":\"/value/tags\"}],\"binary_float_policy\":\"reject\",\"byte_order_mark\":false,\"decimal_representation\":\"decimal_string\",\"digest_algorithm\":\"sha256\",\"digest_prefix\":\"sha256:\",\"encoding\":\"utf-8\",\"excluded_pointers\":[{\"pointer\":\"/value/sig\",\"reason\":\"signature\"}],\"included_pointers\":[\"/id\",\"/value\"],\"opaque_pointers\":[\"/value\"],\"profile_id\":\"urn:datacompany:canonical-hash-profile:1\",\"profile_version\":2,\"schema_ref\":\"urn:datacompany:declaration-only-signed-opaque-payload-probe:1\",\"serialization\":\"rfc8785\",\"timestamp_representation\":\"rfc3339_utc_z\",\"unicode_normalization\":\"none\"}",
+  "instance": {
+    "id": "x",
+    "value": {
+      "sig": "s",
+      "tags": [
+        "b",
+        "a"
+      ],
+      "other": 1
+    }
+  },
+  "expected_hash_view_canonical_json": "{\"id\":\"x\",\"value\":{\"other\":1,\"tags\":[\"b\",\"a\"]}}",
+  "expected_content_hash": "sha256:b84aa41c7ff5ceb5557e307b1f8b000af08c4875b91b5071426a71cbe9f8c763",
+  "equivalent_runtime_route": {
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:datacompany:declaration-only-signed-opaque-payload-probe:1",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "x-datacompany-hash-opaque": true,
+          "properties": {
+            "sig": {
+              "type": "string",
+              "x-datacompany-hash-excluded": true,
+              "x-datacompany-hash-exclusion-reason": "signature"
+            }
+          }
+        }
+      },
+      "x-datacompany-composition-point": "#/$defs/domain_extension",
+      "$defs": {
+        "domain_extension": {
+          "$comment": "Declared composition point. The runtime route below supplies an arrays-only profile extension, and merge_profile_extensions accepts one only at an envelope's declared composition point (EXTENSIONS.md section 6.4).",
+          "type": "object"
+        }
+      }
+    },
+    "extensions": {
+      "arrays": [
+        {
+          "pointer": "/value/tags",
+          "kind": "ordered"
+        }
+      ]
+    }
+  }
+}
